@@ -1,0 +1,120 @@
+// 四象限视图 —— 概念稿 03「权衡」
+import * as S from "../store.js";
+import { el, QUADS, popmenu, toast } from "../ui.js";
+import { taskActions } from "../pluginHost.js";
+import { openTaskDrawer } from "./drawer.js";
+
+function taskCard(t) {
+  const scheduled = S.getState().blocks.find((b) => b.taskId === t.id);
+  const card = el("button", { class: `tkc${t.done ? " done" : ""}`, "data-id": t.id },
+    el("span", {
+      class: "cb",
+      onclick: (e) => { e.stopPropagation(); S.toggleTask(t.id); },
+    }, t.done ? "✓" : ""),
+    el("span", { class: "tt" },
+      el("span", { class: "t" }, t.title),
+      el("span", { class: "m" },
+        t.due ? `截止 ${t.due.slice(5).replace("-", "/")}` : "无截止",
+        t.project ? ` · ${t.project}` : "",
+        t.attachments?.length ? " · 📷" : ""),
+    ),
+    scheduled ? el("span", { class: "sch" }, `已排 ${scheduled.start}`) : null,
+    el("span", { class: "est" }, S.durLabel(t.estMin)),
+  );
+  card.addEventListener("click", () => openTaskDrawer(t.id));
+  card.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    popmenu(e.clientX, e.clientY, [
+      { label: "打开详情", icon: "▸", run: () => openTaskDrawer(t.id) },
+      { label: t.done ? "标记为未完成" : "标记完成", icon: "✓", run: () => S.toggleTask(t.id) },
+      "-",
+      { label: "删除任务", icon: "✕", warn: true, run: () => {
+        const t2 = S.removeTask(t.id);
+        toast(`已删除「${t2.title}」`, { actionLabel: "撤销", action: () => { S.addTask(t2); } });
+      } },
+    ]);
+  });
+  return card;
+}
+
+function quadrantCell(def) {
+  const list = el("div", { class: "tks" });
+  const cell = el("div", { class: `q ${def.cls}` },
+    el("span", { class: "rn" }, def.rn),
+    el("div", { class: "qh" }, el("span", { class: "sq" }), el("b", {}, def.title),
+      el("span", { class: "cnt" })),
+    el("div", { class: "tip" }, def.tip),
+    list,
+  );
+
+  const renderList = () => {
+    const tasks = S.tasksOfQuad(def.q);
+    list.replaceChildren(...tasks.map(taskCard));
+    cell.querySelector(".cnt").textContent = `${tasks.filter((t) => !t.done).length} 项`;
+  };
+  renderList();
+  cell._refresh = renderList;
+
+  // 快速添加
+  const addBtn = el("button", { class: "addq" }, "＋ 添加到这个象限");
+  const form = el("div", { class: "addform", style: "display:none" },
+    Object.assign(el("input", { placeholder: "要做什么？回车保存", type: "text" }), {}),
+    (() => {
+      const s = el("select", { class: "estsel", title: "预估时长" });
+      for (const m of [15, 30, 45, 60, 90, 120]) s.append(el("option", { value: m }, S.durLabel(m)));
+      s.value = "30"; return s;
+    })(),
+  );
+  const input = form.querySelector("input");
+  const estSel = form.querySelector("select");
+  const submit = () => {
+    const v = input.value.trim();
+    if (v) S.addTask({ title: v, quad: def.q, estMin: Number(estSel.value) });
+    input.value = ""; input.focus();
+  };
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submit();
+    if (e.key === "Escape") { form.style.display = "none"; addBtn.style.display = ""; }
+  });
+  addBtn.addEventListener("click", () => { addBtn.style.display = "none"; form.style.display = "flex"; input.focus(); });
+  form.addEventListener("focusout", () => setTimeout(() => {
+    if (!input.value.trim()) { form.style.display = "none"; addBtn.style.display = ""; }
+  }, 120));
+  cell.append(addBtn, form);
+  cell._refresh = () => { renderList(); };
+  return cell;
+}
+
+export function renderQuadrant(container) {
+  const cells = QUADS.map(quadrantCell);
+  const grid = el("div", { class: "quad-grid" }, cells);
+
+  const refreshChips = () => {
+    const all = S.getState().tasks;
+    const open = all.filter((t) => !t.done);
+    chips.innerHTML = "";
+    chips.append(
+      el("span", { class: "chip" }, "全部 ", el("b", {}, String(all.length)), " 项"),
+      el("span", { class: "chip" }, "待办 ", el("b", {}, String(open.length)), " 项"),
+      el("span", { class: "chip" }, "已完成 ", el("b", {}, String(all.length - open.length)), " 项"),
+    );
+  };
+  const chips = el("div", {});
+
+  const wrap = el("div", { class: "quad-wrap" },
+    el("div", { class: "quad-head" },
+      el("span", { class: "motto" }, "把任务放进象限，就是做决定 · 象限 I 的面积最大，因为它值得你最多时间"),
+      el("span", { class: "sp" }),
+      chips,
+    ),
+    grid,
+  );
+  container.append(wrap);
+
+  refreshChips();
+  const un = S.subscribe(() => {
+    cells.forEach((c) => c._refresh && c._refresh());
+    refreshChips();
+  });
+  container._unsub = un;
+}

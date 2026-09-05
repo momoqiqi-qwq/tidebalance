@@ -1,0 +1,13 @@
+# Node / 前端构建
+node_modules/
+dist/
+
+# Rust / Tauri 构建产物
+target/
+gen/
+
+# 系统与日志
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
