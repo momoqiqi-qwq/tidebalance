@@ -101,7 +101,7 @@ plugins/
   "author": "you",
   "icon": "✨",
   "description": "它做什么",
-  "permissions": ["ui", "tasks", "blocks", "storage", "notify", "events"],
+  "permissions": ["ui", "tasks", "blocks", "storage", "notify", "events", "http", "openUrl", "timeParse"],
   "entry": "main.js"
 }
 ```
@@ -135,10 +135,25 @@ tide.notify("完成了一件事");
 tide.events.on("pomodoro:finished", (e) => {});
 tide.events.emit("my-plugin:something", {});
 
+// 网络：Rust 端抓取，绕开 WebView CORS（仅 http/https）
+const res = await tide.http.get("https://api.example.com/list?page=1");
+// res = { status, body, finalUrl, contentType }
+
+// 打开系统浏览器
+tide.util.openUrl("https://example.com");
+
+// 复用主程序的中文时间解析（捕获引擎同款）
+const p = tide.util.parseWhen("明天下午3点到4点 讨论开题"); // { date, startMin, endMin, title }
+tide.util.guessCategory(text); // 按关键词猜分类 work/study/sport/life/rest
+tide.util.guessQuad(dateStr);  // 按期限猜象限
+tide.util.navigate("timeblock"); // 跳转到指定视图
+
 // 工具
 tide.util.today(); tide.util.addDays("2026-09-05", 1);
 tide.util.mmOf("09:30"); tide.util.hhmmOf(570); tide.util.durLabel(90);
 ```
+
+内置插件 `public/plugins/gx-news/`（竞赛消息雷达）是网络类插件的完整示例：`tide.http.get` 抓取摩课云竞赛平台公告接口、关键词/类型/已读过滤、`openUrl` 打开详情、`parseWhen` 一键把带时间的消息转成提醒。
 
 ## 设计来源
 

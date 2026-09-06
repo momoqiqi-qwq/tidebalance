@@ -36,4 +36,16 @@ export const api = {
     if (!isTauri) return { version: "web-dev", os: "browser", dataDir: "localStorage（浏览器调试模式）" };
     return invoke("app_info");
   },
+
+  // 插件网络桥：Tauri 端由 Rust 发请求（绕开 CORS），浏览器端直接 fetch
+  async httpGet(url) {
+    if (isTauri) return invoke("http_get", { url });
+    const r = await fetch(url);
+    return { status: r.status, body: await r.text(), finalUrl: r.url, contentType: r.headers.get("content-type") || "" };
+  },
+
+  async openExternal(url) {
+    if (isTauri) return invoke("open_external", { url });
+    window.open(url, "_blank");
+  },
 };

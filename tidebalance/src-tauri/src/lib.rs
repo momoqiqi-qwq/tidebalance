@@ -2,6 +2,7 @@ use serde_json::{json, Value};
 use std::fs;
 use std::path::PathBuf;
 use tauri::{AppHandle, Manager};
+use tauri_plugin_opener::OpenerExt as _;
 
 /// 应用数据目录（Windows: %APPDATA%，Linux: ~/.local/share，Android: 应用内部存储）
 fn data_dir(app: &AppHandle) -> Result<PathBuf, String> {
@@ -167,15 +168,66 @@ fn app_info(app: AppHandle) -> Result<AppInfo, String> {
     })
 }
 
+#[derive(serde::Serialize)]
+struct HttpResp {
+    status: u16,
+    body: String,
+    #[serde(rename = "finalUrl")]
+    final_url: String,
+    #[serde(rename = "contentType")]
+    content_type: String,
+}
+
+/// 插件网络桥：服务端抓取，绕开 WebView 的 CORS 限制
+#[tauri::command]
+async fn http_get(url: String) -> Result<HttpResp, String> {
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err("仅支持 http/https 地址".into());
+    }
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) TideBalance/0.1")
+        .timeout(std::time::Duration::from_secs(20))
+        .build()
+        .map_err(|e| format!("HTTP 客户端初始化失败: {e}"))?;
+    let resp = client
+        .get(&url)
+        .header("Accept", "application/json, text/html;q=0.9, */*;q=0.8")
+        .send()
+        .await
+        .map_err(|e| format!("请求失败: {e}"))?;
+    let status = resp.status().as_u16();
+    let final_url = resp.url().to_string();
+    let content_type = resp
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_string();
+    let body = resp.text().await.map_err(|e| format!("读取响应失败: {e}"))?;
+    Ok(HttpResp { status, body, final_url, content_type })
+}
+
+/// 用系统默认浏览器打开外部链接（插件点击消息详情用）
+#[tauri::command]
+fn open_external(app: AppHandle, url: String) -> Result<(), String> {
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err("仅支持 http/https 链接".into());
+    }
+    app.opener().open_url(url, None::<&str>).map_err(|e| format!("打开失败: {e}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             load_data,
             save_data,
             list_plugins,
             read_plugin_file,
-            app_info
+            app_info,
+            http_get,
+            open_external
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -2,6 +2,7 @@
 import { api } from "./api.js";
 import * as S from "./store.js";
 import { toast } from "./ui.js";
+import { parseWhen, guessCategory, guessQuad } from "./timeParser.js";
 
 const registry = new Map();   // id -> { manifest, source, enabled, error }
 const eventBus = new Map();   // event -> Set<fn>
@@ -14,7 +15,7 @@ export function onNavChanged(fn) { listeners.navChanged.add(fn); }
 export function onTaskActionsChanged(fn) { listeners.taskActionsChanged.add(fn); }
 function emitNavChanged() { listeners.navChanged.forEach((f) => f()); }
 
-const BUILTIN_IDS = ["pomodoro", "weekly-report"];
+const BUILTIN_IDS = ["pomodoro", "weekly-report", "gx-news"];
 
 export function getRegistry() { return [...registry.values()]; }
 
@@ -87,8 +88,16 @@ function makeApi(man) {
       },
     },
 
+    // 网络桥：Rust 端抓取，绕开 WebView CORS；仅允许 http/https
+    http: {
+      get: (url) => api.httpGet(url),
+    },
+
     util: {
       today: S.todayStr, addDays: S.addDays, mmOf: S.mmOf, hhmmOf: S.hhmmOf, durLabel: S.durLabel,
+      openUrl: (url) => api.openExternal(url),
+      parseWhen, guessCategory, guessQuad,
+      navigate: (view) => window.dispatchEvent(new CustomEvent("tide:navigate", { detail: view })),
     },
   };
 }
