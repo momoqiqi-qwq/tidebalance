@@ -11,7 +11,7 @@
   const state = {
     list: [], page: 1, hasMore: true, fetching: false, fetchedAt: 0, error: null,
     seen: new Set(),
-    filter: { kw: "", type: "all", month: "all", hideSeen: false, auto: false },
+    filter: { kw: "", type: "all", month: "all", hideSeen: false, auto: false, showCover: false },
     timer: null, renderedCount: CHUNK,
   };
   let ui = null, io = null, paintToken = 0;
@@ -172,6 +172,7 @@
       state.filter.month, (id) => { state.filter.month = id; savePrefs(); paintChips(); paintList(true); });
 
     ui.hideSeen.classList.toggle("on", !!state.filter.hideSeen);
+    ui.showCover.classList.toggle("on", !!state.filter.showCover);
     ui.auto.classList.toggle("on", !!state.filter.auto);
   }
 
@@ -179,7 +180,7 @@
     const isNew = !state.seen.has(m.id);
     const tn = typeName(m.type);
     return `<div class="gx-card${isNew ? "" : " seen"}" data-id="${m.id}">
-      ${m.cover ? `<img class="gx-cover" loading="lazy" decoding="async" fetchpriority="low" src="${esc(coverSmall(m.cover))}" data-orig="${esc(m.cover)}" onerror="if(this.dataset.retried){this.style.display='none'}else{this.dataset.retried=1;this.src=this.dataset.orig}">` : ""}
+      ${state.filter.showCover && m.cover ? `<img class="gx-cover" loading="lazy" decoding="async" fetchpriority="low" src="${esc(coverSmall(m.cover))}" data-orig="${esc(m.cover)}" onerror="if(this.dataset.retried){this.style.display='none'}else{this.dataset.retried=1;this.src=this.dataset.orig}">` : ""}
       <div class="gx-main">
         <div class="gx-title">${esc(m.title)}</div>
         <div class="gx-meta">
@@ -309,6 +310,7 @@
         <button class="gx-refresh">⟳ 刷新</button>
         <input class="gx-kw" type="text" placeholder="关键词过滤：如 答辩 / 数学 / 报名 / 截止…">
         <label class="gx-toggle hide-seen"><i></i>只看未读</label>
+        <label class="gx-toggle show-cover"><i></i>封面图</label>
         <label class="gx-toggle auto"><i></i>每 10 分钟自动刷新</label>
       </div>
       <div class="gx-toolbar"><span class="gx-lab">类型</span><div class="gx-chips" data-chips></div></div>
@@ -326,6 +328,7 @@
       list: wrap.querySelector("[data-list]"),
       kw: wrap.querySelector(".gx-kw"),
       hideSeen: wrap.querySelector(".hide-seen"),
+      showCover: wrap.querySelector(".show-cover"),
       auto: wrap.querySelector(".auto"),
       refresh: wrap.querySelector(".gx-refresh"),
       count: document.createElement("b"),
@@ -345,6 +348,10 @@
 
     ui.hideSeen.addEventListener("click", () => {
       state.filter.hideSeen = !state.filter.hideSeen;
+      savePrefs(); paintChips(); paintList(true);
+    });
+    ui.showCover.addEventListener("click", () => {
+      state.filter.showCover = !state.filter.showCover;
       savePrefs(); paintChips(); paintList(true);
     });
     ui.auto.addEventListener("click", () => {
