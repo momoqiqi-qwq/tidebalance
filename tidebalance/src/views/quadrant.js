@@ -4,15 +4,34 @@ import { el, QUADS, popmenu, toast } from "../ui.js";
 import { taskActions } from "../pluginHost.js";
 import { openTaskDrawer } from "./drawer.js";
 
+// 展开状态跨重渲染保持
+const expandedCards = new Set();
+
 function taskCard(t) {
   const scheduled = S.getState().blocks.find((b) => b.taskId === t.id);
-  const card = el("button", { class: `tkc${t.done ? " done" : ""}`, "data-id": t.id },
+  const hasNote = !!(t.note && t.note.trim());
+  const expandable = hasNote || t.title.length > 16;
+  const card = el("button", { class: `tkc${t.done ? " done" : ""}${expandedCards.has(t.id) ? " expanded" : ""}`, "data-id": t.id },
     el("span", {
       class: "cb",
       onclick: (e) => { e.stopPropagation(); S.toggleTask(t.id); },
     }, t.done ? "✓" : ""),
     el("span", { class: "tt" },
-      el("span", { class: "t" }, t.title),
+      (() => {
+        const titleSpan = el("span", { class: "t", title: t.title }, t.title);
+        if (expandable) {
+          // 点标题就地展开/收起（长标题或带原始消息），不打开抽屉
+          titleSpan.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (expandedCards.has(t.id)) expandedCards.delete(t.id);
+            else expandedCards.add(t.id);
+            card.classList.toggle("expanded", expandedCards.has(t.id));
+          });
+        }
+        return titleSpan;
+      })(),
+      expandable ? el("span", { class: "exp" }, "⌄") : null,
+      hasNote ? el("span", { class: "tn" }, t.note) : null,
       el("span", { class: "m" },
         t.due ? `截止 ${t.due.slice(5).replace("-", "/")}` : "无截止",
         t.project ? ` · ${t.project}` : "",
