@@ -344,7 +344,19 @@ async fn http_fetch(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default();
+    // 桌面端单实例：二次启动时聚焦已有窗口，避免多实例互相覆盖 data.json
+    #[cfg(desktop)]
+    {
+        builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.show();
+                let _ = w.unminimize();
+                let _ = w.set_focus();
+            }
+        }));
+    }
+    builder
         .plugin(tauri_plugin_opener::init())
         .manage(HttpSessions(Mutex::new(HashMap::new())))
         .invoke_handler(tauri::generate_handler![

@@ -23,6 +23,9 @@ ecb = "0.1"
 hex = "0.4"
 base64 = "0.22"
 
+[target."cfg(any(target_os = \"windows\", target_os = \"linux\", target_os = \"macos\"))".dependencies]
+tauri-plugin-single-instance = "2"
+
 [profile.release]
 codegen-units = 1
 lto = true

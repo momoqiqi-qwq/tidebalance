@@ -107,13 +107,14 @@ export function parseWhen(raw, base = new Date()) {
         }
         endMin = eH * 60 + eM;
         if (endMin <= startMin) endMin = null;
-        eat(times[0]); eat(times[1]);
       } else {
-        startMin = times[0].h * 60 + times[0].min; eat(times[0]);
+        startMin = times[0].h * 60 + times[0].min;
       }
     } else {
-      startMin = times[0].h * 60 + times[0].min; eat(times[0]);
+      startMin = times[0].h * 60 + times[0].min;
     }
+    // 标题里剔除所有时间（多时段日程消息不能残留 "11:40" 这类片段）
+    times.forEach(eat);
   }
 
   /* ── 标题清洗 ── */
@@ -121,13 +122,16 @@ export function parseWhen(raw, base = new Date()) {
   for (const t of eaten) title = title.replace(t, " ");
   title = title
     .replace(/(记得|帮忙|麻烦|劳驾|安排一下|安排|提醒我|我需要|需要|定在|定个|约个|有个|开个)/g, " ")
-    .replace(/[，。,、;；！!？?\s]+/g, " ")
-    .replace(/^[到至~～\-—·,\s]+/, "")
+    .replace(/\d{1,2}\s*[：:]\s*\d{1,2}\s*分?/g, " ")            // 残留的钟点时间
+    .replace(/\d{1,2}\s*[：:](?=\s|$)/g, " ")                     // 被截断的半截时间
+    .replace(/[，。,、;；！!？?：:\s]+/g, " ")
+    .replace(/^[到至~～\-—·,，。：:、\s]+/, "")
     .trim();
   if (!title || title.length < 2) {
     title = String(raw || "").replace(/\s+/g, " ").trim().slice(0, 24) || "捕获的事件";
-  } else {
-    title = title.slice(0, 40);
+    if (title.length >= 24) title = title.slice(0, 24) + "…";
+  } else if (title.length > 24) {
+    title = title.slice(0, 24).trim() + "…";
   }
 
   return { date, startMin, endMin, title };
