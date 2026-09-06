@@ -11,3 +11,6 @@ gen/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# 签名密钥（泄露即可冒充应用发布，切勿提交）
+keystore/

@@ -1,0 +1,152 @@
+/* ═══════════════════════════════════════════════════════════
+   潮衡 TideBalance · 小程序设计系统
+   与桌面端 src/styles.css 同源：
+   03「权衡」四象限（纸面质感、四色象限）
+   04「潮汐」时间块（暖沙底、深青/珊瑚/日黄/海蓝）
+   ═══════════════════════════════════════════════════════════ */
+page {
+  --bg: #F2EFEA;            /* 暖沙底（潮汐） */
+  --paper: #F7F6F2;         /* 纸面（权衡） */
+  --panel: #FFFFFF;
+  --ink: #22303A;
+  --ink-2: #7E8B94;
+  --ink-3: #A9B2BA;
+  --line: #E4DFD6;
+  --line-soft: #EFEAE1;
+
+  --deep: #0F4C5C;          /* 深青 · 主操作 */
+  --deep-2: #12333D;        /* 导航栏 */
+  --sea: #118AB2;
+  --coral: #FF6B6B;
+  --sun: #E3A008;
+  --grape: #9B5DE5;
+  --mint: #2EC4B6;
+
+  /* 四象限 */
+  --q1: #D64545; --q1-bg: #F9E4E1;
+  --q2: #D9A13B; --q2-bg: #F7ECD4;
+  --q3: #5B6BE8; --q3-bg: #E2E7FA;
+  --q4: #5B8F7B; --q4-bg: #E2EDE7;
+
+  /* 功能色 */
+  --accent-soft: #DCEAEF;   /* 节奏图「今天」柱底 */
+  --danger-bg: #FDECEC;
+  --danger-ink: #C43C3C;
+  --on-deep: #FFFFFF;       /* 深青主色之上的文字 */
+
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 28rpx;
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
+
+/* ── 暗色模式（app.json darkmode: true 时生效） ── */
+@media (prefers-color-scheme: dark) {
+  page {
+    --bg: #141B20;
+    --paper: #1B242A;
+    --panel: #212C33;
+    --ink: #E2E8EB;
+    --ink-2: #94A2AA;
+    --ink-3: #61707A;
+    --line: #33424C;
+    --line-soft: #2A3840;
+
+    --deep: #58A8BE;
+    --deep-2: #0D1F26;
+    --sea: #3FB0DA;
+    --coral: #FF8080;
+    --sun: #EAB33C;
+    --grape: #B07DF0;
+    --mint: #3ED2C4;
+
+    --q1: #E07A7A; --q1-bg: #3B2727;
+    --q2: #E2B767; --q2-bg: #3A3120;
+    --q3: #8F9AF0; --q3-bg: #272C47;
+    --q4: #82B6A0; --q4-bg: #23342D;
+
+    --accent-soft: #1C3B47;
+    --danger-bg: #3B2727;
+    --danger-ink: #E08A8A;
+    --on-deep: #08202A;
+  }
+}
+
+/* ── 通用布局 ── */
+.page-body {
+  padding: 20rpx 24rpx 40rpx;
+}
+.card {
+  background: var(--panel);
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(34, 48, 58, 0.06);
+  padding: 26rpx;
+  margin-bottom: 22rpx;
+}
+.sec-title {
+  font-size: 22rpx;
+  letter-spacing: 0.2em;
+  color: var(--ink-2);
+  margin: 6rpx 4rpx 14rpx;
+}
+.desc {
+  font-size: 24rpx;
+  color: var(--ink-2);
+  line-height: 1.65;
+}
+.empty {
+  color: var(--ink-3);
+  font-size: 24rpx;
+  text-align: center;
+  padding: 30rpx 0;
+  line-height: 1.7;
+}
+
+/* ── 按钮 ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  font-size: 26rpx;
+  padding: 16rpx 28rpx;
+  border-radius: 14rpx;
+  line-height: 1.2;
+  border: none;
+}
+.btn::after { border: none; }
+.btn.pri { background: var(--deep); color: var(--on-deep); font-weight: 600; }
+.btn.ghost { background: transparent; color: var(--deep); border: 2rpx solid var(--line); }
+.btn.danger { background: var(--danger-bg); color: var(--danger-ink); }
+.btn.small { font-size: 23rpx; padding: 10rpx 20rpx; }
+.btn.block { display: flex; width: 100%; }
+.btn[disabled] { opacity: 0.45; }
+
+/* ── 输入 ── */
+.input,
+.textarea {
+  background: var(--paper);
+  border: 2rpx solid var(--line);
+  border-radius: 14rpx;
+  padding: 16rpx 20rpx;
+  font-size: 27rpx;
+  color: var(--ink);
+  width: 100%;
+  box-sizing: border-box;
+}
+.textarea { min-height: 160rpx; }
+
+/* ── 分类色 ── */
+.cat-work { background: var(--deep); }
+.cat-study { background: var(--grape); }
+.cat-sport { background: var(--coral); }
+.cat-life { background: var(--sun); }
+.cat-rest { background: var(--mint); }
+.cat-pill {
+  display: inline-block;
+  font-size: 20rpx;
+  color: var(--on-deep);
+  border-radius: 8rpx;
+  padding: 3rpx 12rpx;
+  line-height: 1.4;
+}

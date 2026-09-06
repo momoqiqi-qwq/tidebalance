@@ -1,0 +1,10 @@
+{
+  "description": "潮衡小程序（连接 Win 控制端局域网服务）",
+  "appid": "touristappid",
+  "setting": {
+    "urlCheck": false,
+    "compileHotReLoad": false
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.0.0"
+}

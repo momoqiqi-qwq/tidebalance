@@ -106,6 +106,66 @@ export function renderSettings(container) {
       }, "⟳ 重新扫描"),
     ));
 
+    /* 局域网联动 */
+    const st = S.getState().settings;
+    st.lanPort ??= 27123;
+    st.lanToken ??= Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 8);
+    let lanStatus = { running: false, url: "" };
+    try { lanStatus = await api.lanStatus(); } catch {}
+
+    const lanCard = el("div", { class: "card set-card" },
+      el("h2", {}, "📱 局域网联动（手机控制）"),
+      el("p", { class: "desc" },
+        "启动后，手机连同一 Wi-Fi，用相机扫码或浏览器打开链接，即可查看今日时间块/任务、勾选完成、快速添加——改动实时回写潮衡。配对令牌用于防蹭访问。"),
+    );
+    const lanBody = el("div", { style: "margin-top:10px" });
+    lanCard.append(lanBody);
+
+    const renderLan = () => {
+      lanBody.replaceChildren();
+      if (lanStatus.running) {
+        lanBody.append(
+          el("div", { class: "path-code" }, lanStatus.url),
+          el("div", { style: "display:flex;gap:14px;margin-top:12px;align-items:center" },
+            el("img", { src: `${lanStatus.url.replace("/m?", "/qr.svg?")}`, style: "width:132px;height:132px;border-radius:10px;border:1px solid var(--line);background:#fff" }),
+            el("div", { style: "flex:1" },
+              el("p", { class: "desc" }, "手机相机扫码 → 浏览器打开即可使用；也可把链接发到手机。"),
+              el("div", { style: "display:flex;gap:8px;margin-top:10px" },
+                el("button", { class: "btn ghost sm", onclick: () => { navigator.clipboard?.writeText(lanStatus.url); toast("链接已复制"); } }, "复制链接"),
+                el("button", {
+                  class: "btn danger sm",
+                  onclick: async () => { await api.lanStop(); st.lanAuto = false; S.saveNow(); renderLan(); },
+                }, "停止服务"),
+              ),
+            ),
+          ),
+        );
+      } else {
+        const portIn = el("input", { type: "number", value: st.lanPort, style: "width:110px;height:34px;border:1px solid var(--line);border-radius:8px;padding:0 10px;background:#fff" });
+        lanBody.append(
+          el("div", { style: "display:flex;gap:8px;align-items:center;margin-top:4px" },
+            el("span", { style: "font-size:12px;color:var(--ink-2)" }, "端口"),
+            portIn,
+            el("button", {
+              class: "btn pri sm",
+              onclick: async () => {
+                st.lanPort = Number(portIn.value) || 27123;
+                st.lanAuto = true;
+                S.saveNow();
+                try {
+                  lanStatus = { running: true, url: await api.lanStart(st.lanPort, st.lanToken) };
+                  toast("联动服务已启动");
+                  renderLan();
+                } catch (e) { toast(`启动失败：${e.message || e}`); }
+              },
+            }, "▶ 启动服务"),
+            el("span", { style: "font-size:11px;color:var(--ink-2)" }, "令牌已自动生成，随链接/二维码分发"),
+          ),
+        );
+      }
+    };
+    renderLan();
+
     /* 关于 */
     const aboutCard = el("div", { class: "card set-card" },
       el("h2", {}, "☀ 关于潮衡"),
@@ -115,7 +175,7 @@ export function renderSettings(container) {
         el("br"), "本地优先 · 无账号 · 无联网"),
     );
 
-    wrap.replaceChildren(dataCard, plugCard, aboutCard);
+    wrap.replaceChildren(dataCard, lanCard, plugCard, aboutCard);
   };
   render();
 }

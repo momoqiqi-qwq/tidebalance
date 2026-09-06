@@ -1,0 +1,18 @@
+{
+  "compileType": "miniprogram",
+  "libVersion": "3.0.0",
+  "appid": "touristappid",
+  "projectname": "tidebalance-miniprogram",
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "urlCheck": false,
+    "coverView": true,
+    "lazyloadPlaceholderEnable": false,
+    "autoAudits": false,
+    "ignoreUploadUnusedFiles": true
+  },
+  "condition": {}
+}

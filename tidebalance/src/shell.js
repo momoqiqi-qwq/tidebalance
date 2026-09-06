@@ -29,6 +29,11 @@ function viewDef(id) {
   return VIEWS.find((v) => v.id === id) || VIEWS[0];
 }
 
+// 翻页顺序：滑动/翻页沿此序循环（底栏小方格同款顺序）
+function allViewIds() {
+  return ["quadrant", "timeblock", ...pluginViews.map((pv) => `plug:${pv.id}`), "settings"];
+}
+
 export function renderShell(root) {
   ensureActiveView();
   const nav = el("nav", { class: "nav" });
@@ -71,9 +76,9 @@ export function renderShell(root) {
   }
   function navBtn(id, isPlug = false) {
     const def = viewDef(id);
-    const b = el("button", { class: activeView === id ? "on" : "" },
+    const b = el("button", { class: activeView === id ? "on" : "", "data-view": id },
       el("span", { class: "ic" }, def.icon),
-      def.title,
+      el("span", { class: "lb" }, def.title),
       isPlug ? el("span", { class: "pv-count" }, "插件") : null,
     );
     b.addEventListener("click", () => switchTo(id));
@@ -86,7 +91,8 @@ export function renderShell(root) {
     statPill.replaceChildren("待办 ", el("b", {}, String(open)), " · 已完成 ", el("b", {}, String(t.length - open)));
   }
 
-  function switchTo(id) {
+  function switchTo(id, dirHint) {
+    const prevId = activeView;
     activeView = id;
     S.getState().settings.lastView = id;
     S.saveNow();
@@ -105,7 +111,39 @@ export function renderShell(root) {
     } else if (id === "quadrant") renderQuadrant(view);
     else if (id === "timeblock") renderTimeblock(view);
     else if (id === "settings") renderSettings(view);
+    // 翻页动画：按视图顺序决定方向（显式 dirHint 优先，来自滑动手势）
+    const ids = allViewIds();
+    const dir = dirHint || (ids.indexOf(id) >= ids.indexOf(prevId) ? "left" : "right");
+    view.classList.remove("page-l", "page-r");
+    if (prevId !== id) {
+      void view.offsetWidth; // 强制重排，让连续切换也能重启动画
+      view.classList.add(dir === "left" ? "page-l" : "page-r");
+    }
   }
+
+  // ── 内容区左右滑动 = 翻页（与底栏点按互补）──
+  // 只排除真正占有横向手势的元素：可拖拽时间块、横向滚动池、抽屉、输入控件
+  let swX = 0, swY = 0, swOn = false;
+  const SWIPE_SKIP = ".plist, .block, .drawer, .popmenu, input, textarea, select, [data-noswipe]";
+  view.addEventListener("touchstart", (e) => {
+    swOn = false;
+    if (e.touches.length !== 1) return;
+    if (e.target.closest?.(SWIPE_SKIP)) return;
+    swX = e.touches[0].clientX; swY = e.touches[0].clientY; swOn = true;
+  }, { passive: true });
+  view.addEventListener("touchcancel", () => { swOn = false; }, { passive: true });
+  view.addEventListener("touchend", (e) => {
+    if (!swOn) return;
+    swOn = false;
+    const dx = e.changedTouches[0].clientX - swX;
+    const dy = e.changedTouches[0].clientY - swY;
+    // 横向主导 + 足够长才翻页，避免误伤纵向滚动
+    if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+    const ids = allViewIds();
+    const i = ids.indexOf(activeView);
+    const next = dx < 0 ? ids[i + 1] : ids[i - 1];
+    if (next) switchTo(next, dx < 0 ? "left" : "right");
+  }, { passive: true });
 
   renderNav();
   onNavChanged(() => { renderNav(); if (activeView.startsWith("plug:")) switchTo(activeView); });

@@ -2,9 +2,12 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_opener::OpenerExt as _;
+
+mod lan;
 
 /// 应用数据目录（Windows: %APPDATA%，Linux: ~/.local/share，Android: 应用内部存储）
 fn data_dir(app: &AppHandle) -> Result<PathBuf, String> {
@@ -218,6 +221,40 @@ fn open_external(app: AppHandle, url: String) -> Result<(), String> {
     app.opener().open_url(url, None::<&str>).map_err(|e| format!("打开失败: {e}"))
 }
 
+/* ── 局域网联动：手机/小程序作为遥控端 ── */
+
+struct LanHandle(Mutex<Option<lan::LanInstance>>);
+
+#[tauri::command]
+fn lan_start(app: AppHandle, handle: State<LanHandle>, port: u16, token: String) -> Result<String, String> {
+    let quit = Arc::new(AtomicBool::new(false));
+    let data_path = data_dir(&app)?.join("data.json");
+    let url = lan::spawn_server(app, port, token.clone(), data_path, quit.clone())?;
+    *handle.0.lock().map_err(|_| "锁占用")? = Some(lan::LanInstance { quit, url: url.clone(), port, token });
+    Ok(url)
+}
+
+#[tauri::command]
+fn lan_stop(handle: State<LanHandle>) -> Result<(), String> {
+    if let Some(inst) = handle.0.lock().map_err(|_| "锁占用")?.take() {
+        inst.quit.store(true, std::sync::atomic::Ordering::Relaxed);
+        // 发一个哑请求解除 recv 阻塞，让服务线程退出
+        if let Ok(mut s) = std::net::TcpStream::connect(("127.0.0.1", inst.port)) {
+            use std::io::Write as _;
+            let _ = s.write_all(format!("GET /quit?token={} HTTP/1.1\r\nHost: localhost\r\n\r\n", inst.token).as_bytes());
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn lan_status(handle: State<LanHandle>) -> Result<Value, String> {
+    Ok(match handle.0.lock().map_err(|_| "锁占用")?.as_ref() {
+        Some(inst) => json!({ "running": true, "url": inst.url }),
+        None => json!({ "running": false }),
+    })
+}
+
 /// DES-ECB(PKCS5) 加密并输出 hex —— 超星登录等场景用（RustCrypto 实现，保证正确性）
 #[tauri::command]
 fn des_ecb_encrypt_hex(plain: String, key: String) -> Result<String, String> {
@@ -359,6 +396,7 @@ pub fn run() {
     builder
         .plugin(tauri_plugin_opener::init())
         .manage(HttpSessions(Mutex::new(HashMap::new())))
+        .manage(LanHandle(Mutex::new(None)))
         .invoke_handler(tauri::generate_handler![
             load_data,
             save_data,
@@ -369,7 +407,10 @@ pub fn run() {
             open_external,
             des_ecb_encrypt_hex,
             http_session_new,
-            http_fetch
+            http_fetch,
+            lan_start,
+            lan_stop,
+            lan_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

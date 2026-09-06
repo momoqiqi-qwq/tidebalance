@@ -1,0 +1,303 @@
+/* 时间块（潮汐） */
+.press { opacity: 0.8; }
+.tb { padding-bottom: 170rpx; }
+
+/* ── 日期导航 ── */
+.tl-head { display: flex; align-items: center; gap: 20rpx; padding: 20rpx 24rpx; }
+.dnav { display: flex; gap: 10rpx; flex: none; }
+.dnav-btn {
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 14rpx;
+  background: var(--paper);
+  border: 2rpx solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  color: var(--deep);
+  box-sizing: border-box;
+}
+.dlabel { display: flex; flex-direction: column; min-width: 0; }
+.dlabel .d { font-size: 30rpx; font-weight: 700; }
+.dlabel .sum { font-size: 22rpx; color: var(--ink-2); margin-top: 2rpx; }
+
+/* ── 近 7 天日期条 ── */
+.days { margin: 0 4rpx 20rpx; white-space: nowrap; }
+.days-inner { display: inline-flex; gap: 12rpx; padding: 2rpx; }
+.dchip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rpx;
+  min-width: 96rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 14rpx;
+  background: var(--panel);
+  box-shadow: 0 2rpx 8rpx rgba(34, 48, 58, 0.05);
+  box-sizing: border-box;
+}
+.dchip .dmd { font-size: 24rpx; font-weight: 600; }
+.dchip .dwk { font-size: 19rpx; color: var(--ink-3); }
+.dchip.on { background: var(--deep); }
+.dchip.on .dmd { color: var(--on-deep); }
+.dchip.on .dwk { color: var(--on-deep); opacity: 0.72; }
+
+/* ── 长按放置模式提示条 ── */
+.placebar {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 16rpx);
+  left: 24rpx;
+  right: 24rpx;
+  background: var(--deep-2);
+  color: #fff;
+  border-radius: 16rpx;
+  padding: 18rpx 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  box-shadow: 0 10rpx 30rpx rgba(13, 31, 38, 0.35);
+  z-index: 30;
+}
+.placebar .pt1 { font-size: 24rpx; line-height: 1.5; }
+.placebar .pt2 { flex: none; font-size: 24rpx; padding: 6rpx 14rpx; opacity: 0.85; }
+
+/* ── 空天提示 ── */
+.day-empty {
+  position: absolute;
+  left: 96rpx;
+  right: 20rpx;
+  top: 45%;
+  transform: translateY(-50%);
+  text-align: center;
+  color: var(--ink-3);
+  font-size: 24rpx;
+  line-height: 1.9;
+  pointer-events: none;
+}
+
+/* ── 任务池 ── */
+.pool { margin-bottom: 22rpx; }
+.pt {
+  font-size: 22rpx;
+  letter-spacing: 0.12em;
+  color: var(--ink-2);
+  margin: 0 6rpx 12rpx;
+  display: flex;
+  align-items: baseline;
+  gap: 14rpx;
+}
+.pt-hint { font-size: 20rpx; letter-spacing: 0; color: var(--ink-3); }
+.plist { width: 100%; white-space: nowrap; }
+.plist-inner { display: inline-flex; gap: 14rpx; padding: 4rpx 2rpx 8rpx; }
+.ptask {
+  display: inline-block;
+  width: 330rpx;
+  white-space: normal;
+  background: var(--panel);
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+  box-shadow: 0 3rpx 12rpx rgba(34, 48, 58, 0.06);
+  box-sizing: border-box;
+  vertical-align: top;
+}
+.ptask .n {
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 1.4;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.ptask .m {
+  display: flex;
+  gap: 10rpx;
+  font-size: 20rpx;
+  color: var(--ink-2);
+  margin-top: 8rpx;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pool-empty {
+  border: 2rpx dashed var(--line);
+  border-radius: 16rpx;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ── 时间轴画布 ── */
+/* 注意：内部 hour-row / movable-area 的 top 均按 px 精确计算，
+   垂直方向不能有任何内边距，否则 928px 画布与 movable-area 错位 */
+.canvas {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  box-sizing: border-box;
+}
+.hour-row {
+  position: absolute;
+  left: 96rpx;
+  right: 20rpx;
+  height: 54px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.hour-row .h {
+  position: absolute;
+  left: -84rpx;
+  top: -7px;
+  font-size: 20rpx;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.ma { position: absolute; top: 10px; bottom: 0; left: 96rpx; right: 20rpx; }
+.block {
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 9px;
+  padding: 7px 12px;
+  color: var(--on-deep);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+.block .bn {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.block .bm { font-size: 10px; opacity: 0.85; margin-top: 2px; }
+.block.tiny { padding: 4px 10px; }
+.block.dragging {
+  opacity: 0.78;
+  box-shadow: 0 10px 24px rgba(34, 48, 58, 0.4);
+}
+
+.now-line {
+  position: absolute;
+  left: 84rpx;
+  right: 36rpx;
+  height: 2px;
+  background: var(--coral);
+  z-index: 5;
+  pointer-events: none;
+}
+.now-line::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--coral);
+}
+.now-line .t {
+  position: absolute;
+  right: 0;
+  top: -18px;
+  background: var(--coral);
+  color: #fff;
+  font-size: 10px;
+  border-radius: 8px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.drop-hint {
+  position: absolute;
+  left: 88rpx;
+  right: 32rpx;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--sea);
+  z-index: 6;
+  pointer-events: none;
+}
+.drop-hint .hl {
+  position: absolute;
+  right: 0;
+  top: -24px;
+  background: var(--sea);
+  color: #fff;
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+/* ── 概览 ── */
+.at {
+  font-size: 22rpx;
+  letter-spacing: 0.18em;
+  color: var(--ink-2);
+  margin-bottom: 14rpx;
+}
+.bigrow { display: flex; align-items: baseline; gap: 10rpx; margin-bottom: 16rpx; }
+.big { font-size: 46rpx; font-weight: 800; color: var(--deep); }
+.small { font-size: 22rpx; color: var(--ink-3); }
+.meter {
+  display: flex;
+  height: 14rpx;
+  border-radius: 999rpx;
+  overflow: hidden;
+  gap: 2rpx;
+  margin-bottom: 16rpx;
+  background: var(--line-soft);
+}
+.seg { height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 10rpx 26rpx; }
+.lg { display: flex; align-items: center; gap: 8rpx; font-size: 22rpx; color: var(--ink-2); }
+.dot { width: 16rpx; height: 16rpx; border-radius: 50%; flex: none; }
+
+.rhythm { display: flex; gap: 12rpx; align-items: flex-end; }
+.r { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8rpx; }
+.rbar {
+  width: 100%;
+  height: 120rpx;
+  display: flex;
+  align-items: flex-end;
+  background: var(--paper);
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+.fill { width: 100%; background: var(--sea); min-height: 6rpx; }
+.r.today .rbar { background: var(--accent-soft); }
+.r.today .fill { background: var(--deep); }
+.rd { font-size: 19rpx; color: var(--ink-3); }
+
+.trow {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid var(--line-soft);
+}
+.trow:last-child { border-bottom: none; }
+.tlabel {
+  flex: 1;
+  font-size: 24rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.du { font-size: 21rpx; color: var(--ink-3); flex: none; }
+
+/* ── 底部快速输入 ── */
+.addbar {
+  position: fixed;
+  left: 24rpx;
+  right: 24rpx;
+  bottom: calc(env(safe-area-inset-bottom) + 20rpx);
+  display: flex;
+  gap: 14rpx;
+  align-items: center;
+  background: var(--panel);
+  border-radius: 18rpx;
+  padding: 14rpx 18rpx;
+  box-shadow: 0 8rpx 30rpx rgba(34, 48, 58, 0.16);
+  z-index: 20;
+}
+.addbar .input { flex: 1; background: var(--paper); border: none; }

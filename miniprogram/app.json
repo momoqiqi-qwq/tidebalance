@@ -1,0 +1,53 @@
+{
+  "pages": [
+    "pages/quadrant/index",
+    "pages/timeblock/index",
+    "pages/capture/index",
+    "pages/settings/index",
+    "pages/task/index"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "@navBg",
+    "navigationBarTextStyle": "@navTxt",
+    "navigationBarTitleText": "潮衡 TideBalance",
+    "backgroundColor": "@bg",
+    "backgroundTextStyle": "@bgTxt"
+  },
+  "tabBar": {
+    "color": "@tabColor",
+    "selectedColor": "@tabSelected",
+    "backgroundColor": "@tabBg",
+    "borderStyle": "@tabBorder",
+    "list": [
+      {
+        "pagePath": "pages/quadrant/index",
+        "text": "四象限",
+        "iconPath": "images/tab/quadrant.png",
+        "selectedIconPath": "images/tab/quadrant-on.png"
+      },
+      {
+        "pagePath": "pages/timeblock/index",
+        "text": "时间块",
+        "iconPath": "images/tab/timeblock.png",
+        "selectedIconPath": "images/tab/timeblock-on.png"
+      },
+      {
+        "pagePath": "pages/capture/index",
+        "text": "捕获",
+        "iconPath": "images/tab/capture.png",
+        "selectedIconPath": "images/tab/capture-on.png"
+      },
+      {
+        "pagePath": "pages/settings/index",
+        "text": "设置",
+        "iconPath": "images/tab/settings.png",
+        "selectedIconPath": "images/tab/settings-on.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "darkmode": true,
+  "themeLocation": "theme.json",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

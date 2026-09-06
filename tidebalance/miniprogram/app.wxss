@@ -1,0 +1,22 @@
+page { background: #F2EFEA; color: #22303A; font-size: 14px; padding: 14px; box-sizing: border-box; }
+.head { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.date { font-size: 12px; color: #7E8B94; margin-bottom: 14px; }
+.sec { font-size: 12px; font-weight: 700; color: #0F4C5C; margin: 16px 0 8px; padding-left: 8px; border-left: 3px solid #0F4C5C; }
+.block { background: #fff; border-radius: 14px; padding: 11px 14px; margin-bottom: 8px; border-left: 4px solid #0F4C5C; box-shadow: 0 1px 3px rgba(34,48,58,.06); }
+.block.past { opacity: .45; }
+.block.now { outline: 2px solid #2EC4B6; }
+.bn { font-size: 14px; font-weight: 600; }
+.bm { font-size: 11px; color: #7E8B94; margin-top: 3px; }
+.task { display: flex; gap: 10px; align-items: center; background: #fff; border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(34,48,58,.06); }
+.task.done { opacity: .5; }
+.task.done .tt { text-decoration: line-through; }
+.cb { width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid #C9C4B8; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; flex-shrink: 0; }
+.task.done .cb { background: #5B8F7B; border-color: #5B8F7B; }
+.tt { flex: 1; font-size: 13.5px; font-weight: 600; }
+.tm { font-size: 10.5px; color: #7E8B94; margin-top: 3px; }
+.add { display: flex; gap: 8px; margin-top: 10px; }
+.add input { flex: 1; height: 42px; border: 1px solid #E4DFD6; border-radius: 12px; padding: 0 13px; background: #fff; }
+.add button { width: 120rpx; height: 42px; border: none; border-radius: 12px; background: #0F4C5C; color: #fff; font-size: 13px; font-weight: 600; line-height: 42px; }
+.refresh { width: 100%; height: 38px; border: 1px solid #E4DFD6; border-radius: 11px; background: #fff; color: #7E8B94; font-size: 12.5px; margin-top: 14px; }
+.empty { border: 1.5px dashed #CFC8BA; border-radius: 12px; padding: 20px; text-align: center; color: #A9B2BA; font-size: 12px; }
+.err { background: #FFF7E8; border: 1px solid #F2D9A6; color: #8A6420; border-radius: 12px; padding: 12px; font-size: 12px; line-height: 1.8; margin-bottom: 10px; }

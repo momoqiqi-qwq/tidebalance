@@ -26,7 +26,8 @@ tidebalance/
 │     ├─ drawer.js       # 任务详情抽屉
 │     ├─ timeblock.js    # 时间块视图
 │     └─ settings.js     # 设置（数据 / 插件管理 / 关于）
-├─ public/plugins/       # 内置插件（番茄专注、周度报告、竞赛消息雷达、学习通通知、警大门户通知）
+├─ public/plugins/       # 内置插件（番茄专注、周度报告、竞赛消息雷达、学习通通知、警大门户通知、微信推送）
+├─ miniprogram/          # 微信小程序（连接 Win 控制端局域网服务）
 └─ src-tauri/            # Rust 侧：数据读写(原子写)、插件目录扫描、应用信息
 ```
 
@@ -58,8 +59,18 @@ rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-andro
 # 安装 Android Studio（含 SDK + NDK），并设置 ANDROID_HOME / NDK_HOME
 npm run tauri android init   # 生成 gen/android 工程（图标已由 tauri icon 生成到对应 mipmap）
 npm run tauri android dev    # 真机/模拟器调试
-npm run tauri android build  # 产出 APK/AAB
+npm run tauri android build -- --apk --target aarch64  # 产出 APK
 ```
+
+本机构建环境备忘（2026-09 搭建，产物 APK 约 9.5MB）：
+
+- SDK/NDK：`D:\Environment\android-sdk`（platform 34/35/36、build-tools 34/35、NDK r27、cmdline-tools）；JDK 21（Adoptium）
+- 环境变量：`JAVA_HOME` / `ANDROID_HOME` / `NDK_HOME` 指向上述路径
+- gen/android 是 gitignore 的生成目录，重新 init 后需要补两处：
+  - `gradle.properties` 加 `android.overridePathCheck=true`（项目路径含中文）
+  - release 签名：`gen/android/keystore.properties`（storeFile 指向 `tidebalance/keystore/tidebalance-release.keystore`，alias `tidebalance`，密码见本地 keystore.properties）+ `app/build.gradle.kts` 里读取该文件的 `signingConfigs`（已就位，init 覆盖后需按本文件重加）
+  - Gradle 发行版走腾讯镜像：`gradle/wrapper/gradle-wrapper.properties` 的 `distributionUrl`
+- 国内网络下 `rustup target add` 若龟速：直连 USTC 镜像（`RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static`），或用 curl 把 `rust-std-*.tar.xz` 按 manifest 的 xz_hash 放进 `~/.rustup/downloads/<hash>` 再跑 rustup
 
 界面已做移动端适配：窄屏下侧栏变为底部导航，四象限/时间块单列排布，拖拽用指针事件实现（触摸可用）。
 
@@ -79,6 +90,16 @@ npm run tauri android build  # 产出 APK/AAB
 - 图片/截图 → 弹出确认卡：预览 + 标题 + 日期/时间/时长/分类，确认后图片作为附件存在任务上（四象限卡片显示 📷，抽屉里看大图）
 
 解析器在 `src/timeParser.js`，纯规则实现（相对日、星期、X月X日、X号、月底、时段词、X点半、HH:MM、区间连接词），不联网、零依赖。图片内的文字识别（OCR）暂未内置——如需"截图里自动认时间"，后续可接 tesseract（离线）或系统 OCR。
+
+## 局域网联动（手机 / 小程序 / 微信推送）
+
+Win 作为控制端，内置局域网服务（设置 → 局域网联动 → 启动）：
+
+- **手机浏览器**：手机连同一 Wi-Fi，扫二维码或打开链接（`http://电脑IP:27123/m?token=配对令牌`）→ 移动端页面：今日时间块、任务勾选、快速添加，改动实时回写潮衡
+- **微信小程序**：源码在 `miniprogram/`，用微信开发者工具导入，本地设置勾选「不校验合法域名」，在 `config.js` 填联动地址与令牌。正式发布需要注册小程序并配置 HTTPS 域名（个人局域网用法用开发/预览模式即可）
+- **微信提醒推送**：内置插件「微信推送」（Server酱通道）——时间块开始前 N 分钟推送到微信，SendKey 在 sct.ftqq.com 扫码获取
+
+所有请求都需要配对令牌（自动生成，随二维码分发）；服务只监听局域网。
 
 ## 插件开发指南
 
@@ -169,6 +190,7 @@ tide.util.mmOf("09:30"); tide.util.hhmmOf(570); tide.util.durLabel(90);
 - 内置插件 `public/plugins/gx-news/`（竞赛消息雷达）：`tide.http.get` 抓取摩课云竞赛平台公告、关键词/类型/月份/已读过滤、`openUrl` 打开详情、`parseWhen` 一键转提醒。
 - 内置插件 `public/plugins/chaoxing-notify/`（学习通通知）：需要登录态的场景——`http.session/fetch` 保持 Cookie、`desEncryptHex` 在本机完成超星 DES 登录加密（改造自 chaoxing-notify-skill）。注意：学习通「消息中心」接口有平台 IP 白名单，被拒时插件会明确提示；课程列表与通知分享码查询不受影响。
 - 内置插件 `public/plugins/cppu-notify/`（警大门户通知）：改造自 cppu-notify-skill，完整复刻三段式 SSO 链路（主 SSO 验证码手输 → sso-jw bridge → 门户 tp_up）+ Sudy CAS RSA 加密（BigInt 移植，与原实现逐字节一致）。相比原 skill 移除了 74MB 的 tesseract OCR 运行时——验证码改为界面内手输，CASTGC 5 天内静默续期免验证码。
+- 内置插件 `public/plugins/wechat-push/`（微信推送）：时间块开始前 N 分钟经 Server酱 推送到微信，带测试按钮与推送日志。
 
 ## 设计来源
 

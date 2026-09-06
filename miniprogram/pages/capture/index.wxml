@@ -1,0 +1,73 @@
+<view class="page-body">
+  <!-- 输入 -->
+  <view class="card">
+    <view class="cap-h">把带时间的消息粘进来</view>
+    <textarea
+      class="textarea cap-ta"
+      value="{{text}}"
+      placeholder="如：明天下午3点到4点 与导师讨论开题修改"
+      maxlength="500"
+      bindinput="onInput"
+    ></textarea>
+    <view class="cap-btns">
+      <button class="btn ghost small" bindtap="onPasteClip">📋 读取剪贴板</button>
+      <button class="btn ghost small" bindtap="onClear">清空</button>
+    </view>
+  </view>
+
+  <!-- 解析预览（日期/开始/时长/分类可点改） -->
+  <view wx:if="{{preview.show}}" class="card pv">
+    <view class="pv-row"><text class="k">标题</text><text class="v">{{preview.title}}</text></view>
+    <view class="pv-row">
+      <text class="k">日期</text>
+      <picker mode="date" value="{{edit.date}}" bindchange="onEditDate">
+        <view class="v pick">{{edit.date}} ▾</view>
+      </picker>
+    </view>
+    <view class="pv-row">
+      <text class="k">开始</text>
+      <picker mode="time" value="{{edit.start}}" bindchange="onEditStart">
+        <view class="v pick">{{edit.start}} ▾</view>
+      </picker>
+    </view>
+    <view class="pv-row">
+      <text class="k">时长</text>
+      <picker mode="selector" range="{{durLabels}}" value="{{edit.durIndex}}" bindchange="onEditDur">
+        <view class="v pick">{{durLabels[edit.durIndex]}} ▾</view>
+      </picker>
+    </view>
+    <view class="pv-row">
+      <text class="k">分类</text>
+      <picker mode="selector" range="{{catLabels}}" value="{{edit.catIndex}}" bindchange="onEditCat">
+        <view class="v pick">{{catLabels[edit.catIndex]}} ▾</view>
+      </picker>
+    </view>
+    <view class="pv-row"><text class="k">象限</text><text class="v">{{preview.quadLabel}}</text></view>
+    <view wx:if="{{!preview.hasDate || !preview.hasTime}}" class="pv-note">
+      {{!preview.hasDate ? "未识别到日期，已默认今天；" : ""}}{{!preview.hasTime ? "未识别到时间，已默认 09:00" : ""}}都可点上面直接改
+    </view>
+  </view>
+
+  <!-- 创建动作 -->
+  <view wx:if="{{preview.show}}" class="cap-act">
+    <button class="btn pri block" bindtap="onCreate">✓ 创建任务 + 时间块</button>
+    <button class="btn ghost block" bindtap="onTaskOnly">仅存为任务（不排时间）</button>
+  </view>
+
+  <!-- 结果 -->
+  <view wx:if="{{result.show}}" class="card ok">
+    <view class="ok-msg">{{result.msg}}</view>
+    <view class="cap-btns">
+      <button wx:if="{{result.hasBlock}}" class="btn pri small" bindtap="onViewTimeblock">查看时间块</button>
+      <button class="btn ghost small" bindtap="onDismiss">继续捕获</button>
+    </view>
+  </view>
+
+  <!-- 说明 -->
+  <view class="card tips">
+    <view class="at">能 识 别 什 么</view>
+    <view class="tip-line">· 日期：今天 / 明天 / 后天 / 大后天、周X、下周X、下下周X、X月X日、X号、月底</view>
+    <view class="tip-line">· 时间：下午3点、晚上8点半、9点一刻、14:30、「2点到4点」这类区间</view>
+    <view class="tip-line">· 把微信聊天里带时间的消息长按复制，回到潮衡点「读取剪贴板」，确认预览后一键落成任务和时间块；无日期的文字可用「仅存为任务」先收进任务池。</view>
+  </view>
+</view>

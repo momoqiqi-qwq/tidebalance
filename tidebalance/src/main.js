@@ -1,8 +1,8 @@
-import { initStore } from "./store.js";
+import { initStore, todayStr, getState } from "./store.js";
 import { renderShell } from "./shell.js";
 import { initPluginHost } from "./pluginHost.js";
 import { initCapture } from "./capture.js";
-import { todayStr } from "./store.js";
+import { api } from "./api.js";
 
 // 首次启动的种子数据（Tauri 端由 Rust seed_data() 生成；浏览器调试用这份）
 function seed() {
@@ -33,6 +33,23 @@ async function boot() {
   await initStore(seed());
   renderShell(document.getElementById("app"));
   initCapture();
+  // 手机端（局域网）指令 → 应用统一数据层
+  if (api.isTauri) {
+    const { listen } = await import("@tauri-apps/api/event");
+    listen("lan-command", (e) => {
+      const c = e.payload || {};
+      if (c.action === "toggle" && c.id) {
+        import("./store.js").then((S) => S.toggleTask(c.id));
+      } else if (c.action === "add" && c.title) {
+        import("./store.js").then((S) => S.addTask({ title: c.title, quad: 1, estMin: 30, due: S.todayStr(), tags: ["手机"] }));
+      }
+    });
+    // 自动启动局域网联动服务
+    const st = getState().settings;
+    if (st.lanAuto && st.lanPort && st.lanToken) {
+      api.lanStart(Number(st.lanPort), st.lanToken).catch((e) => console.error("联动服务启动失败:", e));
+    }
+  }
   // 插件加载放在界面之后，不阻塞首屏
   initPluginHost().catch((e) => console.error("插件宿主初始化失败:", e));
 }

@@ -1,0 +1,152 @@
+<view class="page-body tb">
+  <!-- 长按放置模式提示条 -->
+  <view wx:if="{{placing}}" class="placebar">
+    <view class="pt1">放置「{{placing.title}}」· 在时间轴上点一下开始的位置</view>
+    <view class="pt2" hover-class="press" bindtap="onPlaceCancel">取消</view>
+  </view>
+
+  <!-- 日期导航 -->
+  <view class="tl-head card">
+    <view class="dnav">
+      <view class="dnav-btn" hover-class="press" bindtap="onPrevDay">‹</view>
+      <view class="dnav-btn" hover-class="press" bindtap="onToday">◎</view>
+      <view class="dnav-btn" hover-class="press" bindtap="onNextDay">›</view>
+    </view>
+    <picker mode="date" value="{{curDate}}" bindchange="onDateChange">
+      <view class="dlabel">
+        <text class="d">{{dateLabel}}</text>
+        <text class="sum">{{sumLabel}}</text>
+      </view>
+    </picker>
+  </view>
+
+  <!-- 近 7 天日期条 -->
+  <scroll-view class="days" scroll-x show-scrollbar="{{false}}">
+    <view class="days-inner">
+      <view
+        wx:for="{{daysBar}}"
+        wx:key="date"
+        class="dchip {{item.active ? 'on' : ''}}"
+        data-date="{{item.date}}"
+        hover-class="press"
+        bindtap="onDayTap"
+      >
+        <text class="dmd">{{item.md}}</text>
+        <text class="dwk">{{item.wk}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 任务池 -->
+  <view class="pool">
+    <view class="pt">待安排 · {{pool.length}} 件<text class="pt-hint">点卡片自动安排 · 长按可放到指定时间</text></view>
+    <scroll-view wx:if="{{pool.length}}" class="plist" scroll-x show-scrollbar="{{false}}">
+      <view class="plist-inner">
+        <view
+          wx:for="{{pool}}"
+          wx:key="id"
+          class="ptask"
+          hover-class="press"
+          data-id="{{item.id}}"
+          bindtap="onPoolTap"
+          bindlongpress="onPoolLongPress"
+        >
+          <view class="n">{{item.title}}</view>
+          <view class="m">
+            <text class="cat-pill cat-{{item.cat}}">{{item.catLabel}}</text>
+            <text>{{item.estLabel}}</text>
+            <text wx:if="{{item.dueLabel}}">{{item.dueLabel}}</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+    <view wx:else class="empty pool-empty">全部安排完了 🎉</view>
+  </view>
+
+  <!-- 时间轴 -->
+  <view class="canvas card" style="height:{{canvasH}}px" bindtap="onCanvasTap">
+    <view wx:for="{{hours}}" wx:key="top" class="hour-row" style="top:{{item.top}}px">
+      <text class="h">{{item.label}}</text>
+    </view>
+    <view wx:if="{{emptyDay}}" class="day-empty">
+      <view>这一天还是空的</view>
+      <view>点空白处加一段 · 或点上方任务卡自动安排</view>
+    </view>
+    <movable-area class="ma">
+      <movable-view
+        wx:for="{{blocks}}"
+        wx:key="id"
+        class="block cat-{{item.cat}} {{item.tiny ? 'tiny' : ''}} {{item.id === dragId ? 'dragging' : ''}}"
+        style="height:{{item.h}}px"
+        direction="vertical"
+        damping="60"
+        x="0"
+        y="{{item.y}}"
+        data-id="{{item.id}}"
+        bindtouchstart="onBlockTouchStart"
+        bindchange="onBlockChange"
+        bindtouchend="onBlockTouchEnd"
+      >
+        <view class="bn">{{item.title}}</view>
+        <view wx:if="{{item.showMeta}}" class="bm">{{item.timeLabel}} · {{item.catLabel}}</view>
+      </movable-view>
+    </movable-area>
+    <view wx:if="{{nowLine.show}}" class="now-line" style="top:{{nowLine.top}}px">
+      <text class="t">{{nowLine.label}}</text>
+    </view>
+    <view wx:if="{{hint.show}}" class="drop-hint" style="top:{{hint.top}}px">
+      <text class="hl">{{hint.label}}</text>
+    </view>
+  </view>
+
+  <!-- 概览 -->
+  <view class="card">
+    <view class="at">这 天 已 排</view>
+    <view class="bigrow">
+      <text class="big">{{totalLabel}}</text>
+      <text class="small">/ {{awakeLabel}} 清醒时间</text>
+    </view>
+    <view class="meter" wx:if="{{meter.length}}">
+      <view wx:for="{{meter}}" wx:key="cat" class="seg cat-{{item.cat}}" style="width:{{item.w}}%"></view>
+    </view>
+    <view class="legend">
+      <view wx:for="{{legend}}" wx:key="cat" class="lg">
+        <view class="dot cat-{{item.cat}}"></view>
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="at">近 7 天节奏</view>
+    <view class="rhythm">
+      <view wx:for="{{rhythm}}" wx:key="i" class="r {{item.today ? 'today' : ''}}">
+        <view class="rbar"><view class="fill" style="height:{{item.h}}%"></view></view>
+        <text class="rd">{{item.day}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="at">明 天 预 告</view>
+    <view wx:if="{{tomEmpty}}" class="empty">明天还是空的，去安排一下吧</view>
+    <view wx:for="{{tomorrow}}" wx:key="id" class="trow">
+      <view class="dot cat-{{item.cat}}"></view>
+      <text class="tlabel">{{item.label}}</text>
+      <text class="du">{{item.dur}}</text>
+    </view>
+  </view>
+
+  <!-- 底部快速输入 -->
+  <view class="addbar">
+    <input
+      class="input"
+      placeholder="＋ 加一段空白时间，如「午休」"
+      value="{{quick}}"
+      confirm-type="done"
+      bindinput="onQuickInput"
+      bindconfirm="onQuickAdd"
+    />
+    <button class="btn pri small" bindtap="onQuickAdd">添加</button>
+  </view>
+</view>

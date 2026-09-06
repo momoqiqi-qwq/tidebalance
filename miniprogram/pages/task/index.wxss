@@ -1,0 +1,86 @@
+/* 任务详情 */
+.title-in {
+  font-size: 34rpx;
+  font-weight: 700;
+  line-height: 1.4;
+  padding-bottom: 18rpx;
+  border-bottom: 1rpx solid var(--line-soft);
+  margin-bottom: 6rpx;
+}
+.at {
+  font-size: 22rpx;
+  letter-spacing: 0.18em;
+  color: var(--ink-2);
+  margin-bottom: 16rpx;
+}
+.kv {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding: 14rpx 0;
+}
+.kv.col { flex-direction: column; align-items: stretch; }
+.k { flex: none; font-size: 24rpx; color: var(--ink-2); }
+.kv.col .k { margin-bottom: 10rpx; }
+
+.quadpick { display: flex; gap: 12rpx; }
+.qp {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  font-weight: 700;
+  font-style: italic;
+  border: 3rpx solid transparent;
+  box-sizing: border-box;
+}
+.qp.q1 { background: var(--q1-bg); color: var(--q1); }
+.qp.q2 { background: var(--q2-bg); color: var(--q2); }
+.qp.q3 { background: var(--q3-bg); color: var(--q3); }
+.qp.q4 { background: var(--q4-bg); color: var(--q4); }
+.qp.on.q1 { border-color: var(--q1); }
+.qp.on.q2 { border-color: var(--q2); }
+.qp.on.q3 { border-color: var(--q3); }
+.qp.on.q4 { border-color: var(--q4); }
+
+.pv {
+  font-size: 25rpx;
+  color: var(--deep);
+  background: var(--paper);
+  border: 2rpx solid var(--line);
+  border-radius: 12rpx;
+  padding: 10rpx 18rpx;
+  display: inline-block;
+}
+.duerow { display: flex; align-items: center; gap: 16rpx; }
+.clr { font-size: 22rpx; color: var(--coral); }
+.inline-in {
+  flex: 1;
+  text-align: right;
+  font-size: 26rpx;
+}
+.kv.col .textarea { min-height: 130rpx; }
+
+.srow {
+  font-size: 24rpx;
+  color: var(--sea);
+  background: rgba(17, 138, 178, 0.08);
+  border-radius: 10rpx;
+  padding: 12rpx 18rpx;
+  margin-bottom: 10rpx;
+}
+
+.atts { display: flex; flex-wrap: wrap; gap: 14rpx; }
+.att { width: 200rpx; height: 200rpx; border-radius: 14rpx; background: var(--paper); }
+
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  margin-top: 10rpx;
+  padding-bottom: 40rpx;
+}

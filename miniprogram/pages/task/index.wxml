@@ -1,0 +1,75 @@
+<view class="page-body" wx:if="{{t}}">
+  <view class="card">
+    <input class="title-in" value="{{t.title}}" maxlength="100" bindblur="onTitleBlur" />
+    <view class="kv">
+      <text class="k">状态</text>
+      <button class="btn small {{t.done ? 'ghost' : 'pri'}}" bindtap="onToggleDone">
+        {{t.done ? "↩ 标记未完成" : "✓ 标记完成"}}
+      </button>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="at">归 类</view>
+    <view class="kv">
+      <text class="k">象限</text>
+      <view class="quadpick">
+        <view
+          wx:for="{{quads}}"
+          wx:key="q"
+          class="qp q{{item.q}} {{t.quad === item.q ? 'on' : ''}}"
+          data-q="{{item.q}}"
+          bindtap="onQuadTap"
+        >{{item.rn}}</view>
+      </view>
+    </view>
+    <view class="kv">
+      <text class="k">预估</text>
+      <picker mode="selector" range="{{estLabels}}" value="{{estIndex}}" bindchange="onEstChange">
+        <view class="pv">{{estLabels[estIndex]}} ▾</view>
+      </picker>
+    </view>
+    <view class="kv">
+      <text class="k">截止</text>
+      <view class="duerow">
+        <picker mode="date" value="{{due}}" bindchange="onDueChange">
+          <view class="pv">{{due || "选择日期"}} ▾</view>
+        </picker>
+        <text wx:if="{{due}}" class="clr" bindtap="onDueClear">清除</text>
+      </view>
+    </view>
+    <view class="kv">
+      <text class="k">项目</text>
+      <input class="inline-in" value="{{t.project}}" placeholder="无" maxlength="30" bindblur="onProjectBlur" />
+    </view>
+    <view class="kv col">
+      <text class="k">备注</text>
+      <textarea class="textarea" value="{{t.note}}" placeholder="补充说明…" maxlength="500" bindblur="onNoteBlur"></textarea>
+    </view>
+  </view>
+
+  <view class="card" wx:if="{{sched.length}}">
+    <view class="at">已 排 时 间</view>
+    <view wx:for="{{sched}}" wx:key="id" class="srow">{{item.label}}</view>
+  </view>
+
+  <view class="card" wx:if="{{attachments.length}}">
+    <view class="at">图 片 附 件</view>
+    <view class="atts">
+      <image
+        wx:for="{{attachments}}"
+        wx:key="*this"
+        class="att"
+        src="{{item}}"
+        mode="aspectFill"
+        data-i="{{index}}"
+        bindtap="onAttTap"
+      />
+    </view>
+  </view>
+
+  <view class="foot">
+    <button class="btn pri" bindtap="onScheduleToday">🕐 排入今天时间块</button>
+    <button class="btn danger" bindtap="onDelete">删除任务</button>
+  </view>
+</view>

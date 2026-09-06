@@ -1,0 +1,44 @@
+/* 设置 */
+.at {
+  font-size: 26rpx;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-bottom: 14rpx;
+}
+.desc { font-size: 24rpx; color: var(--ink-2); line-height: 1.65; }
+
+.statrow {
+  display: flex;
+  gap: 10rpx;
+  margin: 22rpx 0;
+}
+.stat {
+  flex: 1;
+  background: var(--paper);
+  border-radius: 14rpx;
+  padding: 16rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+.stat .n { font-size: 32rpx; font-weight: 700; color: var(--deep); }
+.stat .l { font-size: 20rpx; color: var(--ink-3); }
+
+.warn {
+  font-size: 22rpx;
+  color: var(--sun);
+  background: rgba(227, 160, 8, 0.1);
+  border-radius: 12rpx;
+  padding: 14rpx 18rpx;
+  line-height: 1.6;
+  margin-bottom: 20rpx;
+}
+
+.setbtns { display: flex; gap: 14rpx; margin-bottom: 20rpx; }
+.imp { display: flex; flex-direction: column; gap: 14rpx; }
+.imp .textarea { min-height: 180rpx; font-size: 22rpx; }
+
+.about .line { font-size: 24rpx; line-height: 1.9; }
+.about .line.dim { color: var(--ink-3); font-size: 22rpx; }
+.danger-zone { margin-top: 24rpx; }

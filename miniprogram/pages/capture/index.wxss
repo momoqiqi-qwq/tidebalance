@@ -1,0 +1,50 @@
+/* 捕获 */
+.cap-h { font-size: 30rpx; font-weight: 700; margin-bottom: 16rpx; }
+.cap-ta { width: 100%; min-height: 200rpx; }
+.cap-btns { display: flex; gap: 14rpx; margin-top: 18rpx; }
+
+.pv .pv-row {
+  display: flex;
+  gap: 20rpx;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid var(--line-soft);
+  align-items: baseline;
+}
+.pv .pv-row:last-child { border-bottom: none; }
+.pv .k {
+  flex: none;
+  width: 84rpx;
+  font-size: 22rpx;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+}
+.pv .v { flex: 1; font-size: 26rpx; color: var(--ink); word-break: break-all; }
+.pv .v.miss { color: var(--ink-3); }
+.pv .v.pick { color: var(--deep); }
+.pv-note {
+  margin-top: 14rpx;
+  font-size: 22rpx;
+  color: var(--sun);
+  background: rgba(227, 160, 8, 0.1);
+  border-radius: 10rpx;
+  padding: 12rpx 16rpx;
+  line-height: 1.6;
+}
+
+.cap-act { display: flex; flex-direction: column; gap: 14rpx; margin-bottom: 22rpx; }
+
+.ok { border: 2rpx solid var(--mint); }
+.ok-msg { font-size: 26rpx; line-height: 1.6; }
+
+.tips .at {
+  font-size: 22rpx;
+  letter-spacing: 0.18em;
+  color: var(--ink-2);
+  margin-bottom: 12rpx;
+}
+.tip-line {
+  font-size: 23rpx;
+  color: var(--ink-2);
+  line-height: 1.7;
+  margin-bottom: 6rpx;
+}

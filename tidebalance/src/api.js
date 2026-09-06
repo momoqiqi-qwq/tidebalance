@@ -71,4 +71,17 @@ export const api = {
     if (isTauri) return invoke("des_ecb_encrypt_hex", { plain, key });
     throw new Error("DES 加密仅支持在 Tauri 环境使用");
   },
+
+  // 局域网联动服务
+  async lanStart(port, token) {
+    if (!isTauri) throw new Error("仅 Tauri 环境可用");
+    return invoke("lan_start", { port, token });
+  },
+  async lanStop() {
+    if (isTauri) return invoke("lan_stop");
+  },
+  async lanStatus() {
+    if (!isTauri) return { running: false };
+    return invoke("lan_status");
+  },
 };
