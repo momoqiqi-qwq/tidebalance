@@ -169,7 +169,8 @@
     const res = await getPage(SSO + "/tpass/captcha.jpg?tt=" + Math.random(), true);
     if (res.status !== 200) throw new Error("验证码获取失败");
     state.captcha = "data:image/jpeg;base64," + res.body;
-    if (ui && ui.cap) ui.cap.src = state.captcha;
+    // 更新页面上所有验证码图（登录表单/换图按钮共用）
+    document.querySelectorAll("img[data-cap]").forEach((img) => { img.src = state.captcha; });
     return state.captcha;
   }
 
@@ -188,12 +189,19 @@
       const m = res.finalUrl.match(/tp_up=([^&?;]+)/);
       if (m) { state.token = m[1]; return; }
     }
-    const body = res.body;
+    // CAS 对登录失败返回 500 +「提示信息」页（会作废 execution），先尝试静默续期兜底
+    if (await silentRenew()) return;
+    const body = res.body || "";
+    let msg = null;
     if (/密码错误|账号或密码/.test(body)) throw { fatal: "账号或密码错误" };
-    if (/验证码/.test(body)) throw { retry: "验证码不正确，已换新验证码" };
-    const m2 = body.match(/name="execution" value="([^"]+)"/);
-    if (m2) p.execution = m2[1];
-    throw { retry: "登录未通过（可能验证码错误），请再试" };
+    const plain = cleanText(body);
+    const mm = plain.match(/((?:验证码|密码|账号|用户名|锁定|禁止|失败|不正确|不允许|过期)[^\n。；;]{0,40})/);
+    if (mm) msg = mm[1].trim();
+    // 失败后 execution 已失效：重置登录页（新 execution + 新验证码）
+    state.pending.execution = await fetchLoginHtml();
+    await fetchCaptcha();
+    const diag = `诊断：HTTP ${res.status} · 落点 ${esc((res.finalUrl || "").slice(0, 60))} · 页面摘要「${esc(plain.slice(0, 90))}」`;
+    throw { retry: msg || `登录未通过（HTTP ${res.status}），已重置登录页，请重试`, diag };
   }
 
   // 静默续期：CASTGC 5 天内有效时，sso-jw 会自动换 ticket，无需验证码
@@ -483,11 +491,8 @@
       } catch (e2) {
         if (e2 && e2.fatal) { errEl.textContent = "⚠ " + e2.fatal; }
         else {
-          errEl.textContent = "⚠ " + (e2 && e2.retry || e2.message || "登录失败");
-          try { await fetchCaptcha(); } catch {}
-          if (!state.pending?.execution) {
-            try { state.pending.execution = await fetchLoginHtml(); } catch {}
-          }
+          errEl.innerHTML = "⚠ " + esc((e2 && e2.retry) || e2.message || "登录失败") +
+            (e2 && e2.diag ? `<br><span style="font-size:10.5px;color:#A9B2BA;word-break:break-all">${e2.diag}</span>` : "");
         }
       }
     });
