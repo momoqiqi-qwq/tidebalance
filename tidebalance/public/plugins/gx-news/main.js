@@ -37,7 +37,7 @@
       .gx-toggle.on i::after{left:17px}
       .gx-status{font-size:12px;color:#7E8B94;margin:2px 0 10px}
       .gx-status .err{color:#B03535}
-      .gx-card{display:flex;gap:12px;background:#fff;border:1px solid #E4DFD6;border-radius:14px;padding:12px 14px;margin-bottom:9px;cursor:pointer;box-shadow:0 1px 3px rgba(34,48,58,.06)}
+      .gx-card{display:flex;gap:12px;background:#fff;border:1px solid #E4DFD6;border-radius:14px;padding:12px 14px;margin-bottom:9px;cursor:pointer;box-shadow:0 1px 3px rgba(34,48,58,.06);content-visibility:auto;contain-intrinsic-size:auto 96px}
       .gx-card:hover{box-shadow:0 3px 10px rgba(34,48,58,.12)}
       .gx-card.seen{opacity:.55}
       .gx-cover{width:74px;height:56px;border-radius:8px;object-fit:cover;flex:none;background:#EFEAE1}
@@ -145,7 +145,7 @@
       const isNew = !state.seen.has(m.id);
       const tn = TYPE_NAMES[m.type] || `类型 ${m.type}`;
       return `<div class="gx-card${isNew ? "" : " seen"}" data-id="${m.id}">
-        ${m.cover ? `<img class="gx-cover" loading="lazy" src="${esc(m.cover)}" onerror="this.style.display='none'">` : ""}
+        ${m.cover ? `<img class="gx-cover" loading="lazy" decoding="async" fetchpriority="low" src="${esc(coverSmall(m.cover))}" data-orig="${esc(m.cover)}" onerror="if(this.dataset.retried){this.style.display='none'}else{this.dataset.retried=1;this.src=this.dataset.orig}">` : ""}
         <div class="gx-main">
           <div class="gx-title">${esc(m.title)}</div>
           <div class="gx-meta">
@@ -166,6 +166,12 @@
   function markSeen(id) {
     state.seen.add(id);
     saveSeen();
+  }
+
+  // 阿里云 OSS 支持实时缩放：列表里只拉 148px 缩略图，失败回退原图
+  function coverSmall(url) {
+    if (!url) return "";
+    return url + (url.includes("?") ? "&" : "?") + "x-oss-process=image/resize,w_148/quality,q_80";
   }
 
   async function createReminder(m) {
