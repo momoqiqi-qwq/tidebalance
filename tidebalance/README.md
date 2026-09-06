@@ -26,7 +26,7 @@ tidebalance/
 │     ├─ drawer.js       # 任务详情抽屉
 │     ├─ timeblock.js    # 时间块视图
 │     └─ settings.js     # 设置（数据 / 插件管理 / 关于）
-├─ public/plugins/       # 内置插件（番茄专注、周度报告、竞赛消息雷达、学习通通知）
+├─ public/plugins/       # 内置插件（番茄专注、周度报告、竞赛消息雷达、学习通通知、警大门户通知）
 └─ src-tauri/            # Rust 侧：数据读写(原子写)、插件目录扫描、应用信息
 ```
 
@@ -147,6 +147,7 @@ await tide.http.fetch(sid, "POST", "https://example.com/login", {
 });
 const r2 = await tide.http.fetch(sid, "GET", "https://example.com/feed");
 // r2 = { status, body, finalUrl, contentType, cookies }
+// 图片等二进制：tide.http.fetch(sid, "GET", url, { binary: true }) → body 为 base64
 
 // 打开系统浏览器
 tide.util.openUrl("https://example.com");
@@ -166,7 +167,8 @@ tide.util.mmOf("09:30"); tide.util.hhmmOf(570); tide.util.durLabel(90);
 ```
 
 - 内置插件 `public/plugins/gx-news/`（竞赛消息雷达）：`tide.http.get` 抓取摩课云竞赛平台公告、关键词/类型/月份/已读过滤、`openUrl` 打开详情、`parseWhen` 一键转提醒。
-- 内置插件 `public/plugins/chaoxing-notify/`（学习通通知）：需要登录态的示例——`http.session/fetch` 保持 Cookie、`desEncryptHex` 在本机完成超星 DES 登录加密（改造自 chaoxing-notify-skill）。注意：学习通「消息中心」接口有平台 IP 白名单，被拒时插件会明确提示；课程列表与通知分享码查询不受影响。
+- 内置插件 `public/plugins/chaoxing-notify/`（学习通通知）：需要登录态的场景——`http.session/fetch` 保持 Cookie、`desEncryptHex` 在本机完成超星 DES 登录加密（改造自 chaoxing-notify-skill）。注意：学习通「消息中心」接口有平台 IP 白名单，被拒时插件会明确提示；课程列表与通知分享码查询不受影响。
+- 内置插件 `public/plugins/cppu-notify/`（警大门户通知）：改造自 cppu-notify-skill，完整复刻三段式 SSO 链路（主 SSO 验证码手输 → sso-jw bridge → 门户 tp_up）+ Sudy CAS RSA 加密（BigInt 移植，与原实现逐字节一致）。相比原 skill 移除了 74MB 的 tesseract OCR 运行时——验证码改为界面内手输，CASTGC 5 天内静默续期免验证码。
 
 ## 设计来源
 

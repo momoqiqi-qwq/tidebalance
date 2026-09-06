@@ -21,6 +21,7 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 des = "0.8"
 ecb = "0.1"
 hex = "0.4"
+base64 = "0.22"
 
 [profile.release]
 codegen-units = 1

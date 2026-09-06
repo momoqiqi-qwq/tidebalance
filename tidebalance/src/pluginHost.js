@@ -15,7 +15,7 @@ export function onNavChanged(fn) { listeners.navChanged.add(fn); }
 export function onTaskActionsChanged(fn) { listeners.taskActionsChanged.add(fn); }
 function emitNavChanged() { listeners.navChanged.forEach((f) => f()); }
 
-const BUILTIN_IDS = ["pomodoro", "weekly-report", "gx-news", "chaoxing-notify"];
+const BUILTIN_IDS = ["pomodoro", "weekly-report", "gx-news", "chaoxing-notify", "cppu-notify"];
 
 export function getRegistry() { return [...registry.values()]; }
 

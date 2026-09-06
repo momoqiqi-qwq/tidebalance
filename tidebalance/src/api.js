@@ -57,12 +57,14 @@ export const api = {
 
   async httpFetch(sid, method, url, opts = {}) {
     if (isTauri) {
-      return invoke("http_fetch", { sid, method, url, headers: opts.headers || null, body: opts.body || null });
+      return invoke("http_fetch", { sid, method, url, headers: opts.headers || null, body: opts.body || null, binary: opts.binary || null });
     }
     const r = await fetch(url, {
       method, headers: opts.headers, body: opts.body, credentials: "include",
     });
-    return { status: r.status, body: await r.text(), finalUrl: r.url, contentType: r.headers.get("content-type") || "", cookies: [] };
+    const body = opts.binary ? btoa(String.fromCharCode(...new Uint8Array(await r.arrayBuffer())))
+      : await r.text();
+    return { status: r.status, body, finalUrl: r.url, contentType: r.headers.get("content-type") || "", cookies: [] };
   },
 
   async desEncryptHex(plain, key) {

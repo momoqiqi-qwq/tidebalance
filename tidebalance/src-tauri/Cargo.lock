@@ -4081,6 +4081,7 @@ dependencies = [
 name = "tidebalance"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "des",
  "ecb",
  "hex",

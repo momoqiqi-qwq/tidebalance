@@ -288,6 +288,7 @@ async fn http_fetch(
     url: String,
     headers: Option<HashMap<String, String>>,
     body: Option<String>,
+    binary: Option<bool>,
 ) -> Result<HttpFetchResp, String> {
     if !url.starts_with("http://") && !url.starts_with("https://") {
         return Err("仅支持 http/https 地址".into());
@@ -330,7 +331,14 @@ async fn http_fetch(
         .filter_map(|v| v.to_str().ok())
         .map(|s| s.to_string())
         .collect();
-    let resp_body = resp.text().await.map_err(|e| format!("读取响应失败: {e}"))?;
+    // binary=true 时返回 base64（验证码等图片场景）
+    let resp_body = if binary.unwrap_or(false) {
+        use base64::Engine as _;
+        let bytes = resp.bytes().await.map_err(|e| format!("读取响应失败: {e}"))?;
+        base64::engine::general_purpose::STANDARD.encode(&bytes)
+    } else {
+        resp.text().await.map_err(|e| format!("读取响应失败: {e}"))?
+    };
     Ok(HttpFetchResp { status, body: resp_body, final_url, content_type, cookies })
 }
 
