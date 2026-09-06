@@ -15,7 +15,7 @@ export function onNavChanged(fn) { listeners.navChanged.add(fn); }
 export function onTaskActionsChanged(fn) { listeners.taskActionsChanged.add(fn); }
 function emitNavChanged() { listeners.navChanged.forEach((f) => f()); }
 
-const BUILTIN_IDS = ["pomodoro", "weekly-report", "gx-news"];
+const BUILTIN_IDS = ["pomodoro", "weekly-report", "gx-news", "chaoxing-notify"];
 
 export function getRegistry() { return [...registry.values()]; }
 
@@ -91,6 +91,9 @@ function makeApi(man) {
     // 网络桥：Rust 端抓取，绕开 WebView CORS；仅允许 http/https
     http: {
       get: (url) => api.httpGet(url),
+      // 会话化请求：Cookie 自动保持，适合需要登录的接口
+      session: () => api.httpSessionNew(),
+      fetch: (sid, method, url, opts) => api.httpFetch(sid, method, url, opts),
     },
 
     util: {
@@ -98,6 +101,7 @@ function makeApi(man) {
       openUrl: (url) => api.openExternal(url),
       parseWhen, guessCategory, guessQuad,
       navigate: (view) => window.dispatchEvent(new CustomEvent("tide:navigate", { detail: view })),
+      desEncryptHex: (plain, key) => api.desEncryptHex(plain, key),
     },
   };
 }

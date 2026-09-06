@@ -26,7 +26,7 @@ tidebalance/
 │     ├─ drawer.js       # 任务详情抽屉
 │     ├─ timeblock.js    # 时间块视图
 │     └─ settings.js     # 设置（数据 / 插件管理 / 关于）
-├─ public/plugins/       # 内置插件（番茄专注、周度报告）
+├─ public/plugins/       # 内置插件（番茄专注、周度报告、竞赛消息雷达、学习通通知）
 └─ src-tauri/            # Rust 侧：数据读写(原子写)、插件目录扫描、应用信息
 ```
 
@@ -139,6 +139,15 @@ tide.events.emit("my-plugin:something", {});
 const res = await tide.http.get("https://api.example.com/list?page=1");
 // res = { status, body, finalUrl, contentType }
 
+// 会话化请求：Cookie Jar 保持登录态（适合需要登录的接口，如学习通）
+const sid = await tide.http.session();
+await tide.http.fetch(sid, "POST", "https://example.com/login", {
+  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  body: "uname=a&password=b",
+});
+const r2 = await tide.http.fetch(sid, "GET", "https://example.com/feed");
+// r2 = { status, body, finalUrl, contentType, cookies }
+
 // 打开系统浏览器
 tide.util.openUrl("https://example.com");
 
@@ -148,12 +157,16 @@ tide.util.guessCategory(text); // 按关键词猜分类 work/study/sport/life/re
 tide.util.guessQuad(dateStr);  // 按期限猜象限
 tide.util.navigate("timeblock"); // 跳转到指定视图
 
+// DES-ECB/PKCS5 加密（RustCrypto 实现，超星等平台登录加密用）
+const hexPwd = await tide.util.desEncryptHex("password", "u2oh6Vu^");
+
 // 工具
 tide.util.today(); tide.util.addDays("2026-09-05", 1);
 tide.util.mmOf("09:30"); tide.util.hhmmOf(570); tide.util.durLabel(90);
 ```
 
-内置插件 `public/plugins/gx-news/`（竞赛消息雷达）是网络类插件的完整示例：`tide.http.get` 抓取摩课云竞赛平台公告接口、关键词/类型/已读过滤、`openUrl` 打开详情、`parseWhen` 一键把带时间的消息转成提醒。
+- 内置插件 `public/plugins/gx-news/`（竞赛消息雷达）：`tide.http.get` 抓取摩课云竞赛平台公告、关键词/类型/月份/已读过滤、`openUrl` 打开详情、`parseWhen` 一键转提醒。
+- 内置插件 `public/plugins/chaoxing-notify/`（学习通通知）：需要登录态的示例——`http.session/fetch` 保持 Cookie、`desEncryptHex` 在本机完成超星 DES 登录加密（改造自 chaoxing-notify-skill）。注意：学习通「消息中心」接口有平台 IP 白名单，被拒时插件会明确提示；课程列表与通知分享码查询不受影响。
 
 ## 设计来源
 

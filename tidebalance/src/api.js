@@ -48,4 +48,25 @@ export const api = {
     if (isTauri) return invoke("open_external", { url });
     window.open(url, "_blank");
   },
+
+  // 会话化 HTTP：Tauri 端带 Cookie Jar（登录态跨请求保持）；浏览器端用 include 凭据
+  async httpSessionNew() {
+    if (isTauri) return invoke("http_session_new");
+    return "browser";
+  },
+
+  async httpFetch(sid, method, url, opts = {}) {
+    if (isTauri) {
+      return invoke("http_fetch", { sid, method, url, headers: opts.headers || null, body: opts.body || null });
+    }
+    const r = await fetch(url, {
+      method, headers: opts.headers, body: opts.body, credentials: "include",
+    });
+    return { status: r.status, body: await r.text(), finalUrl: r.url, contentType: r.headers.get("content-type") || "", cookies: [] };
+  },
+
+  async desEncryptHex(plain, key) {
+    if (isTauri) return invoke("des_ecb_encrypt_hex", { plain, key });
+    throw new Error("DES 加密仅支持在 Tauri 环境使用");
+  },
 };

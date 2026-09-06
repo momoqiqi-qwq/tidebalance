@@ -1,7 +1,9 @@
 use serde_json::{json, Value};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager};
+use std::sync::{Arc, Mutex};
+use tauri::{AppHandle, Manager, State};
 use tauri_plugin_opener::OpenerExt as _;
 
 /// 应用数据目录（Windows: %APPDATA%，Linux: ~/.local/share，Android: 应用内部存储）
@@ -216,10 +218,127 @@ fn open_external(app: AppHandle, url: String) -> Result<(), String> {
     app.opener().open_url(url, None::<&str>).map_err(|e| format!("打开失败: {e}"))
 }
 
+/// DES-ECB(PKCS5) 加密并输出 hex —— 超星登录等场景用（RustCrypto 实现，保证正确性）
+#[tauri::command]
+fn des_ecb_encrypt_hex(plain: String, key: String) -> Result<String, String> {
+    use des::Des;
+    use ecb::cipher::{BlockEncryptMut, KeyInit};
+    use ecb::Encryptor;
+    if key.as_bytes().len() != 8 {
+        return Err("DES 密钥必须为 8 字节".into());
+    }
+    type DesEcb = Encryptor<Des>;
+    let mut cipher = DesEcb::new_from_slice(key.as_bytes())
+        .map_err(|e| format!("密钥初始化失败: {e}"))?;
+    let mut buf = plain.as_bytes().to_vec();
+    let pad = 8 - (buf.len() % 8);
+    buf.extend(std::iter::repeat(pad as u8).take(pad));
+    for chunk in buf.chunks_mut(8) {
+        cipher.encrypt_block_mut(chunk.into());
+    }
+    Ok(hex::encode(buf))
+}
+
+/* ── 会话化 HTTP：带 Cookie Jar，供需要登录态的插件（如学习通）使用 ── */
+
+pub struct HttpSessions(pub Mutex<HashMap<String, reqwest::Client>>);
+
+fn new_http_client() -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .cookie_provider(Arc::new(reqwest::cookie::Jar::default()))
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+        .timeout(std::time::Duration::from_secs(25))
+        .build()
+        .map_err(|e| format!("HTTP 客户端初始化失败: {e}"))
+}
+
+#[derive(serde::Serialize)]
+struct HttpFetchResp {
+    status: u16,
+    body: String,
+    #[serde(rename = "finalUrl")]
+    final_url: String,
+    #[serde(rename = "contentType")]
+    content_type: String,
+    cookies: Vec<String>,
+}
+
+#[tauri::command]
+fn http_session_new(state: State<HttpSessions>) -> Result<String, String> {
+    let id = format!(
+        "s{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0)
+    );
+    state
+        .0
+        .lock()
+        .map_err(|_| "会话表被占用")?
+        .insert(id.clone(), new_http_client()?);
+    Ok(id)
+}
+
+#[tauri::command]
+async fn http_fetch(
+    state: State<'_, HttpSessions>,
+    sid: String,
+    method: String,
+    url: String,
+    headers: Option<HashMap<String, String>>,
+    body: Option<String>,
+) -> Result<HttpFetchResp, String> {
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err("仅支持 http/https 地址".into());
+    }
+    let client = state
+        .0
+        .lock()
+        .map_err(|_| "会话表被占用")?
+        .get(&sid)
+        .cloned()
+        .ok_or("会话不存在或已过期，请重新创建")?;
+
+    let mut req = match method.to_uppercase().as_str() {
+        "POST" => client.post(&url),
+        "PUT" => client.put(&url),
+        "DELETE" => client.delete(&url),
+        _ => client.get(&url),
+    };
+    if let Some(hs) = &headers {
+        for (k, v) in hs {
+            req = req.header(k, v);
+        }
+    }
+    if let Some(b) = &body {
+        req = req.body(b.clone());
+    }
+    let resp = req.send().await.map_err(|e| format!("请求失败: {e}"))?;
+    let status = resp.status().as_u16();
+    let final_url = resp.url().to_string();
+    let content_type = resp
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("")
+        .to_string();
+    let cookies = resp
+        .headers()
+        .get_all(reqwest::header::SET_COOKIE)
+        .iter()
+        .filter_map(|v| v.to_str().ok())
+        .map(|s| s.to_string())
+        .collect();
+    let resp_body = resp.text().await.map_err(|e| format!("读取响应失败: {e}"))?;
+    Ok(HttpFetchResp { status, body: resp_body, final_url, content_type, cookies })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .manage(HttpSessions(Mutex::new(HashMap::new())))
         .invoke_handler(tauri::generate_handler![
             load_data,
             save_data,
@@ -227,8 +346,29 @@ pub fn run() {
             read_plugin_file,
             app_info,
             http_get,
-            open_external
+            open_external,
+            des_ecb_encrypt_hex,
+            http_session_new,
+            http_fetch
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn des_matches_pydes_vectors() {
+        // 向量由 python pyDes（超星登录同款 DES-ECB/PKCS5）计算
+        assert_eq!(
+            des_ecb_encrypt_hex("123456".into(), "u2oh6Vu^".into()).unwrap(),
+            "218b246a6f42ee81"
+        );
+        assert_eq!(
+            des_ecb_encrypt_hex("abc".into(), "u2oh6Vu^".into()).unwrap(),
+            "4cfc33620fedd8d7"
+        );
+    }
 }
