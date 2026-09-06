@@ -2,7 +2,7 @@
 // 抓取摩课云竞赛平台公告，月份分组 + 过滤显示，一键转潮衡提醒
 (function () {
   const API = "https://www.gxxsjs.com/prod-api/home/competition/news/page";
-  const DETAIL = "https://www.gxxsjs.com/newsContain/detail?newsId=";
+  const DETAIL = "https://www.gxxsjs.com/home/newsDetails?newsId=";
   // newsType 是点分复合标签（如 202.204.208），按包含关系收敛成两类
   const hasType = (t, code) => String(t || "").split(".").includes(code);
   const typeName = (t) => (hasType(t, "203") ? "赛事动态" : hasType(t, "202") ? "平台通知" : "其他");
