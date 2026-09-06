@@ -453,7 +453,17 @@
 
     const errEl = el.querySelector("[data-err]");
     const codeEl = el.querySelector("[data-code]");
-    el.querySelector("[data-capbox]").addEventListener("click", () => fetchCaptcha().catch((e) => { errEl.textContent = "⚠ " + (e.message || e); }));
+    const capImg = el.querySelector("[data-cap]");
+    el.querySelector("[data-capbox]").addEventListener("click", async () => {
+      errEl.textContent = "⏳ 正在换验证码…";
+      try {
+        const url = await fetchCaptcha();
+        if (capImg) capImg.src = url;   // 直接更新登录表单里的验证码图
+        errEl.textContent = "";
+      } catch (e) {
+        errEl.textContent = "⚠ " + (e.message || e);
+      }
+    });
     el.querySelector("[data-switchuser]").addEventListener("click", () => { state.username = ""; tide.storage.set("username", ""); el.querySelector("[data-u]").value = ""; });
 
     el.querySelector("[data-go]").addEventListener("click", async () => {
