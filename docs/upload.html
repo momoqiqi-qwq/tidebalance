@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="潮衡插件工坊：上传、校验、打包 TideBalance 插件。纯浏览器本地完成，文件不出你的设备。">
+  <meta name="theme-color" content="#16213e">
+  <title>插件工坊 · 潮衡 TideBalance</title>
+  <style>
+    :root {
+      --ink: #16213e;
+      --ink-2: #33415c;
+      --muted: #68728a;
+      --paper: #f4f7fb;
+      --sheet: #ffffff;
+      --tide: #188ca5;
+      --tide-dark: #0f6d80;
+      --foam: #d9f2f3;
+      --sun: #ff7a59;
+      --sun-soft: #fff2ed;
+      --bad: #c0392b;
+      --bad-soft: #fdecea;
+      --line: #d9e1ec;
+      --code: #111a31;
+      --shadow: 0 18px 55px rgba(22, 33, 62, .11);
+      --sans: "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+      --display: "STZhongsong", "Songti SC", "Noto Serif SC", serif;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font: 16px/1.75 var(--sans); }
+    a { color: inherit; }
+    button { font: inherit; cursor: pointer; }
+    input, select, textarea { font: inherit; }
+    :focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 20px clamp(20px, 4vw, 56px); color: #fff; background: var(--ink); }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 800; letter-spacing: .08em; }
+    .brand-mark { display: grid; place-items: center; width: 36px; aspect-ratio: 1; border: 1px solid rgba(255,255,255,.46); border-radius: 50%; color: #8be1e4; font-family: var(--display); }
+    .topbar nav { display: flex; gap: 20px; font-size: 14px; }
+    .topbar a { color: #ccd5e6; text-decoration: none; }
+    .topbar a:hover { color: #8be1e4; }
+
+    .hero { padding: clamp(34px, 6vh, 64px) clamp(20px, 4vw, 56px) 8px; color: #fff; background: var(--ink); }
+    .hero .eyebrow { margin: 0 0 12px; color: #8be1e4; font: 700 12px/1.2 var(--mono); letter-spacing: .18em; text-transform: uppercase; }
+    .hero h1 { margin: 0; font: 400 clamp(34px, 5vw, 58px)/1.1 var(--display); letter-spacing: -.03em; }
+    .hero p { max-width: 720px; margin: 16px 0 0; color: #ccd5e6; font-size: clamp(15px, 1.7vw, 18px); }
+
+    .wrap { width: min(1120px, calc(100% - 32px)); margin: 34px auto 90px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; }
+
+    .dropzone { position: relative; padding: clamp(30px, 5vw, 52px); border: 2px dashed #a9bcd4; border-radius: 4px; background: var(--sheet); text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
+    .dropzone.over { border-color: var(--sun); background: var(--sun-soft); }
+    .dropzone b { display: block; margin-bottom: 6px; font-size: 19px; }
+    .dropzone p { margin: 0; color: var(--muted); font-size: 14px; }
+    .dropzone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .dz-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 18px; }
+
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 0 16px; border: 1px solid var(--ink); background: transparent; color: var(--ink); text-decoration: none; font-weight: 700; font-size: 14px; }
+    .button.primary { border-color: var(--sun); background: var(--sun); color: var(--ink); }
+    .button.small { min-height: 34px; padding: 0 12px; font-size: 13px; }
+    .button:disabled { opacity: .45; cursor: not-allowed; }
+
+    .panel { padding: 26px 26px 30px; border: 1px solid var(--line); background: var(--sheet); box-shadow: var(--shadow); }
+    .panel > h2 { margin: 0 0 6px; font: 500 clamp(22px, 3vw, 30px)/1.2 var(--display); letter-spacing: -.02em; }
+    .panel > .sub { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+    .panel h3 { margin: 26px 0 10px; font-size: 16.5px; }
+    .hidden { display: none !important; }
+
+    .filelist { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+    .filechip { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border: 1px solid #b8c6d8; background: #f8fafc; font: 12.5px var(--mono); }
+    .filechip .role { padding: 1px 7px; border-radius: 9px; background: var(--foam); color: var(--tide-dark); font-size: 10.5px; font-weight: 700; }
+    .filechip .role.extra { background: #eef1f6; color: var(--muted); }
+    .filechip button { border: 0; background: none; color: var(--muted); font-size: 13px; line-height: 1; padding: 0; }
+    .filechip button:hover { color: var(--bad); }
+
+    .checks { border-top: 1px solid var(--line); }
+    .check { display: grid; grid-template-columns: 24px 1fr; gap: 12px; padding: 12px 2px; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+    .check .ic { font: 800 13px/22px var(--mono); text-align: center; }
+    .check .ic.pass { color: var(--tide-dark); }
+    .check .ic.warn { color: #b4492c; }
+    .check .ic.fail { color: var(--bad); }
+    .check .ic.info { color: var(--muted); }
+    .check small { display: block; color: var(--muted); }
+    .check b { font-size: 14.5px; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+    .chip { padding: 4px 10px; border: 1px solid #b8c6d8; background: var(--sheet); font: 12px var(--mono); }
+    .chip.both { border-color: var(--tide); background: var(--foam); color: var(--tide-dark); }
+    .chip.only-declared { color: var(--muted); }
+    .chip.only-detected { border-color: var(--sun); background: var(--sun-soft); color: #b4492c; }
+
+    .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .field { display: grid; gap: 5px; }
+    .field label { color: var(--muted); font: 700 11px var(--mono); letter-spacing: .08em; }
+    .field input, .field textarea { min-height: 40px; padding: 8px 12px; border: 1px solid #b8c6d8; background: var(--sheet); }
+    .field textarea { min-height: 74px; resize: vertical; }
+    .field .err { color: var(--bad); font-size: 12.5px; }
+    .perms { display: flex; flex-wrap: wrap; gap: 6px 14px; padding-top: 4px; }
+    .perms label { display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; color: var(--ink-2); }
+
+    pre { margin: 12px 0; padding: 18px 20px; overflow: auto; color: #e8edf7; background: var(--code); border-left: 4px solid var(--tide); font: 12.5px/1.65 var(--mono); tab-size: 2; }
+    .tree { color: #b9e8e7; }
+    .cmt { color: #7f92b8; }
+
+    .callout { margin: 18px 0 0; padding: 16px 20px; border-left: 5px solid var(--sun); background: var(--sun-soft); font-size: 14.5px; }
+    .callout.cool { border-color: var(--tide); background: var(--foam); }
+
+    footer { padding: 40px 18px; color: #c6d0e3; background: var(--ink); text-align: center; font-size: 13px; }
+    footer a { color: #8be1e4; }
+
+    @media (max-width: 720px) {
+      .grid2 { grid-template-columns: 1fr; }
+      .topbar nav { display: none; }
+      .panel { padding: 20px 16px 24px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="brand-mark">衡</span><span>潮衡 · 插件工坊</span></a>
+    <nav>
+      <a href="index.html">开发手册</a>
+      <a href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">GitHub ↗</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <p class="eyebrow">Plugin workshop / validate &amp; package</p>
+    <h1>上传、校验、打包<br>一气呵成</h1>
+    <p>把 manifest.json 和 main.js 拖进来，工坊按开发手册的契约逐项校验，静态检查代码风险，再打包成可直接放进数据目录 <code>plugins/</code> 的 zip。全程在你的浏览器本地完成，文件不会上传到任何服务器。</p>
+  </section>
+
+  <div class="wrap">
+    <div class="dropzone" id="dropzone">
+      <b>拖拽文件到这里，或点击选择</b>
+      <p>接受 manifest.json、入口脚本（默认 main.js）及插件的附带文件 · 可多选</p>
+      <input type="file" id="fileinput" multiple>
+      <div class="dz-actions">
+        <button class="button small" type="button" id="load-sample">载入示例插件</button>
+        <button class="button small" type="button" id="clear-files">清空</button>
+      </div>
+    </div>
+    <div class="filelist hidden" id="filelist"></div>
+
+    <section class="panel hidden" id="report">
+      <h2>校验报告</h2>
+      <p class="sub" id="report-sub"></p>
+      <div class="checks" id="checks"></div>
+
+      <h3>权限比对</h3>
+      <p class="sub" style="margin-bottom:6px">声明值来自 manifest；检测值来自代码里实际调用的 tide API。绿色 = 声明且使用，橙色 = 用了但没声明，灰色 = 声明了没用。</p>
+      <div class="chips" id="perm-chips"></div>
+
+      <h3>打包结构预览</h3>
+      <pre class="tree" id="tree-preview"></pre>
+      <div class="dz-actions" style="justify-content:flex-start">
+        <button class="button primary" type="button" id="download-zip">下载插件包 (.zip)</button>
+      </div>
+      <div class="callout cool">安装方式：解压到桌面端数据目录的 <code>plugins/</code> 下（「设置 → 数据」可查看路径），回到应用点「重新扫描」即可。Android 端请改用内置方式，见<a href="index.html#quickstart">手册 · 快速开始</a>。</div>
+    </section>
+
+    <section class="panel" id="generator">
+      <h2>Manifest 生成器</h2>
+      <p class="sub">没有现成清单？填一下这几项，生成标准 manifest.json 并与已上传的 main.js 一起打包。已上传 manifest 时，此处会先按上传值填充。</p>
+      <div class="grid2">
+        <div class="field"><label>ID *（小写字母、数字、连字符）</label><input id="g-id" placeholder="hello-tide" spellcheck="false"><span class="err hidden" id="e-id"></span></div>
+        <div class="field"><label>名称 *</label><input id="g-name" placeholder="潮汐问候"></div>
+        <div class="field"><label>版本 *（语义化）</label><input id="g-version" placeholder="0.1.0" spellcheck="false"></div>
+        <div class="field"><label>作者</label><input id="g-author" placeholder="your-name"></div>
+        <div class="field"><label>图标（单个汉字或字符）</label><input id="g-icon" maxlength="2" placeholder="潮"></div>
+        <div class="field"><label>入口文件</label><input id="g-entry" value="main.js" spellcheck="false"></div>
+      </div>
+      <div class="field" style="margin-top:14px"><label>描述（写清用途、远端服务与登录要求）</label><textarea id="g-desc" placeholder="显示今天日期，并记录视图打开次数。"></textarea></div>
+      <div class="field" style="margin-top:14px"><label>声明能力 permissions</label>
+        <div class="perms" id="g-perms"></div>
+      </div>
+      <div class="dz-actions" style="justify-content:flex-start">
+        <button class="button" type="button" id="gen-manifest">生成 manifest.json</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>发布前对照</h2>
+      <p class="sub">机器校验管不了的部分，打包前最后过一眼（摘自<a href="index.html#test">手册 · 测试发布</a>）。</p>
+      <div class="checks">
+        <div class="check"><span class="ic info">▢</span><div><b>生命周期</b><small>首次加载、停用、重新启用、重新扫描、重启，均不产生重复视图或定时器。</small></div></div>
+        <div class="check"><span class="ic info">▢</span><div><b>失败分支</b><small>断网、非 2xx、登录过期、空列表时给出可行动提示，而不是静默失败。</small></div></div>
+        <div class="check"><span class="ic info">▢</span><div><b>凭据安全</b><small>密码、令牌、Cookie 不写进日志；存储凭据时在描述里向用户说明风险。</small></div></div>
+        <div class="check"><span class="ic info">▢</span><div><b>目标平台实测</b><small>桌面数据目录真机验证；要随 APK 分发则按内置插件流程走一遍。</small></div></div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <p>潮衡 TideBalance · 本地优先的时间管理平台</p>
+    <p><a href="index.html">开发手册</a> · <a href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">GitHub 仓库</a></p>
+  </footer>
+
+  <script>
+  (function () {
+    "use strict";
+
+    /* ── 状态 ── */
+    const files = new Map();       // name -> text
+    const ALL_PERMS = ["ui", "tasks", "blocks", "storage", "notify", "events", "http", "openUrl", "timeParse"];
+    const PERM_LABELS = { ui: "ui 界面", tasks: "tasks 任务", blocks: "blocks 时间块", storage: "storage 存储", notify: "notify 通知", events: "events 事件", http: "http 网络", openUrl: "openUrl 外链", timeParse: "timeParse 时间解析" };
+
+    const $ = (sel) => document.querySelector(sel);
+    const manifestText = () => files.get("manifest.json") || null;
+    function entryName(man) { return (man && typeof man.entry === "string" && man.entry) || "main.js"; }
+
+    /* ── 文件接入 ── */
+    function addFiles(list) {
+      let pending = list.length;
+      for (const f of list) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          files.set(f.name, String(reader.result));
+          if (--pending === 0) { classify(); refresh(); }
+        };
+        reader.readAsText(f);
+      }
+    }
+
+    // 名为 manifest.json 的当清单；其余若与 entry 同名先占位为入口；真正入口在解析 manifest 后再纠正
+    function classify() {
+      const man = manifestText();
+      let entry = "main.js";
+      if (man) { try { entry = entryName(JSON.parse(man)); } catch (_) {} }
+      for (const name of [...files.keys()]) {
+        if (name === "manifest.json") continue;
+        const role = name === entry ? "entry" : "extra";
+        fileMeta.set(name, role);
+      }
+      if (files.has(entry)) fileMeta.set(entry, "entry");
+    }
+    const fileMeta = new Map();   // name -> "entry" | "extra"
+
+    function removeFile(name) { files.delete(name); fileMeta.delete(name); refresh(); }
+
+    /* ── 校验 ── */
+    const ID_RE = /^[a-z0-9][a-z0-9-]*$/;
+    const SEMVER_RE = /^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/;
+
+    function analyze() {
+      const items = [];
+      const raw = manifestText();
+      let man = null;
+
+      if (!raw) {
+        items.push({ level: "fail", title: "缺少 manifest.json", note: "从下方生成器填一份，或上传现有清单。" });
+      } else {
+        try { man = JSON.parse(raw); items.push({ level: "pass", title: "manifest.json 可解析", note: "严格 JSON，无注释无尾逗号。" }); }
+        catch (e) { items.push({ level: "fail", title: "manifest.json 不是合法 JSON", note: String(e.message || e) + "——检查注释与尾逗号。" }); }
+      }
+
+      if (man) {
+        if (typeof man.id === "string" && ID_RE.test(man.id)) items.push({ level: "pass", title: `ID「${man.id}」格式合法`, note: "小写字母、数字、连字符。" });
+        else items.push({ level: "fail", title: "ID 缺失或格式不合法", note: "要求：小写字母开头，仅含小写字母、数字、连字符。ID 一经发布不要更改——私有存储与启用状态都挂在它下面。" });
+
+        items.push(typeof man.name === "string" && man.name.trim()
+          ? { level: "pass", title: `名称「${man.name}」`, note: "通知会显示为「名称：消息」。" }
+          : { level: "fail", title: "缺少 name", note: "面向用户的名称是必填项。" });
+
+        items.push(typeof man.version === "string" && SEMVER_RE.test(man.version)
+          ? { level: "pass", title: `版本 ${man.version} 符合语义化`, note: "" }
+          : { level: "warn", title: "版本号缺失或不规范", note: "建议 x.y.z，例如 1.2.0。" });
+
+        items.push(typeof man.description === "string" && man.description.trim().length >= 8
+          ? { level: "pass", title: "描述已填写", note: "" }
+          : { level: "warn", title: "描述过于简略", note: "写清用途、远端数据源、登录要求与敏感配置——这是用户决定是否信任插件的依据。" });
+
+        items.push(typeof man.author === "string" && man.author.trim()
+          ? { level: "pass", title: `作者 ${man.author}`, note: "" }
+          : { level: "warn", title: "未署名 author", note: "建议填写。" });
+
+        const entry = entryName(man);
+        items.push(files.has(entry)
+          ? { level: "pass", title: `入口 ${entry} 存在`, note: "" }
+          : { level: "fail", title: `入口 ${entry} 不在上传文件里`, note: "把入口脚本一起拖进来。" });
+
+        const bad = (Array.isArray(man.permissions) ? man.permissions : []).filter((p) => !ALL_PERMS.includes(p));
+        items.push(bad.length
+          ? { level: "warn", title: `未知 permissions：${bad.join(", ")}`, note: `可声明：${ALL_PERMS.join(" / ")}。` }
+          : { level: "pass", title: "permissions 均为可声明能力", note: "" });
+      }
+
+      const code = [...files.entries()].filter(([n]) => n !== "manifest.json").map(([, t]) => t).join("\n");
+      if (code.trim()) {
+        if (/\.innerHTML\s*=|document\.write\s*\(/.test(code))
+          items.push({ level: "warn", title: "检测到 innerHTML 赋值 / document.write", note: "远端文本必须 textContent 或转义后渲染，防 XSS。" });
+        if (/\beval\s*\(|new\s+Function\s*\(/.test(code))
+          items.push({ level: "warn", title: "检测到 eval / new Function", note: "动态执行让审查与排错都变难，尽量改为显式逻辑。" });
+        for (const m of code.matchAll(/http:\/\/[^\s"'`)]+/g)) {
+          const url = m[0];
+          if (/localhost|127\.0\.0\.1/.test(url)) continue;
+          items.push({ level: "warn", title: "明文 http 地址", note: url.slice(0, 60) + " ——远程请求建议一律 https。" });
+          break;
+        }
+        if (/setInterval\s*\(/.test(code))
+          items.push({ level: "info", title: "使用了 setInterval", note: "确保可重复执行入口时先 clearInterval（见手册·生命周期），否则重扫一次多一条轮询。" });
+        if (!/^\s*\(function|^\s*\(\s*\(\)/.test(code) && /^\s*tide\./m.test(code))
+          items.push({ level: "info", title: "建议用 IIFE 包住入口", note: "(function () { … })(); 把状态封进闭包，重扫不串状态。" });
+      }
+
+      return { items, man, code };
+    }
+
+    function detectPerms(code) {
+      const found = new Set();
+      if (/tide\.ui\.(registerView|registerTaskAction)/.test(code)) found.add("ui");
+      if (/tide\.tasks\./.test(code)) found.add("tasks");
+      if (/tide\.blocks\./.test(code)) found.add("blocks");
+      if (/tide\.storage\./.test(code)) found.add("storage");
+      if (/tide\.notify\s*\(/.test(code)) found.add("notify");
+      if (/tide\.events\./.test(code)) found.add("events");
+      if (/tide\.http\./.test(code)) found.add("http");
+      if (/tide\.util\.openUrl/.test(code)) found.add("openUrl");
+      if (/tide\.util\.parseWhen/.test(code)) found.add("timeParse");
+      return found;
+    }
+
+    /* ── 渲染 ── */
+    function refresh() {
+      renderFileList();
+      const { items, man, code } = analyze();
+      renderReport(items, man, code);
+      fillGenerator(man);
+      syncGeneratorFromFiles();
+    }
+
+    function renderFileList() {
+      const box = $("#filelist");
+      box.classList.toggle("hidden", files.size === 0);
+      box.replaceChildren();
+      for (const [name] of [...files].sort(([a], [b]) => (a === "manifest.json" ? -1 : 1))) {
+        const chip = document.createElement("span");
+        chip.className = "filechip";
+        const role = name === "manifest.json" ? "清单" : (fileMeta.get(name) === "entry" ? "入口" : "附带");
+        chip.innerHTML = `<span class="role${role === "附带" ? " extra" : ""}">${role}</span>`;
+        chip.append(name);
+        const x = document.createElement("button");
+        x.type = "button"; x.textContent = "✕"; x.title = "移除";
+        x.addEventListener("click", () => removeFile(name));
+        chip.append(x);
+        box.append(chip);
+      }
+    }
+
+    function renderReport(items, man, code) {
+      const panel = $("#report");
+      panel.classList.toggle("hidden", files.size === 0 || (!items.length));
+      const checks = $("#checks");
+      checks.replaceChildren();
+      const ICON = { pass: "✓", warn: "!", fail: "✕", info: "·" };
+      for (const it of items) {
+        const row = document.createElement("div");
+        row.className = "check";
+        row.innerHTML = `<span class="ic ${it.level}">${ICON[it.level]}</span><div><b></b>${it.note ? "<small></small>" : ""}</div>`;
+        row.querySelector("b").textContent = it.title;
+        if (it.note) row.querySelector("small").textContent = it.note;
+        checks.append(row);
+      }
+      const fail = items.filter((i) => i.level === "fail").length;
+      const warn = items.filter((i) => i.level === "warn").length;
+      $("#report-sub").textContent = fail
+        ? `有 ${fail} 项必须修复后才能打包。`
+        : (warn ? `没有阻断问题，${warn} 项建议处理。` : "全部机器校验通过，可以打包。");
+
+      // 权限比对
+      const chips = $("#perm-chips");
+      chips.replaceChildren();
+      const declared = new Set((man && Array.isArray(man.permissions)) ? man.permissions : []);
+      const detected = detectPerms(code);
+      for (const p of ALL_PERMS) {
+        const d = declared.has(p), u = detected.has(p);
+        if (!d && !u) continue;
+        const c = document.createElement("span");
+        c.className = "chip " + (d && u ? "both" : d ? "only-declared" : "only-detected");
+        c.textContent = PERM_LABELS[p];
+        c.title = d && u ? "声明且使用" : d ? "声明了但代码里没用到" : "用到了但未声明——建议加入 permissions";
+        chips.append(c);
+      }
+      if (!chips.children.length) chips.innerHTML = "<span class='chip only-declared'>未检测到 tide API 调用</span>";
+
+      // 打包结构
+      const id = (man && typeof man.id === "string" && ID_RE.test(man.id)) ? man.id : "<插件ID>";
+      const entry = man ? entryName(man) : "main.js";
+      const lines = [`${id}/`, `├─ manifest.json`, `└─ ${entry}`];
+      for (const [name, role] of fileMeta) if (role === "extra" && name !== entry) lines.push(`└─ ${name}`);
+      $("#tree-preview").textContent = lines.join("\n");
+
+      const canPack = man && !fail;
+      const btn = $("#download-zip");
+      btn.disabled = !canPack;
+      btn.textContent = canPack ? `下载 ${id} v${man.version || "0.0.0"}.zip` : "修复问题后可下载";
+    }
+
+    /* ── 生成器 ── */
+    const gPerms = $("#g-perms");
+    for (const p of ALL_PERMS) {
+      const lab = document.createElement("label");
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.value = p;
+      lab.append(cb, PERM_LABELS[p]);
+      gPerms.append(lab);
+    }
+
+    function fillGenerator(man) {
+      if (!man) return;
+      $("#g-id").value = man.id || $("#g-id").value;
+      $("#g-name").value = man.name || "";
+      $("#g-version").value = man.version || "0.1.0";
+      $("#g-author").value = man.author || "";
+      $("#g-icon").value = man.icon || "";
+      $("#g-entry").value = man.entry || "main.js";
+      $("#g-desc").value = man.description || "";
+      for (const cb of gPerms.querySelectorAll("input")) cb.checked = (man.permissions || []).includes(cb.value);
+    }
+
+    function syncGeneratorFromFiles() {
+      // 有 main.js 而没有清单时，用文件名猜一个 ID
+      if (!manifestText() && files.size) {
+        const guess = [...files.keys()].find((n) => n !== "manifest.json");
+        if (guess && !$("#g-id").value) $("#g-id").value = guess.replace(/\.js$/i, "").toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+      }
+    }
+
+    $("#gen-manifest").addEventListener("click", () => {
+      const id = $("#g-id").value.trim();
+      const e = $("#e-id");
+      if (!ID_RE.test(id)) { e.textContent = "ID 必须由小写字母、数字、连字符组成"; e.classList.remove("hidden"); return; }
+      e.classList.add("hidden");
+
+      const man = {
+        id,
+        name: $("#g-name").value.trim() || id,
+        version: $("#g-version").value.trim() || "0.1.0",
+      };
+      if ($("#g-author").value.trim()) man.author = $("#g-author").value.trim();
+      if ($("#g-icon").value.trim()) man.icon = $("#g-icon").value.trim();
+      man.description = $("#g-desc").value.trim() || "（请补充描述：用途、远端服务与登录要求）";
+      man.permissions = [...gPerms.querySelectorAll("input:checked")].map((c) => c.value);
+      man.entry = $("#g-entry").value.trim() || "main.js";
+
+      files.set("manifest.json", JSON.stringify(man, null, 2) + "\n");
+      classify(); refresh();
+    });
+
+    /* ── ZIP 打包（store 模式，零依赖） ── */
+    const CRC_TABLE = (() => {
+      const t = new Uint32Array(256);
+      for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); t[n] = c; }
+      return t;
+    })();
+    function crc32(bytes) {
+      let c = 0xFFFFFFFF;
+      for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+      return (c ^ 0xFFFFFFFF) >>> 0;
+    }
+    function buildZip(entries) {
+      const enc = new TextEncoder();
+      const now = new Date();
+      const dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+      const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+      const chunks = [], central = [];
+      let offset = 0;
+      for (const { name, text } of entries) {
+        const nameB = enc.encode(name);
+        const data = enc.encode(text);
+        const crc = crc32(data);
+        const h = new Uint8Array(30 + nameB.length);
+        const dv = new DataView(h.buffer);
+        dv.setUint32(0, 0x04034b50, true);
+        dv.setUint16(4, 20, true); dv.setUint16(6, 0x0800, true); dv.setUint16(8, 0, true);
+        dv.setUint16(10, dosTime, true); dv.setUint16(12, dosDate, true);
+        dv.setUint32(14, crc, true);
+        dv.setUint32(18, data.length, true); dv.setUint32(22, data.length, true);
+        dv.setUint16(26, nameB.length, true);
+        h.set(nameB, 30);
+        chunks.push(h, data);
+        central.push({ nameB, crc, size: data.length, offset });
+        offset += h.length + data.length;
+      }
+      const centralStart = offset;
+      let centralSize = 0;
+      for (const c of central) {
+        const h = new Uint8Array(46 + c.nameB.length);
+        const dv = new DataView(h.buffer);
+        dv.setUint32(0, 0x02014b50, true);
+        dv.setUint16(4, 20, true); dv.setUint16(6, 20, true);
+        dv.setUint16(8, 0x0800, true); dv.setUint16(10, 0, true);
+        dv.setUint16(12, dosTime, true); dv.setUint16(14, dosDate, true);
+        dv.setUint32(16, c.crc, true);
+        dv.setUint32(20, c.size, true); dv.setUint32(24, c.size, true);
+        dv.setUint16(28, c.nameB.length, true);
+        dv.setUint32(42, c.offset, true);
+        h.set(c.nameB, 46);
+        chunks.push(h); centralSize += h.length;
+      }
+      const eocd = new Uint8Array(22);
+      const dv = new DataView(eocd.buffer);
+      dv.setUint32(0, 0x06054b50, true);
+      dv.setUint16(8, central.length, true); dv.setUint16(10, central.length, true);
+      dv.setUint32(12, centralSize, true); dv.setUint32(16, centralStart, true);
+      chunks.push(eocd);
+      return new Blob(chunks, { type: "application/zip" });
+    }
+
+    $("#download-zip").addEventListener("click", () => {
+      const { man } = analyze();
+      if (!man) return;
+      const dir = man.id + "/";
+      const entry = entryName(man);
+      const entries = [{ name: dir + "manifest.json", text: manifestText() }];
+      for (const [name, text] of files) if (name !== "manifest.json") entries.push({ name: dir + (fileMeta.get(name) === "entry" ? entry : name), text });
+      const url = URL.createObjectURL(buildZip(entries));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${man.id}-v${man.version || "0.0.0"}.zip`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    });
+
+    /* ── 示例插件 ── */
+    $("#load-sample").addEventListener("click", () => {
+      files.clear(); fileMeta.clear();
+      files.set("manifest.json", JSON.stringify({
+        id: "hello-tide", name: "潮汐问候", version: "0.1.0", author: "tideworkshop",
+        icon: "潮", description: "显示今天日期，并记录视图打开次数。",
+        permissions: ["ui", "storage", "notify"], entry: "main.js"
+      }, null, 2) + "\n");
+      files.set("main.js", `tide.ui.registerView({
+  id: "hello-tide",
+  title: "潮汐问候",
+  icon: "潮",
+  async render(el) {
+    const visits = await tide.storage.get("visits", 0);
+    await tide.storage.set("visits", visits + 1);
+    el.replaceChildren();
+    const card = document.createElement("section");
+    card.textContent = \`今天是 \${tide.util.today()}，这是第 \${visits + 1} 次打开。\`;
+    el.append(card);
+  }
+});
+
+tide.notify("插件已加载");
+`);
+      classify(); refresh();
+      $("#report").scrollIntoView({ behavior: "smooth" });
+    });
+
+    $("#clear-files").addEventListener("click", () => { files.clear(); fileMeta.clear(); refresh(); });
+
+    /* ── 拖拽 ── */
+    const dz = $("#dropzone");
+    $("#fileinput").addEventListener("change", (e) => { addFiles([...e.target.files]); e.target.value = ""; });
+    dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("over"); });
+    dz.addEventListener("dragleave", () => dz.classList.remove("over"));
+    dz.addEventListener("drop", (e) => { e.preventDefault(); dz.classList.remove("over"); addFiles([...e.dataTransfer.files]); });
+  })();
+  </script>
+</body>
+</html>

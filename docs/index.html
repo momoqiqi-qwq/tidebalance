@@ -185,6 +185,7 @@
         <a href="#compat">平台边界</a>
         <a href="#debug">调试排错</a>
         <a href="#test">测试发布</a>
+        <a href="upload.html">插件工坊 ↗</a>
       </nav>
       <p class="rail-note">逐条对照 pluginHost.js<br>文档站：GitHub Pages<br>静态、零依赖、可离线保存</p>
     </aside>
@@ -251,7 +252,7 @@ tide.notify("插件已加载");</code></pre>
           <article class="card"><span class="tag">EXTERNAL 外部插件</span><h3>放数据目录，随时热改</h3><p>桌面端在「设置 → 数据」查看数据目录，把插件放进其中的 <code>plugins/</code>。改完 main.js 点「重新扫描」即生效，不需要重新构建应用。</p></article>
           <article class="card"><span class="tag">BUILTIN 内置插件</span><h3>放进 public/plugins，随包分发</h3><p>把目录放入 <code>tidebalance/public/plugins/</code>，并同步把 ID 加进 <code>pluginHost.js</code> 的 <code>BUILTIN_IDS</code>。Android 端只能用这种方式。</p></article>
         </div>
-        <div class="callout cool"><strong>建议用 IIFE 包住入口</strong><p>内置插件的通行写法是 <code>(function () { … })();</code> 把状态与函数封在闭包里，只把注册调用暴露在顶层。这样重新执行入口不会和上一轮的闭包互相串状态。</p></div>
+        <div class="callout cool"><strong>建议用 IIFE 包住入口</strong><p>内置插件的通行写法是 <code>(function () { … })();</code> 把状态与函数封在闭包里，只把注册调用暴露在顶层。这样重新执行入口不会和上一轮的闭包互相串状态。写好后可到<a href="upload.html">插件工坊</a>上传校验、一键打包成合规 zip。</p></div>
       </section>
 
       <section id="manifest">
@@ -676,7 +677,7 @@ tidebalance/src/pluginHost.js  <span class="cmt">// BUILTIN_IDS 加入 plugin-id
     });
 
     const links = [...document.querySelectorAll('.rail nav a')];
-    const sections = links.map((link) => document.querySelector(link.hash)).filter(Boolean);
+    const sections = links.flatMap((link) => (link.hash ? [document.querySelector(link.hash)] : [])).filter(Boolean);
     const observer = new IntersectionObserver((entries) => {
       const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
       if (!visible) return;
