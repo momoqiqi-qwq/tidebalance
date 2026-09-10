@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="潮衡 TideBalance 插件开发、平台适配、测试与发布文档。">
+  <meta name="description" content="潮衡 TideBalance 插件开发、平台适配、调试与发布文档。内容逐条对应当前插件宿主实现。">
   <meta name="theme-color" content="#16213e">
   <title>潮衡插件开发手册 · TideBalance</title>
   <style>
@@ -54,7 +54,7 @@
     .rail { position: sticky; top: 20px; height: max-content; padding: 26px 22px; background: var(--sheet); box-shadow: var(--shadow); }
     .rail-label { margin: 0 0 18px; color: var(--muted); font: 700 10px var(--mono); letter-spacing: .15em; }
     .rail nav { display: grid; }
-    .rail a { position: relative; padding: 9px 0 9px 20px; color: var(--muted); text-decoration: none; font-size: 14px; }
+    .rail a { position: relative; padding: 7px 0 7px 20px; color: var(--muted); text-decoration: none; font-size: 13.5px; }
     .rail a::before { content: ""; position: absolute; left: 0; top: 50%; width: 7px; height: 1px; background: var(--line); }
     .rail a.active { color: var(--ink); font-weight: 800; }
     .rail a.active::before { width: 12px; height: 3px; background: var(--sun); }
@@ -65,15 +65,19 @@
     .section-kicker { margin: 0 0 8px; color: var(--tide); font: 700 11px var(--mono); letter-spacing: .15em; text-transform: uppercase; }
     h2 { margin: 0 0 16px; font: 500 clamp(33px, 4.6vw, 56px)/1.08 var(--display); letter-spacing: -.035em; }
     h3 { margin: 32px 0 12px; font-size: 19px; line-height: 1.4; }
+    h4 { margin: 22px 0 8px; font-size: 15.5px; }
     p { margin: 0 0 16px; }
     .intro { max-width: 780px; color: var(--ink-2); font-size: 18px; }
     .rule { height: 1px; margin: 28px 0; background: var(--line); }
+    ul.plain { margin: 0 0 16px; padding-left: 22px; }
+    ul.plain li { margin: 6px 0; }
     code { padding: .14em .32em; background: #e8eef6; color: #183258; font: .9em var(--mono); }
     pre { position: relative; margin: 14px 0 24px; padding: 25px 58px 25px 25px; overflow: auto; color: #e8edf7; background: var(--code); border-left: 4px solid var(--tide); line-height: 1.65; tab-size: 2; }
     pre code { padding: 0; color: inherit; background: none; font-size: 13px; }
     .copy { position: absolute; top: 10px; right: 10px; padding: 5px 9px; border: 1px solid #405170; color: #cbd4e7; background: transparent; cursor: pointer; font: 11px var(--mono); }
     .copy.done { border-color: #74d4d5; color: #74d4d5; }
     .tree { color: #b9e8e7; }
+    .cmt { color: #7f92b8; }
 
     .flow { display: grid; grid-template-columns: repeat(5, 1fr); margin: 28px 0; border: 1px solid var(--line); background: var(--sheet); }
     .flow div { position: relative; min-height: 138px; padding: 22px 18px; border-right: 1px solid var(--line); }
@@ -85,19 +89,23 @@
     .card { padding: 23px; border: 1px solid var(--line); background: var(--sheet); }
     .card h3 { margin-top: 9px; }
     .card p { color: var(--muted); font-size: 14px; }
+    .card ul.plain { margin-bottom: 0; }
+    .card ul.plain li { font-size: 14px; color: var(--muted); }
     .tag { color: var(--tide); font: 700 10px var(--mono); letter-spacing: .11em; }
     .callout { margin: 24px 0; padding: 22px 24px; border-left: 5px solid var(--sun); background: #fff2ed; }
     .callout strong { display: block; margin-bottom: 5px; }
-    .callout p { margin: 0; color: #66544f; }
+    .callout p { margin: 0; color: #66544f; font-size: 15px; }
     .callout.cool { border-color: var(--tide); background: var(--foam); }
     .callout.cool p { color: #315b63; }
 
     .table-wrap { margin: 20px 0 30px; overflow-x: auto; border: 1px solid var(--line); }
     table { width: 100%; border-collapse: collapse; background: var(--sheet); font-size: 14px; }
-    th, td { padding: 15px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th, td { padding: 13px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
     th { color: var(--muted); background: #f8fafc; font: 700 11px var(--mono); letter-spacing: .08em; white-space: nowrap; }
     td:first-child { color: #173c62; font-family: var(--mono); white-space: nowrap; }
     tr:last-child td { border-bottom: 0; }
+    td .pill { display: inline-block; margin-right: 6px; padding: 1px 7px; border-radius: 9px; background: #e6f4f6; color: #14606f; font: 700 10.5px var(--mono); }
+    td .pill.warn { background: #fdeee8; color: #b4492c; }
     .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 24px; }
     .chip { padding: 5px 10px; border: 1px solid #b8c6d8; background: var(--sheet); font: 12px var(--mono); }
     .checklist { padding: 0; list-style: none; counter-reset: item; border-top: 1px solid var(--line); }
@@ -146,16 +154,16 @@
     </div>
     <div class="hero-grid">
       <div>
-        <p class="eyebrow">Plugin adaptation manual / implementation-aligned</p>
+        <p class="eyebrow">Plugin development manual / implementation-aligned</p>
         <h1>让时间<br>长出<em>新能力</em></h1>
-        <p class="lede">潮衡插件开发、平台适配、测试与内置发布的一页式手册。内容直接对应当前插件宿主实现，不需要框架或构建工具。</p>
+        <p class="lede">潮衡插件开发完整手册：运行模型、tide API 逐条说明、时间解析语法、四个取自真实内置插件的实战范例、调试排错与发布清单。每一句话都对应当前源码，不需要框架或构建工具。</p>
       </div>
       <aside class="hero-meta" aria-label="文档摘要">
         <div><b>RUNTIME</b><p>Tauri 2 · 原生 JavaScript · Rust 网络桥</p></div>
         <div><b>MINIMUM</b><p>一个 manifest.json，加一个 main.js</p></div>
         <div class="hero-actions">
           <a class="button primary" href="#quickstart">开始写插件</a>
-          <a class="button" href="#compat">先看适配边界</a>
+          <a class="button" href="#recipes">直接看实战范例</a>
         </div>
       </aside>
     </div>
@@ -170,32 +178,42 @@
         <a href="#manifest">Manifest</a>
         <a href="#api">API 参考</a>
         <a href="#data">数据模型</a>
-        <a href="#patterns">适配模式</a>
+        <a href="#timeparse">时间解析</a>
+        <a href="#recipes">实战范例</a>
+        <a href="#lifecycle">生命周期</a>
+        <a href="#events">事件总线</a>
         <a href="#compat">平台边界</a>
+        <a href="#debug">调试排错</a>
         <a href="#test">测试发布</a>
       </nav>
-      <p class="rail-note">按实际代码整理<br>文档站：GitHub Pages<br>静态、零依赖、可离线保存</p>
+      <p class="rail-note">逐条对照 pluginHost.js<br>文档站：GitHub Pages<br>静态、零依赖、可离线保存</p>
     </aside>
 
     <main id="content">
       <section id="model">
         <p class="section-kicker">宿主 / Host lifecycle</p>
         <h2>插件如何进入潮衡</h2>
-        <p class="intro">宿主发现插件目录，读取清单与入口文件，把受控的 <code>tide</code> 对象传给入口代码；插件随后注册视图、任务动作或事件监听。</p>
+        <p class="intro">宿主发现插件目录，读取清单与入口文件，把受控的 <code>tide</code> 对象传给入口代码；插件在顶层调用注册 API 挂载视图、任务动作或事件监听。整个过程不需要 npm、打包器或构建步骤。</p>
         <div class="flow" aria-label="插件加载流程">
-          <div><b>DISCOVER</b><span>扫描内置 ID 与桌面端用户插件目录</span></div>
-          <div><b>MANIFEST</b><span>读取 manifest.json，确认入口文件</span></div>
-          <div><b>INJECT</b><span>创建当前插件专属的 tide API</span></div>
-          <div><b>EXECUTE</b><span>严格模式执行 main.js</span></div>
-          <div><b>REGISTER</b><span>挂载视图、动作与事件监听</span></div>
+          <div><b>DISCOVER</b><span>先加载 8 个内置 ID，再扫描外部插件目录（仅桌面端）</span></div>
+          <div><b>MANIFEST</b><span>读取 manifest.json；<code>id</code> 缺省时取目录名</span></div>
+          <div><b>ENABLE</b><span>首次发现写入插件状态；<code>enabled: false</code> 则跳过执行</span></div>
+          <div><b>EXECUTE</b><span>严格模式下以 <code>new Function("tide", …)</code> 执行入口</span></div>
+          <div><b>REGISTER</b><span>顶层 <code>tide.ui.*</code> 等调用即刻生效，导航刷新</span></div>
         </div>
-        <div class="callout"><strong>信任边界</strong><p>入口由 <code>new Function</code> 执行，不是安全隔离；代码仍可能访问页面全局对象。当前 <code>permissions</code> 是声明与展示信息，宿主尚未按权限裁剪 API。只安装已审查、可信来源的插件。</p></div>
+        <h3>启动时发生了什么</h3>
+        <ul class="plain">
+          <li><strong>顺序固定</strong>：内置插件按 <code>BUILTIN_IDS</code> 声明顺序加载，然后才是外部插件；<strong>ID 相同时内置优先</strong>，外部目录不会被加载。</li>
+          <li><strong>失败不阻断</strong>：某个插件 manifest 解析失败或执行抛错，只会记录到该插件自己的状态里（设置页可见），其余插件照常加载。</li>
+          <li><strong>执行错误可恢复</strong>：再次启用或「重新扫描」会重新执行入口代码，上次注册的视图、动作、监听会先被摘除，不会重复叠加。</li>
+        </ul>
+        <div class="callout"><strong>信任边界</strong><p>入口由 <code>new Function</code> 执行，不是安全隔离；代码仍可访问 <code>document</code>、<code>window</code> 等页面全局对象。当前 <code>permissions</code> 只是声明与展示信息，宿主并未按权限裁剪 API。只安装已审查、可信来源的插件。</p></div>
       </section>
 
       <section id="quickstart">
         <p class="section-kicker">最短路径 / Two-file start</p>
         <h2>十分钟做出第一页</h2>
-        <p class="intro">文件夹名建议与插件 ID 一致。插件不需要 npm，也不需要打包；把两个文件放进数据目录下的 <code>plugins/hello-tide/</code>。</p>
+        <p class="intro">文件夹名建议与插件 ID 一致。插件不需要 npm，也不需要打包；把两个文件放进数据目录下的 <code>plugins/hello-tide/</code>，然后在设置页点「重新扫描」。</p>
         <pre><code class="tree">plugins/
 └─ hello-tide/
    ├─ manifest.json
@@ -228,22 +246,28 @@
 });
 
 tide.notify("插件已加载");</code></pre>
-        <div class="callout cool"><strong>安装与刷新</strong><p>桌面端：在“设置 → 数据”查看数据目录，把插件放进其中的 <code>plugins/</code>，然后在设置页点“重新扫描”。开发内置插件时，把目录放入 <code>public/plugins/</code>，并同步加入 <code>pluginHost.js</code> 的 <code>BUILTIN_IDS</code>。</p></div>
+        <h3>两条开发路径</h3>
+        <div class="cards">
+          <article class="card"><span class="tag">EXTERNAL 外部插件</span><h3>放数据目录，随时热改</h3><p>桌面端在「设置 → 数据」查看数据目录，把插件放进其中的 <code>plugins/</code>。改完 main.js 点「重新扫描」即生效，不需要重新构建应用。</p></article>
+          <article class="card"><span class="tag">BUILTIN 内置插件</span><h3>放进 public/plugins，随包分发</h3><p>把目录放入 <code>tidebalance/public/plugins/</code>，并同步把 ID 加进 <code>pluginHost.js</code> 的 <code>BUILTIN_IDS</code>。Android 端只能用这种方式。</p></article>
+        </div>
+        <div class="callout cool"><strong>建议用 IIFE 包住入口</strong><p>内置插件的通行写法是 <code>(function () { … })();</code> 把状态与函数封在闭包里，只把注册调用暴露在顶层。这样重新执行入口不会和上一轮的闭包互相串状态。</p></div>
       </section>
 
       <section id="manifest">
         <p class="section-kicker">契约 / Manifest contract</p>
         <h2>清单字段</h2>
+        <p class="intro">manifest.json 是标准 JSON——不允许注释、不允许尾逗号，解析失败插件直接不加载。</p>
         <div class="table-wrap"><table>
           <thead><tr><th>字段</th><th>用途与约束</th></tr></thead>
           <tbody>
-            <tr><td>id</td><td>稳定、唯一的插件标识；推荐小写字母、数字与连字符。外部插件目录名应与它一致。</td></tr>
-            <tr><td>name</td><td>面向用户的名称，通知会显示为“插件名：消息”。</td></tr>
-            <tr><td>version</td><td>推荐语义化版本，例如 <code>1.2.0</code>。</td></tr>
+            <tr><td>id</td><td>稳定、唯一的插件标识；推荐小写字母、数字与连字符。外部插件目录名应与它一致；目录名不一致时以清单里的 <code>id</code> 为准，但读文件仍按目录 ID，所以保持一致最省心。</td></tr>
+            <tr><td>name</td><td>面向用户的名称；通知会自动加前缀显示为「插件名：消息」。</td></tr>
+            <tr><td>version</td><td>推荐语义化版本，例如 <code>1.2.0</code>。设置页据此判断是否需要重扫。</td></tr>
             <tr><td>author</td><td>作者或组织名称。</td></tr>
             <tr><td>icon</td><td>侧栏短标识；建议使用单个汉字或稳定的单字符图标。</td></tr>
-            <tr><td>description</td><td>说明用途、远端数据源、登录要求与敏感配置。</td></tr>
-            <tr><td>permissions</td><td>声明使用的能力；当前用于说明与展示，不是运行时权限闸门。</td></tr>
+            <tr><td>description</td><td>说明用途、远端数据源、登录要求与敏感配置。用户决定是否信任这个插件的依据。</td></tr>
+            <tr><td>permissions</td><td>声明使用的能力；当前用于说明与展示，<strong>不是运行时权限闸门</strong>。</td></tr>
             <tr><td>entry</td><td>入口脚本相对路径；省略时默认 <code>main.js</code>。</td></tr>
           </tbody>
         </table></div>
@@ -251,138 +275,382 @@ tide.notify("插件已加载");</code></pre>
         <div class="chips" aria-label="插件权限">
           <span class="chip">ui</span><span class="chip">tasks</span><span class="chip">blocks</span><span class="chip">storage</span><span class="chip">notify</span><span class="chip">events</span><span class="chip">http</span><span class="chip">openUrl</span><span class="chip">timeParse</span>
         </div>
+        <div class="callout"><strong>ID 一旦发布就不要改</strong><p>插件私有存储挂在 <code>state.plugins[id].storage</code> 下，启用状态也按 ID 记忆。改 ID 等于换了一个新插件：旧存储失联、用户需要重新启用。</p></div>
       </section>
 
       <section id="api">
         <p class="section-kicker">接口 / tide API</p>
         <h2>宿主注入的能力</h2>
-        <p class="intro"><code>tide</code> 是插件约定入口。列表读取返回深拷贝；修改数据必须调用 create、update 或 remove，才能触发持久化。</p>
-        <h3>身份、存储与界面</h3>
+        <p class="intro"><code>tide</code> 是插件入口拿到的唯一约定对象。列表读取一律返回深拷贝——改拷贝不影响真实数据；写入必须走 create / update / remove，才能触发持久化与界面刷新。</p>
+
+        <h3>身份与存储</h3>
         <div class="table-wrap"><table>
           <thead><tr><th>API</th><th>说明</th></tr></thead>
           <tbody>
-            <tr><td>tide.id</td><td>当前插件 ID。</td></tr>
-            <tr><td>tide.manifest</td><td>解析后的当前插件清单。</td></tr>
-            <tr><td>storage.get(key, fallback)</td><td>读取插件私有存储；键不存在时返回 fallback。</td></tr>
-            <tr><td>storage.set(key, value)</td><td>写入插件私有存储并触发保存，返回 Promise；当前包装未等待底层写盘，await 不等于磁盘已写完。</td></tr>
-            <tr><td>ui.registerView(def)</td><td>注册侧栏视图；def 包含 <code>id</code>、<code>title</code>、<code>icon</code>、<code>render(el)</code>。</td></tr>
-            <tr><td>ui.registerTaskAction(def)</td><td>注册任务详情动作；def 包含 <code>id</code>、<code>label</code>、<code>icon</code>、<code>run(task)</code>。</td></tr>
-            <tr><td>notify(message, opts)</td><td>显示带插件名前缀的 toast；可用 <code>{ ms: 5000 }</code> 控制时长。</td></tr>
+            <tr><td>tide.id</td><td>当前插件 ID，与 manifest 一致。</td></tr>
+            <tr><td>tide.manifest</td><td>解析后的当前插件清单对象。</td></tr>
+            <tr><td>storage.get(key, fallback?)</td><td>异步读取插件私有存储；键不存在时返回 <code>fallback</code>（缺省 <code>null</code>）。每个插件的存储完全隔离。</td></tr>
+            <tr><td>storage.set(key, value)</td><td>写入插件私有存储并立即触发保存。<span class="pill warn">注意</span>函数本身不返回底层写盘的 Promise，<code>await</code> 只等赋值完成，不等磁盘落盘；但连续多次 set 各自都会触发保存，不会丢。</td></tr>
           </tbody>
         </table></div>
-        <h3>任务、时间块与事件</h3>
+
+        <h3>界面与通知</h3>
         <div class="table-wrap"><table>
           <thead><tr><th>API</th><th>说明</th></tr></thead>
           <tbody>
-            <tr><td>tasks.list()</td><td>读取全部任务的安全拷贝。</td></tr>
-            <tr><td>tasks.create(patch)</td><td>创建任务并返回完整对象。</td></tr>
-            <tr><td>tasks.update(id, patch)</td><td>合并更新任务。</td></tr>
-            <tr><td>tasks.remove(id)</td><td>删除任务，同时删除关联时间块。</td></tr>
-            <tr><td>blocks.list(date)</td><td>读取指定 <code>YYYY-MM-DD</code> 日期的时间块。</td></tr>
-            <tr><td>blocks.create / update / remove</td><td>创建、合并更新或删除时间块。</td></tr>
-            <tr><td>events.on(name, fn)</td><td>订阅当前进程内事件。</td></tr>
-            <tr><td>events.emit(name, data)</td><td>广播当前进程内事件；建议命名为 <code>plugin-id:event</code>。</td></tr>
+            <tr><td>ui.registerView(def)</td><td>注册侧栏视图。<code>def = { id, title, icon, render(el) }</code>。<code>render</code> 会被宿主多次调用（每次进入视图），必须幂等：先清空 <code>el</code> 再重建 DOM。</td></tr>
+            <tr><td>ui.registerTaskAction(def)</td><td>注册任务详情动作。<code>def = { id, label, icon, run(task) }</code>；传入的 task 只用于读取上下文，修改要走 <code>tasks.update</code>。</td></tr>
+            <tr><td>notify(message, opts?)</td><td>显示 toast，自动加「插件名：」前缀；<code>opts.ms</code> 控制毫秒数。</td></tr>
           </tbody>
         </table></div>
-        <h3>网络与工具</h3>
+
+        <h3>任务与时间块</h3>
         <div class="table-wrap"><table>
           <thead><tr><th>API</th><th>说明</th></tr></thead>
           <tbody>
-            <tr><td>http.get(url)</td><td>通过 Rust 网络桥发 GET；返回 <code>{ status, body, finalUrl, contentType }</code>。</td></tr>
-            <tr><td>http.session()</td><td>创建 Cookie Jar 会话，返回会话 ID。</td></tr>
-            <tr><td>http.fetch(sid, method, url, opts)</td><td>会话请求；opts 支持 headers、body、binary。二进制响应 body 为 Base64。</td></tr>
+            <tr><td>tasks.list()</td><td>全部任务的深拷贝数组（同步返回）。</td></tr>
+            <tr><td>tasks.create(patch)</td><td>创建任务，<span class="pill">同步</span>返回完整对象。可省略字段走默认：标题「新任务」、<code>quad: 1</code>、<code>estMin: 30</code>。</td></tr>
+            <tr><td>tasks.update(id, patch)</td><td>合并更新。改 <code>title</code> 时，关联时间块的标题会自动同步。</td></tr>
+            <tr><td>tasks.remove(id)</td><td>删除任务，<strong>级联删除</strong>它关联的所有时间块。</td></tr>
+            <tr><td>blocks.list(date)</td><td>读取 <code>YYYY-MM-DD</code> 当天的时间块，按开始时间升序返回。</td></tr>
+            <tr><td>blocks.create(patch)</td><td>创建时间块。默认值：<code>date</code> 今天、<code>start</code> "09:00"、<code>durMin</code> 30、<code>cat</code> "work"。</td></tr>
+            <tr><td>blocks.update / remove</td><td>合并更新或删除单个时间块。</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3>网络桥</h3>
+        <p>Tauri 端请求由 Rust 发出，<strong>绕开 WebView 的 CORS 限制</strong>，Cookie 也可持久保持；浏览器调试模式自动降级为普通 <code>fetch</code>（受 CORS 约束）。</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>API</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>http.get(url)</td><td>一次性 GET。返回 <code>{ status, body, finalUrl, contentType }</code>，重定向后的最终地址在 <code>finalUrl</code>。</td></tr>
+            <tr><td>http.session()</td><td>创建带 Cookie Jar 的会话，返回会话 ID（异步）。登录态跨请求保持。</td></tr>
+            <tr><td>http.fetch(sid, method, url, opts)</td><td>会话请求。<code>method</code> 支持 GET / POST / PUT / DELETE；<code>opts = { headers, body, binary }</code>。<code>binary: true</code> 时 body 为 Base64（验证码图片场景），响应里额外带 <code>cookies</code> 数组。</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout"><strong>网络桥的三条硬约束</strong><p>① 只允许 http/https 地址，其他协议直接报错；② <code>http.fetch</code> 的会话可能过期（重扫后旧 ID 失效），报「会话不存在」时重新 <code>session()</code> 即可；③ 会话表在内存里，应用重启后登录态要重建。</p></div>
+
+        <h3>工具与关怀频道</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>API</th><th>说明</th></tr></thead>
+          <tbody>
             <tr><td>util.openUrl(url)</td><td>用系统浏览器打开 http/https 链接。</td></tr>
-            <tr><td>util.parseWhen(text)</td><td>解析中文日期时间，返回 date、startMin、endMin、title 等字段。</td></tr>
-            <tr><td>util.guessCategory(text)</td><td>按关键词推测 work、study、sport、life、rest。</td></tr>
-            <tr><td>util.guessQuad(date)</td><td>按截止日期推测四象限。</td></tr>
-            <tr><td>util.navigate(view)</td><td>导航到宿主视图。</td></tr>
-            <tr><td>util.desEncryptHex(plain, key)</td><td>Tauri/Rust 端 DES-ECB/PKCS5 加密；浏览器调试模式不可用。</td></tr>
-            <tr><td>util.today / addDays</td><td>日期工具。</td></tr>
-            <tr><td>util.mmOf / hhmmOf / durLabel</td><td>分钟、HH:mm 与时长标签互转。</td></tr>
+            <tr><td>util.parseWhen(text)</td><td>中文自然语言时间解析，详见<a href="#timeparse">时间解析</a>一节。</td></tr>
+            <tr><td>util.guessCategory(text)</td><td>按关键词推测分类：sport → life → study → rest，兜底 work。</td></tr>
+            <tr><td>util.guessQuad(date)</td><td>按截止日期推测四象限：两天内到期归象限 I，否则象限 II。</td></tr>
+            <tr><td>util.navigate(view)</td><td>跳转到宿主视图（如 <code>"capture"</code>、<code>"quadrant"</code>）。</td></tr>
+            <tr><td>util.desEncryptHex(plain, key)</td><td>Rust 端 DES-ECB/PKCS5 加密，返回十六进制串。部分校园网关登录协议需要。<span class="pill warn">仅 Tauri</span></td></tr>
+            <tr><td>util.today / addDays / mmOf / hhmmOf / durLabel</td><td>日期与时间工具：<code>mmOf("14:30")→870</code>、<code>hhmmOf(870)→"14:30"</code>（自动绕回 24 小时）、<code>durLabel(90)→"1h 30m"</code>。</td></tr>
+            <tr><td>care.registerChannel(def)</td><td><span class="pill">高级</span>注册长辈提醒通道：<code>def = { id, label, send(payload) }</code>，<code>send</code> 需返回 <code>{ accepted: true }</code> 表示设备已确认。</td></tr>
+            <tr><td>care.reportEvent(event)</td><td><span class="pill">高级</span>上报设备事件（当前仅跌倒检测：<code>{ type: "fall", id, deviceId }</code>，id 用于去重），宿主会弹出核实提示。</td></tr>
           </tbody>
         </table></div>
       </section>
 
       <section id="data">
         <p class="section-kicker">数据 / Data shapes</p>
-        <h2>任务与时间块</h2>
-        <div class="cards">
-          <article class="card"><span class="tag">TASK</span><h3>决策对象</h3><p><code>quad</code> 为 1–4；<code>due</code> 使用 YYYY-MM-DD；<code>estMin</code> 是预计分钟；<code>done</code> 表示完成。</p></article>
-          <article class="card"><span class="tag">BLOCK</span><h3>日程对象</h3><p><code>date</code> 是日期，<code>start</code> 为 HH:mm，<code>durMin</code> 为分钟；<code>taskId</code> 可关联任务。</p></article>
+        <h2>任务与时间块的完整字段</h2>
+        <p class="intro">任务表达「决策」——做什么、多急；时间块表达「日程」——哪天、几点、多久。通过 <code>taskId</code> 关联：删除任务会带走它的时间块，改任务标题会同步时间块标题。</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Task 字段</th><th>类型与默认</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>id</td><td>string，自动生成 <code>t_…</code></td><td>稳定标识，创建后不要改。</td></tr>
+            <tr><td>title</td><td>string，默认「新任务」</td><td>改动会同步到关联时间块。</td></tr>
+            <tr><td>note</td><td>string，默认空</td><td>备注。</td></tr>
+            <tr><td>quad</td><td>1–4，默认 1</td><td>四象限：1 重要紧急、2 重要不紧急、3 紧急不重要、4 其他。</td></tr>
+            <tr><td>done</td><td>boolean，默认 false</td><td>完成状态。</td></tr>
+            <tr><td>estMin</td><td>number，默认 30</td><td>预计分钟；排程时最少按 15 分钟计。</td></tr>
+            <tr><td>tags</td><td>string[]，默认 []</td><td>标签。</td></tr>
+            <tr><td>project</td><td>string，默认空</td><td>所属项目名。</td></tr>
+            <tr><td>due</td><td>string，默认 null</td><td>截止日期 <code>YYYY-MM-DD</code>。</td></tr>
+            <tr><td>createdAt</td><td>number</td><td>创建时间戳（毫秒）。</td></tr>
+          </tbody>
+        </table></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Block 字段</th><th>类型与默认</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>id</td><td>string，自动生成 <code>b_…</code></td><td>稳定标识。</td></tr>
+            <tr><td>date</td><td>string，默认今天</td><td><code>YYYY-MM-DD</code>。</td></tr>
+            <tr><td>start</td><td>string，默认 "09:00"</td><td><code>HH:mm</code> 24 小时制。</td></tr>
+            <tr><td>durMin</td><td>number，默认 30</td><td>持续分钟。</td></tr>
+            <tr><td>title</td><td>string，默认「新时间块」</td><td>展示标题；关联任务时随任务标题同步。</td></tr>
+            <tr><td>taskId</td><td>string，默认 null</td><td>关联的任务 ID。</td></tr>
+            <tr><td>cat</td><td>string，默认 "work"</td><td>分类，见下表。</td></tr>
+          </tbody>
+        </table></div>
+        <h3>五种分类</h3>
+        <div class="chips" aria-label="分类">
+          <span class="chip">work 工作</span><span class="chip">study 学习</span><span class="chip">sport 运动</span><span class="chip">life 生活</span><span class="chip">rest 休息</span>
         </div>
-        <pre><button class="copy" type="button">复制</button><code>const task = tide.tasks.create({
+        <pre><button class="copy" type="button">复制</button><code><span class="cmt">// 创建任务再排上日程：先拿 id，再关联时间块</span>
+const task = tide.tasks.create({
   title: "整理插件适配清单",
   note: "先桌面端，再 Android 内置",
-  quad: 2,
-  estMin: 45,
+  quad: 2, estMin: 45,
   tags: ["插件", "开发"],
   project: "TideBalance",
   due: tide.util.today()
 });
 
-tide.blocks.create({
+const block = tide.blocks.create({
   date: tide.util.today(),
-  start: "14:00",
-  durMin: 45,
+  start: "14:00", durMin: 45,
   title: task.title,
   taskId: task.id,
   cat: "work"
 });</code></pre>
+        <div class="callout"><strong>两个容易踩的坑</strong><p>① <code>tasks.list()</code> 返回的是拷贝，直接改数组元素等于没改，必须调用 <code>update</code>；② 时间按「分钟数」运算最稳妥——用 <code>mmOf</code> 进、<code>hhmmOf</code> 出，别自己拼字符串。</p></div>
       </section>
 
-      <section id="patterns">
-        <p class="section-kicker">方案 / Adaptation patterns</p>
-        <h2>四种常用适配</h2>
-        <div class="cards">
-          <article class="card"><span class="tag">REMOTE → REMINDER</span><h3>把外部消息转成提醒</h3><p>用 HTTP 桥拉取，先把远端内容规范化，再交给 <code>parseWhen</code>；创建任务后再创建关联时间块。不要把未清洗 HTML 直接写入 <code>innerHTML</code>。</p></article>
-          <article class="card"><span class="tag">STATE → VIEW</span><h3>保存偏好与进度</h3><p>筛选器、已读 ID 和刷新时间放入私有 storage。避免长期明文保存密码、令牌或 Cookie；对必要凭据说明风险。</p></article>
-          <article class="card"><span class="tag">TASK → ACTION</span><h3>扩展任务动作</h3><p>动作 ID 保持稳定，传入 task 只用于读取上下文；修改统一走 <code>tasks.update</code>，不要直接改对象。</p></article>
-          <article class="card"><span class="tag">EVENT → LOOSE COUPLING</span><h3>插件间松耦合</h3><p>使用 <code>plugin-id:event-name</code> 命名。事件总线仅当前进程有效，不是可靠队列，也不保存历史消息。</p></article>
-        </div>
-        <h3>带登录态的请求</h3>
+      <section id="timeparse">
+        <p class="section-kicker">解析器 / parseWhen</p>
+        <h2>把一句话变成日程</h2>
+        <p class="intro"><code>tide.util.parseWhen(text)</code> 是宿主内置的中文时间解析器，专为聊天消息和通知标题设计。返回 <code>{ date, startMin, endMin, title }</code>——date 为 <code>YYYY-MM-DD</code> 或 null，startMin / endMin 为当日分钟数或 null，title 是清洗后的纯文本标题。</p>
+        <h3>识别的日期写法</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>写法</th><th>示例</th><th>规则</th></tr></thead>
+          <tbody>
+            <tr><td>相对日</td><td>今天 / 明天 / 后天 / 大后天</td><td>直接换算。</td></tr>
+            <tr><td>完整日期</td><td>2026年9月10日、2026-9-10</td><td>按字面取值。</td></tr>
+            <tr><td>月日</td><td>9月10号、9 月 10 日</td><td>今年没有则顺延到明年。</td></tr>
+            <tr><td>星期</td><td>周三 / 下周3 / 下下周星期五</td><td>「下周」永远指下一个完整周；今天也算进本周。</td></tr>
+            <tr><td>下月几号</td><td>下个月5号</td><td>按字面取下月。</td></tr>
+            <tr><td>月底</td><td>这个月底 / 下月底</td><td>取当月最后一天。</td></tr>
+            <tr><td>几号</td><td>15号</td><td>本月已过则顺延到下月。</td></tr>
+          </tbody>
+        </table></div>
+        <h3>识别的时间写法</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>写法</th><th>示例</th><th>规则</th></tr></thead>
+          <tbody>
+            <tr><td>钟点</td><td>下午3点、晚上8点半、9点一刻、10点40分</td><td>时段词：凌晨/早上/上午/中午/下午/傍晚/晚上。下午/晚上自动 +12。</td></tr>
+            <tr><td>24 小时</td><td>14:30、9:05</td><td>冒号形式。</td></tr>
+            <tr><td>区间</td><td>下午3点到4点半、14:00–15:30</td><td>分隔词：到/至/—/--/~/～/-。结束时间继承开始时间的时段词（「下午3点到4点」= 15:00–16:00）。</td></tr>
+            <tr><td>语义归一</td><td>今晚8点、明早九点</td><td>先拆成「今天 晚上8点」再解析，避免时间词被日期吞掉。</td></tr>
+          </tbody>
+        </table></div>
+        <h3>标题清洗</h3>
+        <ul class="plain">
+          <li>所有被解析掉的日期、时间片段都会从标题里剔除，不会残留「11:40」这类碎片。</li>
+          <li>口语引导词（记得、帮忙、提醒我、安排一下、定在……）会被移除。</li>
+          <li>标题截断到 24 字；清洗后为空时退回原文前 24 字，再兜底为「捕获的事件」。</li>
+        </ul>
+        <pre><button class="copy" type="button">复制</button><code><span class="cmt">// 「记得明天下午3点到4点半开组会」→</span>
+// { date: "2026-09-11", startMin: 900, endMin: 990, title: "开组会" }
+const { date, startMin, endMin, title } = tide.util.parseWhen(raw);
+
+if (date) {
+  tide.blocks.create({
+    date,
+    start: tide.util.hhmmOf(startMin),
+    durMin: endMin ? endMin - startMin : 30,
+    title,
+    cat: tide.util.guessCategory(raw)
+  });
+}</code></pre>
+        <p>配套的两个猜测函数：<code>guessCategory</code> 按关键词分类（健身跑步→sport、吃饭快递→life、考试上课→study、休息午睡→rest、其余→work）；<code>guessQuad(date)</code> 两天内到期归象限 I、否则象限 II，date 为空返回 2。</p>
+      </section>
+
+      <section id="recipes">
+        <p class="section-kicker">实战 / Recipes from builtin plugins</p>
+        <h2>四个取自真实插件的范例</h2>
+        <p class="intro">下面的模式都来自当前随包分发的内置插件，按「要做什么」对号入座。完整源码在仓库 <code>tidebalance/public/plugins/</code> 里。</p>
+
+        <h3>1 · 计时器视图 —— 学 pomodoro</h3>
+        <p>适合番茄钟、专注计时这类交互视图。三个关键动作：<strong>IIFE 封闭状态</strong>、<strong>render 先清空再重建</strong>、<strong>interval 存进闭包变量</strong>以便随时停。</p>
+        <pre><button class="copy" type="button">复制</button><code>(function () {
+  let timer = null, left = 25 * 60;
+
+  function stop() { clearInterval(timer); timer = null; }
+
+  function render(el) {
+    el.replaceChildren();                     <span class="cmt">// 幂等：每次进入视图都重建</span>
+    const btn = document.createElement("button");
+    btn.textContent = "开始";
+    btn.addEventListener("click", () => {
+      if (timer) { stop(); btn.textContent = "继续"; }
+      else {
+        timer = setInterval(() => {
+          left -= 1;
+          if (left <= 0) { stop(); tide.notify("时间到"); }
+        }, 1000);
+        btn.textContent = "暂停";
+      }
+    });
+    el.append(btn);
+  }
+
+  tide.ui.registerView({ id: "my-timer", title: "我的计时", icon: "计", render });
+  tide.events.on("my-timer:reset", () => { stop(); left = 25 * 60; });
+})();</code></pre>
+
+        <h3>2 · 后台轮询推送 —— 学 wechat-push</h3>
+        <p>适合「定时检查数据、条件满足就推送」的场景（Server酱、webhook 等）。要点：<strong>插件加载即启动定时器</strong>，视图只是配置入口；用带日期的去重键防止重复推送；日志写进私有 storage。</p>
+        <pre><button class="copy" type="button">复制</button><code>(function () {
+  const state = { enabled: false, timer: null, pushed: [] };
+
+  async function tick() {
+    if (!state.enabled) return;
+    const d = tide.util.today();
+    state.pushed = state.pushed.filter((k) => k.startsWith(d));  <span class="cmt">// 只保留今天</span>
+    const blocks = await tide.blocks.list(d);
+    const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+    for (const b of blocks) {
+      const [h, m] = b.start.split(":").map(Number);
+      const delta = h * 60 + m - nowMin;
+      const key = d + "|" + b.id;
+      if (delta >= 0 && delta <= 5 && !state.pushed.includes(key)) {
+        state.pushed.push(key);
+        await tide.http.get("https://你的推送端点?title=" + encodeURIComponent(b.title));
+      }
+    }
+    await tide.storage.set("pushed", state.pushed);
+  }
+
+  function startTimer() {
+    if (state.timer) clearInterval(state.timer);
+    state.timer = setInterval(tick, 60 * 1000);
+  }
+
+  tide.ui.registerView({ id: "my-push", title: "定时推送", icon: "推", render });
+  startTimer();  <span class="cmt">// 加载即跑，不依赖视图是否打开</span>
+})();</code></pre>
+
+        <h3>3 · 只读报表 —— 学 weekly-report</h3>
+        <p>不写任何数据、只聚合展示的场景。一次 <code>Promise.all</code> 拉七天的时间块，再归约成统计值。</p>
+        <pre><button class="copy" type="button">复制</button><code>const days = [];
+for (let i = -6; i <= 0; i++) days.push(tide.util.addDays(tide.util.today(), i));
+
+Promise.all(days.map((d) => tide.blocks.list(d))).then((weeks) => {
+  const perDay = weeks.map((bs) => bs.reduce((a, b) => a + b.durMin, 0));
+  const byCat = {};
+  weeks.flat().forEach((b) => { byCat[b.cat] = (byCat[b.cat] || 0) + b.durMin; });
+  <span class="cmt">// 用 perDay / byCat 画图或渲染表格…</span>
+});</code></pre>
+
+        <h3>4 · 带登录态的抓取 —— 学 chaoxing / cppu-notify</h3>
+        <p>需要账号登录的教务、门户系统：先建会话登录，再复用同一会话拉数据；验证码用 <code>binary: true</code> 拿 Base64；协议需要 DES 加密时走 Rust 端。</p>
         <pre><button class="copy" type="button">复制</button><code>const sid = await tide.http.session();
+
 const login = await tide.http.fetch(sid, "POST", "https://example.com/login", {
   headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  body: new URLSearchParams({ username, password }).toString()
+  body: new URLSearchParams({ username, password,
+    password: await tide.util.desEncryptHex(password, key) }).toString()
 });
+if (login.status !== 200) { tide.notify(`登录失败：HTTP ${login.status}`); return; }
 
-if (login.status !== 200) {
-  tide.notify(`登录失败：HTTP ${login.status}`);
-  return;
-}
+<span class="cmt">// 验证码：binary 拿 Base64，直接塞进 img.src</span>
+const cap = await tide.http.fetch(sid, "GET", "https://example.com/captcha", { binary: true });
+img.src = "data:image/png;base64," + cap.body;
 
 const feed = await tide.http.fetch(sid, "GET", "https://example.com/api/feed");</code></pre>
+        <div class="callout cool"><strong>凭据安全底线</strong><p>密码、令牌只存插件私有 storage 时要明说风险；不要写进日志或 <code>console.log</code>；远端文本一律 <code>textContent</code> 或转义后渲染，别直接 <code>innerHTML</code>。</p></div>
+      </section>
+
+      <section id="lifecycle">
+        <p class="section-kicker">生命周期 / Enable · disable · rescan</p>
+        <h2>停用、重扫与副作用清理</h2>
+        <p class="intro">用户可以随时停用插件或点「重新扫描」。宿主负责摘掉它注册的东西，但<strong>管不到你自己创建的全局副作用</strong>——这是插件出重复视图、重复通知的头号原因。</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>操作</th><th>宿主做什么</th><th>你需要自己做什么</th></tr></thead>
+          <tbody>
+            <tr><td>停用</td><td>移除该插件注册的视图、任务动作、事件订阅、关怀频道；下次启用重新执行入口。</td><td>停用不会清理你的 <code>setInterval</code>、<code>document</code> 级监听和注入的 <code>&lt;style&gt;</code>——轮询类插件要在通知或 UI 上提示用户，或设计成停用后无害。</td></tr>
+            <tr><td>重新启用</td><td>重新执行入口代码；先摘掉旧注册再执行，不会叠加。</td><td>闭包里的旧定时器还活着（旧闭包没被销毁），<strong>启动定时器前必须先 clearInterval</strong>。</td></tr>
+            <tr><td>重新扫描</td><td>清空全部注册与注册表，从头加载所有插件。</td><td>同上；外部插件文件改动也靠这一步生效。</td></tr>
+            <tr><td>删除（外部插件）</td><td>停用 → 删除目录 → 清掉插件状态与存储。内置插件不可删除，只能停用。</td><td>无。</td></tr>
+          </tbody>
+        </table></div>
+        <h3>幂等启动模板</h3>
+        <pre><button class="copy" type="button">复制</button><code>(function () {
+  let timer = null;   <span class="cmt">// 闭包变量；重新执行入口时这是一个全新的闭包</span>
+
+  function startTimer() {
+    <span class="cmt">// 关键：先清旧再起新。没有这一行，重扫一次就多一条轮询</span>
+    if (timer) clearInterval(timer);
+    timer = setInterval(tick, 60 * 1000);
+  }
+
+  function ensureStyle() {
+    <span class="cmt">// 注入全局样式前先查重，style 元素按 id 挂到 head</span>
+    if (document.getElementById("my-plugin-style")) return;
+    const st = document.createElement("style");
+    st.id = "my-plugin-style";
+    document.head.append(st);
+  }
+
+  startTimer();
+})();</code></pre>
+      </section>
+
+      <section id="events">
+        <p class="section-kicker">事件 / In-process bus</p>
+        <h2>事件总线的能与不能</h2>
+        <p class="intro"><code>tide.events</code> 是当前进程内的发布订阅：适合插件间松耦合协作，不适合当可靠队列。</p>
+        <ul class="plain">
+          <li><strong>命名约定</strong>：事件名用 <code>插件ID:事件名</code>，例如 <code>pomodoro:finished</code>，避免跨插件撞名。</li>
+          <li><strong>监听器异常被吞</strong>：emit 时逐个 try/catch，某个监听器抛错不影响其他监听器，错误只进 console。</li>
+          <li><strong>没有退订</strong>：<code>events.on</code> 不返回退订函数；停用插件时宿主按插件 ID 批量摘除。</li>
+          <li><strong>不持久、不跨进程</strong>：应用重启即清空；微信推送这类外部通道收不到。</li>
+          <li><strong>不保证顺序</strong>：同一事件的监听器按注册顺序同步执行，但跨事件没有顺序保证。</li>
+        </ul>
+        <div class="callout"><strong>宿主当前不广播数据变更</strong><p>写这份手册时，宿主还没有在任务/时间块变化时向插件广播事件（总线里没有 <code>tasks:changed</code> 这类宿主事件）。需要感知数据变化的插件（如轮询推送、任务看板）应自行定时重读 <code>tasks.list()</code> / <code>blocks.list()</code>，或在 <code>render</code> 时重读。这是已知边界，后续版本可能补上。</p></div>
       </section>
 
       <section id="compat">
         <p class="section-kicker">矩阵 / Platform boundaries</p>
         <h2>先决定插件运行在哪</h2>
         <div class="cards">
-          <article class="card"><span class="tag">WINDOWS / LINUX DESKTOP</span><h3>完整路径</h3><p>支持外部插件扫描、文件读取、Rust 网络桥、Cookie 会话、系统浏览器与 DES 工具。</p></article>
-          <article class="card"><span class="tag">ANDROID</span><h3>随应用内置</h3><p>当前不扫描外部目录。将插件放进 <code>public/plugins/</code>，加入 <code>BUILTIN_IDS</code>，随安装包一起构建。</p></article>
-          <article class="card"><span class="tag">BROWSER DEV</span><h3>有限降级</h3><p>数据落 localStorage；不发现外部插件；HTTP 受浏览器 CORS/Cookie 策略限制；DES 不可用。</p></article>
-          <article class="card"><span class="tag">WECHAT MINIPROGRAM</span><h3>不可直接复用</h3><p>小程序版共享数据格式和时间解析思路，但没有插件宿主；需改写为小程序页面或连接桌面端局域网服务。</p></article>
+          <article class="card"><span class="tag">WINDOWS / LINUX DESKTOP</span><h3>完整路径</h3><p>外部插件扫描与文件读取、Rust 网络桥（绕 CORS）、Cookie 会话、DES 工具、系统浏览器、关怀频道全部可用。插件开发的默认目标平台。</p></article>
+          <article class="card"><span class="tag">ANDROID</span><h3>随应用内置</h3><p>不扫描外部目录。插件必须放进 <code>public/plugins/</code> 并加入 <code>BUILTIN_IDS</code>，随 APK 构建。网络桥与 DES 在移动端同样走 Rust，行为一致。</p></article>
+          <article class="card"><span class="tag">BROWSER DEV</span><h3>有限降级</h3><p>数据落 localStorage；<code>listPlugins</code> 返回空（外部插件不可用）；HTTP 走浏览器 fetch，受 CORS 约束；<code>desEncryptHex</code> 直接抛错；会话 ID 是本地随机串，无真实 Cookie Jar。</p></article>
+          <article class="card"><span class="tag">WECHAT MINIPROGRAM</span><h3>不可直接复用</h3><p>小程序版共享数据格式与时间解析思路，但没有插件宿主。要把能力带过去，只能改写成小程序页面，或让它连接桌面端的局域网服务。</p></article>
         </div>
-        <div class="callout"><strong>计时器与清理</strong><p>插件停用时，宿主会移除注册的视图、任务动作和事件订阅，但不会自动清理插件自行创建的 <code>setInterval</code>、DOM 全局监听或全局样式。需要重复扫描/启停的插件应避免重复注册全局副作用，或自行设计幂等清理。</p></div>
+        <div class="callout"><strong>面向 Android 开发的额外纪律</strong><p>内置插件一旦加入 <code>BUILTIN_IDS</code>，Android 用户无法删除只能停用。插件要经得起「长期驻留」：轮询频率克制、失败静默降级、不要在 render 里做重活。</p></div>
+      </section>
+
+      <section id="debug">
+        <p class="section-kicker">排错 / Debugging</p>
+        <h2>出问题时先看这三处</h2>
+        <p class="intro">插件加载失败不会弹窗打断使用——它安静地记录在设置页和 DevTools console 里。</p>
+        <ul class="plain">
+          <li><strong>设置 → 插件</strong>：加载失败的插件会显示错误信息（manifest 解析失败、入口执行异常都在这）。</li>
+          <li><strong>DevTools console</strong>：宿主以 <code>插件 xxx 加载失败:</code> 为前缀输出完整堆栈；你自己的 <code>console.log</code> 也在这里。桌面端按 F12 打开。</li>
+          <li><strong>重新扫描</strong>：改完文件后手动触发，外部插件不会自动热更新。</li>
+        </ul>
+        <h3>常见报错速查</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>报错</th><th>原因与处理</th></tr></thead>
+          <tbody>
+            <tr><td>manifest 拉取失败 (404)</td><td>内置插件：目录没进 <code>public/plugins/</code>，或 ID 没加进 <code>BUILTIN_IDS</code>。</td></tr>
+            <tr><td>JSON.parse 异常</td><td>manifest 里有注释或尾逗号——必须是严格 JSON。</td></tr>
+            <tr><td>插件 xxx 加载失败: SyntaxError</td><td>main.js 语法错误，看 console 堆栈定位行号。</td></tr>
+            <tr><td>会话不存在或已过期，请重新创建</td><td>旧的 <code>http.session()</code> ID 失效（重扫或重启后）。重新建会话再登录。</td></tr>
+            <tr><td>仅支持 http/https 地址</td><td>网络桥协议白名单，检查 URL 拼接是否漏了协议头。</td></tr>
+            <tr><td>DES 加密仅支持在 Tauri 环境使用</td><td>浏览器调试模式没有 Rust 桥；真机上正常。</td></tr>
+            <tr><td>命令 xxx 仅在 Tauri 环境可用</td><td>同上——调试浏览器里走不到 Rust 命令。</td></tr>
+            <tr><td>视图出现两份 / 通知来两条</td><td>定时器或注册没做幂等清理，见<a href="#lifecycle">生命周期</a>一节。</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout cool"><strong>调试建议：先跑浏览器，再上真机</strong><p>浏览器模式数据落 localStorage、改代码刷新即见，适合磨 UI 和纯逻辑；涉及网络桥、会话、DES、外部插件目录时再切桌面端验证，Android 功能最后随 APK 实测。</p></div>
       </section>
 
       <section id="test">
         <p class="section-kicker">交付 / Test & release</p>
         <h2>发布前逐项过一遍</h2>
         <ol class="checklist">
-          <li><div><strong>清单可解析</strong><br>JSON 无注释、ID 与目录匹配、entry 存在、版本已更新。</div></li>
-          <li><div><strong>声明真实能力</strong><br>只列实际使用的 permissions；description 写清远端服务、登录与必要配置。</div></li>
-          <li><div><strong>验证完整生命周期</strong><br>首次加载、停用、重新启用、重新扫描、应用重启都不产生重复视图或计时器。</div></li>
-          <li><div><strong>检查数据写入</strong><br>创建、更新、删除任务/时间块后重启应用，确认持久化与关联删除符合预期。</div></li>
-          <li><div><strong>覆盖失败分支</strong><br>断网、非 2xx、返回结构改变、登录过期、空列表与存储损坏时给出可行动提示。</div></li>
-          <li><div><strong>检查页面安全</strong><br>远端文本用 <code>textContent</code> 或转义后渲染；外链限制为可信 http/https；不记录凭据。</div></li>
-          <li><div><strong>做目标平台实测</strong><br>桌面外置插件在真实数据目录验证；Android 内置插件必须随 APK 构建测试。</div></li>
+          <li><div><strong>清单可解析</strong><br>JSON 无注释、无尾逗号；ID 与目录名一致；entry 指向的文件存在；version 已更新。</div></li>
+          <li><div><strong>声明真实能力</strong><br>只列实际使用的 permissions；description 写清远端服务、登录要求与敏感配置。</div></li>
+          <li><div><strong>验证完整生命周期</strong><br>首次加载 → 停用 → 重新启用 → 重新扫描 → 应用重启，全程不出现重复视图、重复定时器、重复通知。</div></li>
+          <li><div><strong>检查数据写入</strong><br>创建、更新、删除任务/时间块后重启应用，确认持久化正确；删任务时关联时间块一并消失符合预期。</div></li>
+          <li><div><strong>覆盖失败分支</strong><br>断网、非 2xx、返回结构改变、登录过期、空列表、存储损坏——每种情况都有可行动的用户提示，而不是静默失败。</div></li>
+          <li><div><strong>检查页面安全</strong><br>远端文本用 <code>textContent</code> 或转义后渲染；外链限可信 http/https；凭据不进日志。</div></li>
+          <li><div><strong>做目标平台实测</strong><br>外部插件在真实数据目录验证；内置插件必须随 APK 构建后在 Android 真机过一遍。</div></li>
         </ol>
-        <h3>内置发布改动</h3>
+        <h3>内置发布改动清单</h3>
         <pre><code>tidebalance/public/plugins/&lt;plugin-id&gt;/manifest.json
 tidebalance/public/plugins/&lt;plugin-id&gt;/main.js
-tidebalance/src/pluginHost.js  // BUILTIN_IDS 加入 plugin-id</code></pre>
-        <p>实现依据：<a href="https://github.com/momoqiqi-qwq/tidebalance/blob/main/tidebalance/src/pluginHost.js" target="_blank" rel="noreferrer">pluginHost.js</a>、<a href="https://github.com/momoqiqi-qwq/tidebalance/blob/main/tidebalance/src/store.js" target="_blank" rel="noreferrer">store.js</a>、<a href="https://github.com/momoqiqi-qwq/tidebalance/tree/main/tidebalance/public/plugins" target="_blank" rel="noreferrer">内置插件示例</a>。</p>
+tidebalance/src/pluginHost.js  <span class="cmt">// BUILTIN_IDS 加入 plugin-id</span></code></pre>
+        <p>实现依据：<a href="https://github.com/momoqiqi-qwq/tidebalance/blob/main/tidebalance/src/pluginHost.js" target="_blank" rel="noreferrer">pluginHost.js</a>、<a href="https://github.com/momoqiqi-qwq/tidebalance/blob/main/tidebalance/src/store.js" target="_blank" rel="noreferrer">store.js</a>、<a href="https://github.com/momoqiqi-qwq/tidebalance/blob/main/tidebalance/src/timeParser.js" target="_blank" rel="noreferrer">timeParser.js</a>、<a href="https://github.com/momoqiqi-qwq/tidebalance/tree/main/tidebalance/public/plugins" target="_blank" rel="noreferrer">内置插件示例</a>。</p>
       </section>
     </main>
   </div>
