@@ -5,7 +5,7 @@
 - **四象限**：重要/紧急四象限管理任务，点卡片开详情抽屉，可一键「排入今天时间块」
 - **时间块**：左侧任务池拖进一天的时间轴（鼠标/触摸通用，安卓可拖），「现在」红线、7 天节奏、明日预告
 - **捕获**：把聊天文字、网页文本、链接、图片**拖进窗口**（或截图后 Ctrl+V），自动解析中文时间（"明天下午3点到4点"、"9月10日 14:00"、"下周一晚上8点半"）并在对应时间创建时间块
-- **插件系统**：内置「番茄专注」「周度报告」两个插件演示；支持把插件放进数据目录 `plugins/` 动态加载
+- **插件系统**：内置「番茄专注」「周度报告」「中国节假日」等插件；支持把插件放进数据目录 `plugins/` 动态加载
 - **本地优先**：数据就是一个 JSON 文件，存在本机应用数据目录，无账号、无联网
 - **Tauri 2**：一套代码打包 Windows / Linux / Android
 
@@ -26,7 +26,7 @@ tidebalance/
 │     ├─ drawer.js       # 任务详情抽屉
 │     ├─ timeblock.js    # 时间块视图
 │     └─ settings.js     # 设置（数据 / 插件管理 / 关于）
-├─ public/plugins/       # 内置插件（番茄专注、周度报告、竞赛消息雷达、学习通通知、警大门户通知、微信推送）
+├─ public/plugins/       # 内置插件（番茄专注、周度报告、中国节假日、竞赛消息雷达、学习通通知、警大门户通知、微信推送）
 ├─ miniprogram/          # 微信小程序（连接 Win 控制端局域网服务）
 └─ src-tauri/            # Rust 侧：数据读写(原子写)、插件目录扫描、应用信息
 ```
@@ -129,6 +129,8 @@ plugins/
 
 把文件夹放进 **设置 → 数据** 里显示的目录下的 `plugins/` 子目录（Android 上暂不支持外部目录扫描，可用内置插件方式），回到设置点「重新扫描」即可。
 
+**图标**：`manifest.json` 的 `icon` 只决定**侧栏的字形标识**（建议 1 个汉字，最多 2 字符，如 `"番"`、`"学"`）；侧栏方块、插件市场卡片、设置页列表里的**方块图标**是随包 PNG 资源（`public/icons/<key>.png`，128×128 RGBA 透明底，由 `src/icons.js` 的 `KEYS` 白名单放行，未登记的 key 一律回落拼图）。新增/更换图标、尺寸与授权规则的完整说明见 **[docs/plugin-icons.md](./docs/plugin-icons.md)**。
+
 `main.js` 在严格模式的函数沙箱中执行，唯一入口是注入的 `tide` 对象：
 
 ```js
@@ -150,6 +152,10 @@ tide.blocks.list("2026-09-05"); tide.blocks.create({ start: "10:00", durMin: 45,
 
 // 插件私有存储（随主数据一起持久化）
 await tide.storage.set("count", 1); await tide.storage.get("count", 0);
+
+// 插件随包资源（内置插件读取 public/plugins/<id>/，用户插件读取自身目录）
+const cfg = await tide.assets.json("data/config.json");
+const text = await tide.assets.text("README.txt");
 
 // 通知与事件
 tide.notify("完成了一件事");
@@ -187,6 +193,7 @@ tide.util.today(); tide.util.addDays("2026-09-05", 1);
 tide.util.mmOf("09:30"); tide.util.hhmmOf(570); tide.util.durLabel(90);
 ```
 
+- 内置插件 `public/plugins/cn-holiday/`（中国节假日）：由 cn-holiday Skill 移植，内置 2024–2026 数据快照，支持下个假期倒计时、下次休息日、指定日期放假/调休判断、全年安排；缺失年份通过 `tide.http` 联网读取并缓存。
 - 内置插件 `public/plugins/gx-news/`（竞赛消息雷达）：`tide.http.get` 抓取摩课云竞赛平台公告、关键词/类型/月份/已读过滤、`openUrl` 打开详情、`parseWhen` 一键转提醒。
 - 内置插件 `public/plugins/chaoxing-notify/`（学习通通知）：需要登录态的场景——`http.session/fetch` 保持 Cookie、`desEncryptHex` 在本机完成超星 DES 登录加密（改造自 chaoxing-notify-skill）。注意：学习通「消息中心」接口有平台 IP 白名单，被拒时插件会明确提示；课程列表与通知分享码查询不受影响。
 - 内置插件 `public/plugins/cppu-notify/`（警大门户通知）：改造自 cppu-notify-skill，完整复刻三段式 SSO 链路（主 SSO 验证码手输 → sso-jw bridge → 门户 tp_up）+ Sudy CAS RSA 加密（BigInt 移植，与原实现逐字节一致）。相比原 skill 移除了 74MB 的 tesseract OCR 运行时——验证码改为界面内手输，CASTGC 5 天内静默续期免验证码。
@@ -196,3 +203,11 @@ tide.util.mmOf("09:30"); tide.util.hhmmOf(570); tide.util.durLabel(90);
 
 - 03 [权衡 · 四象限决策台](../ui-概念稿/03-权衡-四象限决策.html)
 - 04 [潮汐 · 时间块规划轴](../ui-概念稿/04-潮汐-时间块规划.html)
+
+
+## 插件管理增强
+
+- 已内置 `exam-calendar`（考试日历）插件。
+- 设置 → 插件支持 ZIP 导入、所选插件 ZIP 导出、保存插件配置、全选用户插件和多选删除。
+- 内置插件只能启用/停用，不能误删；批量删除只作用于用户插件目录。
+- 设置 → 插件标题旁提供 GitHub 图标「插件开发文档」，点击打开 https://github.com/momoqiqi-qwq/tidebalance 。

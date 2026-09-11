@@ -70,6 +70,6 @@
 
 ### 🙏 贡献
 
-欢迎 Issue 与 PR：时间解析规则扩充（`src/timeParser.js`）、新内置插件、Linux/Android 适配反馈都特别有价值。插件开发 API 文档见 [`tidebalance/README.md`](./tidebalance/README.md)。
+欢迎 Issue 与 PR：时间解析规则扩充（`src/timeParser.js`）、新内置插件、Linux/Android 适配反馈都特别有价值。插件开发 API 文档见 [`tidebalance/README.md`](./tidebalance/README.md)，界面与插件**图标规范**（字形图标 + 128×128 随包 PNG、授权署名、自检清单）见 [`tidebalance/docs/plugin-icons.md`](./tidebalance/docs/plugin-icons.md)。
 
 > 本 README 按照 [App-Showcase-Template](https://github.com/yxs2003/App-Showcase-Template) 的展示流程编写。
