@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="潮衡 TideBalance 内置插件使用说明：每个插件的作用、使用步骤、前置条件和平台边界。">
+  <meta name="theme-color" content="#16213e">
+  <title>插件使用说明 · 潮衡 TideBalance</title>
+  <style>
+    :root {
+      --ink: #16213e;
+      --ink-2: #33415c;
+      --muted: #68728a;
+      --paper: #f4f7fb;
+      --sheet: #ffffff;
+      --tide: #188ca5;
+      --tide-dark: #0f6d80;
+      --foam: #d9f2f3;
+      --sun: #ff7a59;
+      --line: #d9e1ec;
+      --shadow: 0 18px 48px rgba(22, 33, 62, .10);
+      --sans: "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+      --display: "STZhongsong", "Songti SC", "Noto Serif SC", serif;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font: 16px/1.75 var(--sans); }
+    a { color: inherit; }
+    :focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 22px;
+      padding: 19px clamp(20px, 4vw, 58px);
+      color: #fff;
+      background: var(--ink);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 800; letter-spacing: .06em; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 37px;
+      aspect-ratio: 1;
+      border: 1px solid rgba(255,255,255,.46);
+      border-radius: 50%;
+      color: #8be1e4;
+      font-family: var(--display);
+    }
+    .topbar nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px 22px; font-size: 14px; }
+    .topbar nav a { color: #ccd5e6; text-decoration: none; }
+    .topbar nav a:hover, .topbar nav a[aria-current="page"] { color: #8be1e4; }
+
+    .hero {
+      padding: clamp(48px, 8vh, 86px) clamp(20px, 4vw, 58px) clamp(48px, 8vh, 78px);
+      color: #fff;
+      background: var(--ink);
+    }
+    .hero-inner {
+      width: min(1160px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(240px, .6fr);
+      gap: clamp(34px, 7vw, 92px);
+      align-items: end;
+    }
+    .eyebrow { margin: 0 0 16px; color: #8be1e4; font: 700 12px/1.2 var(--mono); letter-spacing: .17em; text-transform: uppercase; }
+    h1 { margin: 0; font: 400 clamp(44px, 7vw, 88px)/1.02 var(--display); }
+    .lede { max-width: 750px; margin: 24px 0 0; color: #ccd5e6; font-size: clamp(16px, 1.8vw, 20px); }
+    .hero-aside { padding-left: 25px; border-left: 1px solid rgba(255,255,255,.24); }
+    .hero-aside b { display: block; color: var(--sun); font: 700 11px var(--mono); letter-spacing: .14em; }
+    .hero-aside strong { display: block; margin-top: 7px; font: 500 23px/1.3 var(--display); }
+    .hero-aside p { margin: 9px 0 0; color: #c6d0e3; font-size: 13.5px; }
+    .hero-links { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 25px; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 43px;
+      padding: 0 16px;
+      border: 1px solid rgba(255,255,255,.34);
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .button.primary { border-color: var(--sun); background: var(--sun); color: var(--ink); }
+
+    main { width: min(1160px, calc(100% - 36px)); margin: -28px auto 88px; position: relative; z-index: 2; }
+    .start, .catalog, .third-party {
+      padding: clamp(25px, 4vw, 38px);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--sheet);
+      box-shadow: var(--shadow);
+    }
+    .start { margin-bottom: 68px; }
+    .section-kicker { margin: 0 0 8px; color: var(--tide-dark); font: 700 11px var(--mono); letter-spacing: .15em; text-transform: uppercase; }
+    h2 { margin: 0 0 12px; font: 500 clamp(30px, 4vw, 48px)/1.12 var(--display); }
+    .section-lead { max-width: 780px; margin: 0; color: var(--ink-2); font-size: 17px; }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+      margin: 28px 0 0;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .steps li { min-height: 140px; padding: 22px; border-right: 1px solid var(--line); }
+    .steps li:last-child { border-right: 0; }
+    .steps b { display: block; margin-bottom: 7px; color: var(--sun); font: 700 12px var(--mono); }
+    .steps strong { display: block; margin-bottom: 5px; font-size: 16px; }
+    .steps span { display: block; color: var(--muted); font-size: 13.5px; line-height: 1.65; }
+
+    .catalog { margin-bottom: 68px; }
+    .catalog-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: end; }
+    .count {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+      color: var(--muted);
+      font: 12px var(--mono);
+      white-space: nowrap;
+    }
+    .count b { color: var(--ink); font-size: 29px; line-height: 1; }
+    .jump {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin: 24px 0 28px;
+      padding: 17px 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .jump a {
+      padding: 5px 9px;
+      border: 1px solid #b8c6d8;
+      border-radius: 999px;
+      color: var(--ink-2);
+      text-decoration: none;
+      font-size: 12.5px;
+    }
+    .jump a:hover { border-color: var(--tide); color: var(--tide-dark); background: var(--foam); }
+
+    .plugin-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .plugin-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: 24px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--accent, var(--tide));
+      border-radius: 8px;
+      background: var(--sheet);
+      scroll-margin-top: 22px;
+    }
+    .plugin-card::after {
+      content: "";
+      position: absolute;
+      top: -32px;
+      right: -32px;
+      width: 92px;
+      height: 92px;
+      border: 1px solid var(--accent, var(--tide));
+      border-radius: 50%;
+      opacity: .16;
+      pointer-events: none;
+    }
+    .plugin-head { display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; gap: 13px; align-items: center; }
+    .plugin-icon {
+      display: grid;
+      place-items: center;
+      width: 50px;
+      aspect-ratio: 1;
+      border: 1px solid var(--accent, var(--tide));
+      border-radius: 8px;
+      color: var(--accent, var(--tide-dark));
+      background: #f8fafc;
+      font: 500 23px var(--display);
+    }
+    .plugin-head h3 { margin: 0; font-size: 20px; line-height: 1.35; }
+    .plugin-id { margin: 2px 0 0; color: var(--muted); font: 11.5px var(--mono); }
+    .category {
+      align-self: start;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: #f8fafc;
+      font-size: 11.5px;
+      white-space: nowrap;
+    }
+    .plugin-desc { min-height: 75px; margin: 19px 0 16px; color: var(--ink-2); font-size: 14.5px; line-height: 1.75; }
+    .meta { display: flex; flex-wrap: wrap; gap: 6px; min-height: 27px; margin-bottom: 17px; }
+    .meta span {
+      padding: 3px 8px;
+      border: 1px solid #c8d2df;
+      border-radius: 4px;
+      color: var(--muted);
+      background: #f8fafc;
+      font: 11.5px var(--mono);
+    }
+    .plugin-card h4 { margin: 0 0 9px; color: var(--accent, var(--tide-dark)); font: 700 11px var(--mono); letter-spacing: .11em; text-transform: uppercase; }
+    .use-list { margin: 0; padding-left: 20px; color: var(--ink-2); }
+    .use-list li { margin: 5px 0; padding-left: 2px; font-size: 13.5px; line-height: 1.65; }
+    .note {
+      margin: 17px 0 0;
+      padding: 11px 13px;
+      border-left: 3px solid var(--accent, var(--tide));
+      color: var(--muted);
+      background: #f7f9fc;
+      font-size: 12.5px;
+      line-height: 1.65;
+    }
+
+    .third-party { border-left: 5px solid var(--sun); }
+    .third-party p { max-width: 810px; color: var(--ink-2); }
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 22px; }
+    .actions a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--ink);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 700;
+    }
+    .actions a.primary { border-color: var(--sun); background: var(--sun); }
+
+    footer { padding: 43px 18px; color: #c6d0e3; background: var(--ink); text-align: center; font-size: 13px; }
+    footer a { color: #8be1e4; }
+
+    @media (max-width: 920px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-aside { padding: 22px 0 0; border-left: 0; border-top: 1px solid rgba(255,255,255,.24); }
+      .steps { grid-template-columns: 1fr; }
+      .steps li { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .steps li:last-child { border-bottom: 0; }
+    }
+    @media (max-width: 760px) {
+      .topbar { align-items: flex-start; }
+      .topbar nav { display: none; }
+      main { width: min(100% - 24px, 1160px); }
+      .catalog-head { grid-template-columns: 1fr; }
+      .count { justify-self: start; }
+      .plugin-grid { grid-template-columns: 1fr; }
+      .plugin-card { padding: 20px 18px; }
+      .plugin-desc { min-height: 0; }
+    }
+    @media (max-width: 440px) {
+      h1 { font-size: 41px; }
+      .hero { padding-inline: 20px; }
+      .start, .catalog, .third-party { padding: 21px 17px; }
+      .plugin-head { grid-template-columns: 45px minmax(0, 1fr); }
+      .plugin-icon { width: 45px; }
+      .category { grid-column: 2; justify-self: start; margin-top: 3px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="brand-mark">衡</span><span>潮衡 · 插件说明</span></a>
+    <nav aria-label="站点导航">
+      <a href="index.html">开发手册</a>
+      <a href="plugins.html" aria-current="page">插件说明</a>
+      <a href="upload.html">插件工坊</a>
+      <a href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">GitHub ↗</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-inner">
+      <div>
+        <p class="eyebrow">Built-in plugins / User guide</p>
+        <h1>插件怎么用，<br>一张卡说清楚</h1>
+        <p class="lede">这里汇总潮衡当前随应用分发的 10 个内置插件。每张卡说明它能做什么、第一次使用要准备什么，以及最常见的操作路径。</p>
+        <div class="hero-links">
+          <a class="button primary" href="#plugins">查看全部插件</a>
+          <a class="button" href="#before">先看通用步骤</a>
+        </div>
+      </div>
+      <aside class="hero-aside" aria-label="插件概览">
+        <b>INCLUDED</b>
+        <strong>10 个内置插件</strong>
+        <p>Windows · Android · 本地优先<br>部分插件需要联网或登录第三方服务</p>
+      </aside>
+    </div>
+  </section>
+
+  <main>
+    <section class="start" id="before">
+      <p class="section-kicker">Before you start / 通用步骤</p>
+      <h2>从侧栏「插件」进入</h2>
+      <p class="section-lead">内置插件首次发现时默认启用。插件页会自动出现在侧栏；移动端先进入底栏的「插件」，再从卡片进入具体功能。</p>
+      <ol class="steps">
+        <li><b>01</b><strong>打开插件</strong><span>桌面端从侧栏直接进入，或点「插件」查看全部卡片；移动端打开底栏的「插件」入口。</span></li>
+        <li><b>02</b><strong>完成首次设置</strong><span>多数插件开箱即用。校园通知、微信推送、课程表和长辈照护需要账号、SendKey、学期信息或提醒内容。</span></li>
+        <li><b>03</b><strong>管理启用状态</strong><span>进入「设置 → 插件」可停用、启用或重新扫描。内置插件不能删除，关闭后可从侧栏和插件页移除。</span></li>
+      </ol>
+    </section>
+
+    <section class="catalog" id="plugins">
+      <div class="catalog-head">
+        <div>
+          <p class="section-kicker">Plugin catalog / 内置插件</p>
+          <h2>10 张卡片，对应 10 个插件</h2>
+          <p class="section-lead">先按需要找插件，再照着卡里的步骤操作。平台和联网要求都写在每张卡片上。</p>
+        </div>
+        <p class="count"><b>10</b> 个内置插件</p>
+      </div>
+
+      <nav class="jump" aria-label="插件快速索引">
+        <a href="#pomodoro">番茄专注</a>
+        <a href="#weekly-report">周度报告</a>
+        <a href="#cn-holiday">中国节假日</a>
+        <a href="#exam-calendar">考试日历</a>
+        <a href="#gx-news">竞赛消息雷达</a>
+        <a href="#shiguang-schedule">时光课程表</a>
+        <a href="#chaoxing-notify">学习通通知</a>
+        <a href="#cppu-notify">警大门户通知</a>
+        <a href="#wechat-push">微信提醒推送</a>
+        <a href="#elder-care">长辈照护</a>
+      </nav>
+
+      <div class="plugin-grid">
+        <article class="plugin-card" id="pomodoro" style="--accent:#b4492c">
+          <header class="plugin-head">
+            <span class="plugin-icon" aria-hidden="true">番</span>
+            <div>
+              <h3>番茄专注</h3>
+              <p class="plugin-id">pomodoro</p>
+            </div>
+            <span class="category">专注</span>
+          </header>
+          <p class="plugin-desc">环形倒计时专注工具。选择任务后开始 25 分钟专注，可切换 5 分钟短休和 15 分钟长休，完成的番茄会计入累计统计。</p>
+          <div class="meta"><span>无需配置</span><span>选择任务可选</span><span>本地统计</span></div>
+          <h4>怎么用</h4>
+          <ol class="use-list">
+            <li>打开「番茄专注」，在下方选择要关联的任务，也可以保持“不关联任务”。</li>
+            <li>选择“专注 25”“短休 5”或“长休 15”，点“开始”；再次点击可暂停，点“重置”恢复本轮时长。</li>
+            <li>完成后查看页面底部的累计个数和分钟数，并回到四象限或时间块继续处理任务。</li>
+          </ol>
+          <p class="note">计时器只在当前应用运行期间持续。需要后台或锁屏提醒时，请配合“微信提醒推送”或系统级提醒使用。</p>
+        </article>
+
+        <article class="plugin-card" id="weekly-report" style="--accent:#6d4fa3">
+          <header class="plugin-head">
+            <span class="plugin-icon" aria-hidden="true">报</span>
+            <div>
+              <h3>周度报告</h3>
+              <p class="plugin-id">weekly-report</p>
+            </div>
+            <span class="category">复盘</span>
+          </header>
+          <p class="plugin-desc">自动汇总过去 7 天的时间块、分类占比、每日分布和任务完成度，用来快速看清一周的时间投入。</p>
+          <div class="meta"><span>无需配置</span><span>读取本地数据</span><span>自动更新</span></div>
+          <h4>怎么用</h4>
+          <ol class="use-list">
+            <li>先在日常使用中把任务排进四象限和时间块，并尽量选择正确分类。</li>
+            <li>打开「周度报告」，查看过去 7 天的柱状分布、各分类时长和任务完成比例。</li>
+            <li>用报告发现偏科后，回到时间块调整下一周的安排。</li>
+          </ol>
+          <p class="note">报告只统计当前本地数据。分类主要由任务和时间块的类型决定，记录越完整，结果越有参考价值。</p>
+        </article>
+
+        <article class="plugin-card" id="cn-holiday" style="--accent:#0f7d75">
+          <header class="plugin-head">
+            <span class="plugin-icon" aria-hidden="true">假</span>
+            <div>
+              <h3>中国节假日</h3>
+              <p class="plugin-id">cn-holiday</p>
+            </div>
+            <span class="category">日历</span>
+          </header>
+          <p class="plugin-desc">查询法定节假日、调休上班日和下一次休息日。内置 2024 至 2026 年离线数据，缺少年份时可以联网更新并缓存。</p>
+          <div class="meta"><span>内置离线数据</span><span>联网可选</span><span>无需登录</span></div>
+          <h4>怎么用</h4>
+          <ol class="use-list">
+            <li>打开「中国节假日」，首页会显示今天的状态、下一个假期和距离下个休息日的天数。</li>
+            <li>用“查某一天”选择日期并查询，可以判断这天是放假、调休、普通周末还是工作日。</li>
+            <li>在下方切换年份查看全年安排；需要更新时点“联网更新”。</li>
+          </ol>
+          <p class="note">数据源为 holiday-cn，依据国务院办公厅公开安排。重要行程仍建议以官方最新通知为准。</p>
+        </article>
+
+        <article class="plugin-card" id="exam-calendar" style="--accent:#b06a08">
+          <header class="plugin-head">
+            <span class="plugin-icon" aria-hidden="true">考</span>
+            <div>
+              <h3>考试日历</h3>
+              <p class="plugin-id">exam-calendar</p>
+            </div>
+            <span class="category">学习</span>
+          </header>
+          <p class="plugin-desc">汇总四六级、考研、教师资格、计算机等级、专四专八等大学生国家级考试，提供倒计时、官方公告入口、考前提醒和排进日程。</p>
+          <div class="meta"><span>离线数据</span><span>无需登录</span><span>可写入任务</span></div>
+          <h4>怎么用</h4>
+          <ol class="use-list">
+            <li>打开「考试日历」查看未来考次；勾选“只看官方已确认”可隐藏规则推算的预计日期。</li>
+            <li>点“排进日程”为单场考试创建任务和时间块，或点“把最近一场排进日程”一次创建最近一场。</li>
+            <li>需要核对信息时点“官方公告”；在任务标题里写“四级”“考研”等关键词后，可使用任务动作关联最近考试。</li>
+          </ol>
+          <p class="note">标为“预计”的日期由历史规律推算，可能整周偏差。报名、缴费和准考证时间要以官方公告为准。</p>
+        </article>
+
+        <article class="plugin-card" id="gx-news" style="--accent:#2874a6">
+          <header class="plugin-head">
+            <span class="plugin-icon" aria-hidden="true">赛</span>
+            <div>
+              <h3>竞赛消息雷达</h3>
+              <p class="plugin-id">gx-news</p>
+            </div>
+            <span class="category">消息</span>
+          </header>
+          <p class="plugin-desc">从摩课云竞赛平台获取竞赛通知和资讯，支持关键词、类型和月份筛选，标记已读，并把带时间的消息转为潮衡提醒。</p>
+          <div class="meta"><span>需要联网</span><span>无需登录</span><span>可自动刷新</span></div>
+          <h4>怎么用</h4>
+          <ol class="use-list">
+            <li>打开「竞赛消息雷达」，点“刷新”拉取消息；需要持续关注时开启“每 10 分钟自动刷新”。</li>
+            <li>用关键词、类型、月份、“只看未读”等条件缩小范围；点消息卡片会标记已读并打开详情。</li>
+            <li>对包含报名或截止时间的消息点“提醒”，潮衡会解析日期并创建任务和时间块。</li>
+          </ol>
+          <p class="note">消息来自第三方平台，网络不可达或页面结构变化时会显示抓取错误。报名信息以平台公告原文为准。</p>
+        </article>
+
+        <article class="plugin-card" id="shiguang-schedule" style="--accent:#7b3f98">
+          <header class="plugin-head">
+            <span class="plugin-icon" aria-hidden="true">课</span>
+            <div>
+              <h3>时光课程表</h3>
+              <p class="plugin-id">shiguang-schedule</p>
+            </div>
+            <span class="category">校园</span>
+          </header>
+          <p class="plugin-desc">按周查看课程，支持学期周次、节次、自定义时间、单双周、课程编辑、JSON 导入导出、ICS 导出，并可把本周课程加入时间块。</p>
+          <div class="meta"><span>需先设学期</span><span>本地保存</span><span>支持导入</span></div>
+          <h4>怎么用</h4>
+          <ol class="use-list">
+            <li>第一次进入先点“学期与节次”，填写第一周内的开学日期、总周数和每节课的起止时间。</li>
+            <li>点“添加课程”填写课程名、教师、地点、星期和周次；周次支持“1-16”“1,3,5”或单双周按钮。</li>
+            <li>用“导入 / 导出”迁移拾光 JSON 或导出 ICS；点“将本周加入时间块”把本周课程排进潮衡日程。</li>
+          </ol>
+          <p class="note">课程冲突会在加入时间块前停止。已经加入的旧时间块不会因为后续修改课程表而自动更新。</p>
+        </article>
+
+        <article class="plugin-card" id="chaoxing-notify" style="--accent:#c0392b">
+          <header class="plugin-head">
+            <span class="plugin-icon" aria-hidden="true">学</span>
+            <div>
+              <h3>学习通通知</h3>
+              <p class="plugin-id">chaoxing-notify</p>
+            </div>
+            <span class="category">校园</span>
+          </header>
+          <p class="plugin-desc">登录学习通后查看消息中心、课程列表和通知分享码详情，支持关键词过滤、打开原文和把通知转为潮衡提醒。</p>
+          <div class="meta"><span>需要账号</span><span>需要联网</span><span>凭据留本机</span></div>
+          <h4>怎么用</h4>
+          <ol class="use-list">
+            <li>打开「学习通通知」，输入手机号或学号、密码并登录；下次进入会优先尝试本机保存的凭据自动登录。</li>
+            <li>用关键词搜索消息或课程，点“刷新”更新列表；有分享码时粘贴到通知查询框查看正文。</li>
+            <li>对带时间的通知点“提醒”，即可创建任务和时间块；需要查看原文时点“打开”。</li>
+          </ol>
+          <p class="note">消息中心接口存在平台 IP 白名单，被拒时课程和分享码查询仍可使用。账号密码会写入本机数据文件，请只在可信设备上使用。</p>
+        </article>
+
+        <article class="plugin-card" id="cppu-notify" style="--accent:#24527a">
+          <header class="plugin-head">
+            <span class="plugin-icon" aria-hidden="true">警</span>
+            <div>
+              <h3>警大门户通知</h3>
+              <p class="plugin-id">cppu-notify</p>
+            </div>
+            <span class="category">校园</span>
+          </header>
+          <p class="plugin-desc">中国人民警察大学智慧警大门户通知查看工具，支持 SSO 验证码登录、会话续期、月份筛选、正文阅读和转为潮衡提醒。</p>
+          <div class="meta"><span>仅限学校用户</span><span>需要联网</span><span>密码不保存</span></div>
+          <h4>怎么用</h4>
+          <ol class="use-list">
+            <li>打开「警大通知」，输入学号、密码和验证码；看不清验证码时点击图片换一张。</li>
+            <li>登录后点“刷新”拉取通知，按月份筛选并展开正文；会话失效时点“重新登录”。</li>
+            <li>对带时间的通知点“转为提醒”，潮衡会识别日期并创建任务和时间块。</li>
+          </ol>
+          <p class="note">密码只在本次登录内存中使用，不写入磁盘；门户票据会在应用运行期间保留，退出应用后通常需要重新登录。</p>
+        </article>
+
+        <article class="plugin-card" id="wechat-push" style="--accent:#16806b">
+          <header class="plugin-head">
+            <span class="plugin-icon" aria-hidden="true">微</span>
+            <div>
+              <h3>微信提醒推送</h3>
+              <p class="plugin-id">wechat-push</p>
+            </div>
+            <span class="category">提醒</span>
+          </header>
+          <p class="plugin-desc">通过 Server酱把时间块开始提醒推送到微信。可以设置提前 3、5、10 或 15 分钟，并保留推送记录。</p>
+          <div class="meta"><span>需要 SendKey</span><span>需要联网</span><span>免费额度受限</span></div>
+          <h4>怎么用</h4>
+          <ol class="use-list">
+            <li>打开 sct.ftqq.com，用微信扫码登录，关注服务号并复制 SendKey。</li>
+            <li>回到「微信推送」粘贴 SendKey，选择提前时间，先点“发测试消息”确认微信能收到。</li>
+            <li>打开“开启推送”。之后时间块开始前会自动发送，页面下方可查看成功或失败记录。</li>
+          </ol>
+          <p class="note">Server酱免费额度每天 5 条，超出后推送会失败。SendKey 会保存在本机，换设备或怀疑泄露时应在服务端重新生成。</p>
+        </article>
+
+        <article class="plugin-card" id="elder-care" style="--accent:#a64b2a">
+          <header class="plugin-head">
+            <span class="plugin-icon" aria-hidden="true">护</span>
+            <div>
+              <h3>长辈照护</h3>
+              <p class="plugin-id">elder-care</p>
+            </div>
+            <span class="category">生活</span>
+          </header>
+          <p class="plugin-desc">集中管理吃药、量血压、复诊、联系家人等长辈提醒，提供养老办事入口，并可把到点消息联动到蓝牙或 HTTP 设备。</p>
+          <div class="meta"><span>无需账号</span><span>本地保存</span><span>硬件可选</span></div>
+          <h4>怎么用</h4>
+          <ol class="use-list">
+            <li>打开「长辈照护」，从常用预设挑选提醒，或填写提醒名称、时间、重复方式和提示内容。</li>
+            <li>用“排到今天”写入当天日程，用“试提醒”确认提示内容；日常可在列表中启用、停用、编辑或删除。</li>
+            <li>需要外接提醒器时进入“蓝牙联动”，填写设备信息、连接并保存；再在家人协助里选择该提醒通道。</li>
+          </ol>
+          <p class="note">提醒依赖应用前台运行，关掉应用或系统休眠时不能保证继续提醒。用药时间与内容请按医嘱核对，硬件联动需要匹配对应设备协议。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="third-party" id="external">
+      <p class="section-kicker">More plugins / 第三方插件</p>
+      <h2>还想安装其他插件？</h2>
+      <p>桌面端可以在「设置 → 插件」导入用户插件 ZIP，也可以把插件目录放进数据目录的 <code>plugins/</code> 后再点“重新扫描”。Android 当前以内置插件为主，外部目录扫描能力请以实际版本为准。</p>
+      <div class="actions">
+        <a class="primary" href="upload.html">用插件工坊校验并打包</a>
+        <a href="index.html">查看开发手册</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>潮衡 TideBalance · 本地优先的时间管理平台</p>
+    <p><a href="index.html">开发手册</a> · <a href="plugins.html">插件说明</a> · <a href="upload.html">插件工坊</a> · <a href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">GitHub 仓库</a></p>
+  </footer>
+</body>
+</html>

@@ -164,6 +164,7 @@
         <div class="hero-actions">
           <a class="button primary" href="#quickstart">开始写插件</a>
           <a class="button" href="#recipes">直接看实战范例</a>
+          <a class="button" href="plugins.html">查看插件使用说明</a>
         </div>
       </aside>
     </div>
@@ -186,6 +187,7 @@
         <a href="#compat">平台边界</a>
         <a href="#debug">调试排错</a>
         <a href="#test">测试发布</a>
+        <a href="plugins.html">插件使用说明 ↗</a>
         <a href="upload.html">插件工坊 ↗</a>
       </nav>
       <p class="rail-note">逐条对照 pluginHost.js<br>文档站：GitHub Pages<br>静态、零依赖、可离线保存</p>
@@ -197,7 +199,7 @@
         <h2>插件如何进入潮衡</h2>
         <p class="intro">宿主发现插件目录，读取清单与入口文件，把受控的 <code>tide</code> 对象传给入口代码；插件在顶层调用注册 API 挂载视图、任务动作或事件监听。整个过程不需要 npm、打包器或构建步骤。</p>
         <div class="flow" aria-label="插件加载流程">
-          <div><b>DISCOVER</b><span>先加载 8 个内置 ID，再扫描外部插件目录（仅桌面端）</span></div>
+          <div><b>DISCOVER</b><span>先加载 10 个内置 ID，再扫描外部插件目录（仅桌面端）</span></div>
           <div><b>MANIFEST</b><span>读取 manifest.json；<code>id</code> 缺省时取目录名</span></div>
           <div><b>ENABLE</b><span>首次发现写入插件状态；<code>enabled: false</code> 则跳过执行</span></div>
           <div><b>EXECUTE</b><span>严格模式下以 <code>new Function("tide", …)</code> 执行入口</span></div>
@@ -717,7 +719,7 @@ tidebalance/src/pluginHost.js  <span class="cmt">// BUILTIN_IDS 加入 plugin-id
 
   <footer>
     <p>潮衡 TideBalance · 本地优先的时间管理平台</p>
-    <p><a href="#top">回到顶部 ↑</a> · <a href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">GitHub 仓库</a></p>
+    <p><a href="#top">回到顶部 ↑</a> · <a href="plugins.html">插件使用说明</a> · <a href="upload.html">插件工坊</a> · <a href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">GitHub 仓库</a></p>
   </footer>
 
   <script>
