@@ -22,6 +22,8 @@
 5. **Rust 后端**（`src-tauri/`）—— 数据原子读写、插件目录扫描、应用信息
 6. **设置中心**（`src/views/settings.js`）—— 数据管理、插件启停、重新扫描
 
+> 🧱 想看每一层的具体技术选型（依赖、模块映射、版本快照）？→ [`docs/tech-stack.html`](./docs/tech-stack.html)
+
 ### 🛠️ 如何使用
 
 1. **直接运行**：下载 Release 中的 `TideBalance_x64-setup.exe` 安装，或用仓库内构建产物 `tidebalance.exe`
