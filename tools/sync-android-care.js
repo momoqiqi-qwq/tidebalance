@@ -1,0 +1,13 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.join(__dirname, '..');
+const android = path.join(root, 'tidebalance/src-tauri/gen/android/app/src/main');
+if (!fs.existsSync(android)) throw new Error('先运行 tauri android init');
+const dest = path.join(android, 'java/com/yile/tidebalance/CareVoicePlugin.kt');
+fs.copyFileSync(path.join(root, 'tidebalance/android/CareVoicePlugin.kt'), dest);
+fs.copyFileSync(path.join(root, 'tidebalance/android/NativeSchedulePlugin.kt'), path.join(android, 'java/com/yile/tidebalance/NativeSchedulePlugin.kt'));
+const file = path.join(android, 'AndroidManifest.xml');
+let source = fs.readFileSync(file, 'utf8');
+if (!source.includes('android.intent.action.TTS_SERVICE')) source = source.replace('<application', '<queries><intent><action android:name="android.intent.action.TTS_SERVICE" /></intent></queries>\n    <application');
+fs.writeFileSync(file, source);
+console.log('Android native care voice source synchronized');

@@ -1,4 +1,11 @@
 <view class="page-body tb">
+  <scroll-view class="view-tabs" scroll-x show-scrollbar="{{false}}">
+    <view class="view-tabs-inner">
+      <view wx:for="{{viewTabs}}" wx:key="id" class="view-tab {{viewMode === item.id ? 'on' : ''}}" data-mode="{{item.id}}" bindtap="onViewTap">{{item.label}}</view>
+    </view>
+  </scroll-view>
+
+  <view wx:if="{{viewMode === 'day'}}" class="day-view">
   <!-- 长按放置模式提示条 -->
   <view wx:if="{{placing}}" class="placebar">
     <view class="pt1">放置「{{placing.title}}」· 在时间轴上点一下开始的位置</view>
@@ -60,7 +67,7 @@
         </view>
       </view>
     </scroll-view>
-    <view wx:else class="empty pool-empty">全部安排完了 🎉</view>
+    <view wx:else class="empty pool-empty">全部安排完了</view>
   </view>
 
   <!-- 时间轴 -->
@@ -141,12 +148,100 @@
   <view class="addbar">
     <input
       class="input"
-      placeholder="＋ 加一段空白时间，如「午休」"
+      placeholder="加一段空白时间，如「午休」"
       value="{{quick}}"
       confirm-type="done"
       bindinput="onQuickInput"
       bindconfirm="onQuickAdd"
     />
     <button class="btn pri small" bindtap="onQuickAdd">添加</button>
+  </view>
+  </view>
+
+  <view wx:elif="{{viewMode === 'wakeup'}}" class="viz-panel wakeup-mini-panel">
+    <view class="viz-head"><text class="vh-title">WakeUp 课表周视图</text><text class="vh-sub">{{wakeupWeekLabel}} · 本周时间块按课表方式排列</text></view>
+    <scroll-view class="wk-mini-scroll" scroll-x>
+      <view class="wk-mini-grid">
+        <view class="wk-mini-timecol">
+          <view class="wk-mini-head">时间</view>
+          <view class="wk-hour" wx:for="{{wakeupHours}}" wx:key="label" style="top:{{item.top + 92}}rpx">{{item.label}}</view>
+        </view>
+        <view wx:for="{{wakeupDays}}" wx:key="date" class="wk-mini-day {{item.today ? 'today' : ''}}">
+          <view class="wk-mini-head"><text>{{item.name}}</text><text>{{item.md}}</text></view>
+          <view class="wk-mini-lane">
+            <view wx:for="{{wakeupHours}}" wx:key="label" class="wk-mini-line" style="top:{{item.top}}rpx"></view>
+            <view wx:for="{{item.blocks}}" wx:key="id" class="wk-mini-course" style="top:{{item.top}}rpx;height:{{item.height}}rpx;background:{{item.color}}33;border-color:{{item.color}}">
+              <text class="wk-mini-title">{{item.title}}</text><text class="wk-mini-meta">{{item.meta}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view wx:elif="{{viewMode === 'milestone'}}" class="viz-panel">
+    <view class="viz-head"><text class="vh-title">里程碑时间轴</text><text class="vh-sub">彩色箭头式阶段时间轴</text></view>
+    <scroll-view class="ms-scroll" scroll-x>
+      <view class="ms-track">
+        <view wx:for="{{visualEvents}}" wx:key="index" class="ms-cell" style="--ms:{{item.color}}">
+          <view class="ms-stage" style="border-color:{{item.color}}">{{item.catLabel}}</view>
+          <view class="ms-vline" style="background:{{item.color}}"></view>
+          <view class="ms-arrow" style="background:{{item.color}}"><text class="ms-year">{{item.year}}</text><text class="ms-md">{{item.md}}</text></view>
+          <view class="ms-pin" style="background:{{item.color}}">●</view>
+          <view class="ms-copy"><text class="ms-title">{{item.title}}</text><text class="ms-sub">{{item.sub}}</text></view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view wx:elif="{{viewMode === 'chronicle'}}" class="viz-panel">
+    <view class="viz-head"><text class="vh-title">横向时间轴</text><text class="vh-sub">高密度长期事件年表</text></view>
+    <scroll-view class="chron-scroll" scroll-x>
+      <view class="chron-track">
+        <view class="chron-axis"></view>
+        <view wx:for="{{visualEvents}}" wx:key="index" class="chron-event {{item.side}}" style="left:{{40 + index * 220}}rpx;--ec:{{item.color}}">
+          <view class="chron-card"><text class="ct-b">{{item.title}}</text><text>{{item.date}} · {{item.sub}}</text></view>
+          <view class="chron-stem" style="background:{{item.color}}"></view>
+          <view class="chron-dot" style="background:{{item.color}}"></view>
+          <view class="chron-date" style="background:{{item.color}}">{{item.md}}</view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view wx:elif="{{viewMode === 'cards'}}" class="viz-panel cards-mobile">
+    <view class="viz-head"><text class="vh-title">卡片时间轴</text><text class="vh-sub">左右交错的阶段说明卡片</text></view>
+    <view class="cards-axis"></view>
+    <view wx:for="{{visualEvents}}" wx:key="index" class="timeline-card {{item.side}}" style="--ct:{{item.color}}">
+      <view class="tm-card" style="background:{{item.color}}22;border-color:{{item.color}}">
+        <text class="tm-date">{{item.date}}</text><text class="tm-title">{{item.title}}</text><text class="tm-sub">{{item.sub}}</text>
+      </view>
+      <view class="tm-link" style="border-color:{{item.color}}"></view>
+    </view>
+  </view>
+
+  <view wx:elif="{{viewMode === 'gantt'}}" class="viz-panel">
+    <view class="viz-head"><text class="vh-title">年度甘特图</text><text class="vh-sub">任务起止映射到 1-12 月</text></view>
+    <scroll-view class="gantt-mobile-scroll" scroll-x>
+      <view class="gantt-mobile">
+        <view class="gm-head"><view class="gm-label">项目 / 任务</view><view wx:for="{{12}}" wx:key="index" class="gm-month">{{index + 1}}月</view></view>
+        <view wx:for="{{visualGantt}}" wx:key="index" class="gm-row">
+          <view class="gm-label"><text class="gm-group">{{item.group}}</text><text>{{item.title}}</text></view>
+          <view class="gm-cells"><view wx:for="{{12}}" wx:key="index" class="gm-cell"></view><view class="gm-bar" style="left:{{item.left}}%;width:{{item.width}}%;background:{{item.color}}">{{item.title}}</view></view>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view wx:else class="viz-panel">
+    <view class="viz-head"><text class="vh-title">阶段甘特图</text><text class="vh-sub">按工作 / 学习 / 运动 / 生活 / 休息分泳道</text></view>
+    <scroll-view class="swim-mobile-scroll" scroll-x>
+      <view class="swim-mobile">
+        <view wx:for="{{visualSwim}}" wx:key="cat" class="sm-row">
+          <view class="sm-label cat-{{item.cat}}">{{item.label}}</view>
+          <view class="sm-cells"><view wx:for="{{31}}" wx:key="index" class="sm-cell"></view><view wx:for="{{item.bars}}" wx:key="index" class="sm-bar" style="left:{{item.left}}%;width:{{item.width}}%;background:{{item.color}}">{{item.title}}</view></view>
+        </view>
+      </view>
+    </scroll-view>
   </view>
 </view>

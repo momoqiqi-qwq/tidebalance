@@ -164,7 +164,7 @@ function openCaptureModal(dataUrl, caption) {
 
   const mask = el("div", { class: "cap-mask", onclick: close });
   const modal = el("div", { class: "cap-modal" },
-    el("div", { class: "cap-h" }, "🖼 捕获图片", el("button", { class: "btn ghost sm", onclick: close }, "✕")),
+    el("div", { class: "cap-h" }, "捕获图片", el("button", { class: "btn ghost sm", onclick: close }, "关闭")),
     el("img", { class: "cap-img", src: dataUrl }),
     el("div", { class: "cap-grid" },
       el("label", {}, "标题"), titleIn,

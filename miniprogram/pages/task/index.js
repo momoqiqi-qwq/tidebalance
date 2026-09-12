@@ -1,5 +1,6 @@
 // 任务详情页（桌面端的任务抽屉）
 const store = require("../../core/store.js");
+const reminder = require("../../core/taskReminder.js");
 
 const EST = [15, 30, 45, 60, 90, 120, 180];
 const DAY_START = 7 * 60;
@@ -14,6 +15,11 @@ Page({
     estLabels: EST.map((m) => store.durLabel(m)),
     estIndex: 1,
     due: "",
+    dueTime: "23:59",
+    reminderEnabled: true,
+    reminderOptions: reminder.PRESET_OFFSETS.map((o)=>({offset:o,label:o===0?"到点":reminder.label(o).replace("截止","") ,selected:false})),
+    reminderOffsets: [],
+    customReminderMin: "",
     attachments: [],
     sched: [],
   },
@@ -38,6 +44,11 @@ Page({
       },
       estIndex: Math.max(0, EST.indexOf(t.estMin || 30)),
       due: t.due || "",
+      dueTime: t.dueTime || "23:59",
+      reminderEnabled: t.reminderEnabled !== false,
+      reminderOffsets: reminder.offsets(t),
+      reminderOptions: reminder.PRESET_OFFSETS.map((o)=>({offset:o,label:o===0?"到点":reminder.label(o).replace("截止","") ,selected:reminder.offsets(t).includes(o)})),
+      customReminderOffsets: reminder.offsets(t).filter((o)=>!reminder.PRESET_OFFSETS.includes(o)),
       attachments: t.attachments || [],
       sched: store.getState().blocks
         .filter((b) => b.taskId === t.id)
@@ -63,8 +74,19 @@ Page({
   onDueChange(e) {
     store.updateTask(this.id, { due: e.detail.value || null });
   },
-  onDueClear() {
-    store.updateTask(this.id, { due: null });
+  onDueClear() { store.updateTask(this.id, { due: null }); this.refresh(); },
+  onDueTimeChange(e) { store.updateTask(this.id, { dueTime: e.detail.value || "23:59" }); this.refresh(); },
+  onReminderToggle(e) { store.updateTask(this.id, { reminderEnabled: !!e.detail.value }); this.refresh(); },
+  onReminderPreset(e) {
+    const off=+e.currentTarget.dataset.offset, cur=reminder.offsets(store.taskById(this.id));
+    const next=cur.includes(off)?cur.filter(x=>x!==off):reminder.norm(cur.concat([off]));
+    store.updateTask(this.id,{reminderOffsets:next}); this.refresh();
+  },
+  onReminderCustomInput(e){ this.setData({customReminderMin:e.detail.value}); },
+  onReminderCustomAdd(){
+    const n=Math.round(Number(this.data.customReminderMin));
+    if(!isFinite(n)||n<0||n>43200){wx.showToast({title:"请输入 0～43200 分钟",icon:"none"});return;}
+    const cur=reminder.offsets(store.taskById(this.id)); store.updateTask(this.id,{reminderOffsets:reminder.norm(cur.concat([n]))}); this.setData({customReminderMin:""}); this.refresh();
   },
   onProjectBlur(e) {
     store.updateTask(this.id, { project: (e.detail.value || "").trim() });

@@ -1,7 +1,7 @@
 <view class="page-body">
   <!-- 数据 -->
   <view class="card">
-    <view class="at">🗄 数 据</view>
+    <view class="at">数 据</view>
     <view class="desc">所有数据保存在小程序本地存储中，不上传任何服务器。备份 JSON 与桌面端（Tauri / Android 版）格式一致，可互相导入恢复。</view>
     <view class="statrow">
       <view class="stat"><text class="n">{{stats.tasks}}</text><text class="l">任务</text></view>
@@ -11,10 +11,10 @@
       <view class="stat"><text class="n">{{stats.kb}}</text><text class="l">KB</text></view>
     </view>
     <view wx:if="{{stats.warn}}" class="warn">
-      存储占用偏高（本机共 {{stats.total}} KB / 10MB，主数据 {{stats.kb}} KB / 单 key 上限 1MB）。接近上限会保存失败，建议删除带 📷 图片附件的旧任务或先导出备份。
+      存储占用偏高（本机共 {{stats.total}} KB / 10MB，主数据 {{stats.kb}} KB / 单 key 上限 1MB）。接近上限会保存失败，建议删除带图片附件的旧任务或先导出备份。
     </view>
     <view class="setbtns">
-      <button class="btn pri" bindtap="onExport">⇪ 导出备份（复制 JSON）</button>
+      <button class="btn pri" bindtap="onExport">导出备份（复制 JSON）</button>
     </view>
     <view class="imp">
       <textarea
@@ -24,19 +24,57 @@
         maxlength="-1"
         bindinput="onImportText"
       ></textarea>
-      <button class="btn ghost block" bindtap="onImport">⇩ 导入备份</button>
+      <button class="btn ghost block" bindtap="onImport">导入备份</button>
+    </view>
+  </view>
+
+  <!-- 任务提醒 -->
+  <view class="card">
+    <view class="at">任 务 提 醒</view>
+    <view class="desc">任务可设置截止时刻和多个提前预警。这里控制全局声音；每个任务的预警时间在任务详情里单独设置。</view>
+    <view class="setting-line"><text>启用提醒</text><switch checked="{{reminder.enabled}}" bindchange="onReminderEnabled" /></view>
+    <view class="setting-col"><text>提醒音量 {{reminder.volume}}%</text><slider min="0" max="100" step="1" value="{{reminder.volume}}" bindchange="onReminderVolume" activeColor="#118AB2" /></view>
+    <view class="setting-line"><text>提示音</text><picker mode="selector" range="{{soundOptions}}" value="{{reminder.sound === 'custom' ? 1 : 0}}" bindchange="onSoundChange"><view class="pv">{{reminder.sound === 'custom' ? '自定义音频' : '内置提示音'}} ▾</view></picker></view>
+    <view class="setting-line"><text class="audio-file">{{reminder.customAudioName}}</text><view class="audio-btns"><button class="btn ghost small" bindtap="onImportAudio">导入音频</button><button class="btn ghost small" bindtap="onTestSound">试听</button></view></view>
+    <view class="warn">微信小程序仅在前台活跃时能稳定执行本地定时提醒；完全退出或被系统冻结后，不能保证后台持续响铃。</view>
+  </view>
+
+  <!-- 插件 -->
+  <view class="card">
+    <view class="at">插 件</view>
+    <view class="desc">三端共用同一插件清单与启停状态。Windows / Android 运行完整插件宿主；小程序对可移植插件提供原生适配。</view>
+    <view class="setbtns plugins-entry">
+      <button class="btn pri block" bindtap="onPlugins">打开插件中心</button>
     </view>
   </view>
 
   <!-- 关于 -->
   <view class="card">
-    <view class="at">☀ 关 于 潮 衡</view>
-    <view class="about">
-      <view class="line">TideBalance v0.1.0 · 微信小程序版</view>
-      <view class="line">本地优先 · 无账号 · 无联网</view>
-      <view class="line">设计融合：03「权衡」四象限决策台 + 04「潮汐」时间块规划轴</view>
-      <view class="line dim">插件系统、窗口拖拽捕获、图片附件捕获为桌面端专属能力</view>
+    <view class="about-head-mini">
+      <view>
+        <view class="at">关 于 Le时间管理</view>
+        <view class="desc">本地优先 · 四象限 + 时间块 + 插件扩展</view>
+      </view>
+      <view class="version-pill">v{{about.version}}</view>
     </view>
+
+    <view class="about-section">
+      <view class="about-title">版本说明</view>
+      <view wx:for="{{about.releaseNotes}}" wx:key="*this" class="about-item">• {{item}}</view>
+    </view>
+
+    <view class="about-section">
+      <view class="about-title">框架说明</view>
+      <view wx:for="{{about.frameworks}}" wx:key="*this" class="about-item">{{item}}</view>
+    </view>
+
+    <view class="about-section">
+      <view class="about-title">主要开源项目 / 来源</view>
+      <view wx:for="{{about.openSource}}" wx:key="*this" class="about-item dim">{{item}}</view>
+      <view class="about-note">完整许可证与归属说明随桌面源码包的 OPEN_SOURCE_NOTICES.md、LICENSE / NOTICE / ATTRIBUTION 文件提供。</view>
+    </view>
+
+    <view class="about-note">{{about.edition}} · 插件清单与启停状态三端同步；部分插件因小程序运行时限制仅在 Windows / Android 可用。</view>
     <view class="danger-zone">
       <button class="btn danger" bindtap="onResetSeed">恢复示例数据（清空当前）</button>
     </view>

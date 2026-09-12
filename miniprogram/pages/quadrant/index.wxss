@@ -1,5 +1,5 @@
 /* 四象限（权衡） */
-.press { opacity: 0.82; }
+.press { opacity: 0.82; transform: scale(0.99); }
 
 .searchbar { margin: 6rpx 0 16rpx; }
 .searchbar .input { border-radius: 999rpx; }
@@ -12,6 +12,10 @@
   font-size: 23rpx;
   color: var(--ink-2);
   box-shadow: 0 2rpx 8rpx rgba(34, 48, 58, 0.05);
+  min-height: 52rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
 }
 .chip b { color: var(--ink); font-weight: 600; }
 .chip.toggle { color: var(--deep); border: 2rpx solid var(--line); background: transparent; }
@@ -25,6 +29,7 @@
   border-radius: 20rpx;
   padding: 18rpx 22rpx;
   border: 4rpx solid transparent;
+  min-height: 148rpx;
 }
 .qtile.q1 { background: var(--q1-bg); }
 .qtile.q2 { background: var(--q2-bg); }
@@ -97,6 +102,7 @@
   position: relative;
   z-index: 1;
   box-shadow: 0 3rpx 12rpx rgba(34, 48, 58, 0.05);
+  min-height: 104rpx;
 }
 .tkc.done .tt { color: var(--ink-3); text-decoration: line-through; }
 .qb {
@@ -144,7 +150,7 @@
 }
 .tn.open { -webkit-line-clamp: 99; }
 .m { font-size: 21rpx; color: var(--ink-3); margin-top: 8rpx; }
-.side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 8rpx; }
+.side { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 8rpx; max-width: 156rpx; }
 .sch {
   font-size: 20rpx;
   color: var(--sea);
@@ -174,3 +180,16 @@
   padding: 10rpx 18rpx;
 }
 .formbtns { display: flex; gap: 12rpx; }
+
+@media (max-width: 340px) {
+  .chips { gap: 8rpx; }
+  .chip { padding: 8rpx 18rpx; font-size: 22rpx; }
+  .qgrid { gap: 12rpx; }
+  .qtile { width: calc(50% - 6rpx); padding: 16rpx 18rpx; min-height: 140rpx; }
+  .qt-name { font-size: 25rpx; }
+  .qt-tip { display: none; }
+  .tkc { gap: 12rpx; padding: 20rpx; }
+  .side { max-width: 128rpx; }
+  .formrow { flex-direction: column; align-items: stretch; gap: 14rpx; }
+  .formbtns { justify-content: flex-end; }
+}

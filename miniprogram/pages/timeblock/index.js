@@ -40,11 +40,19 @@ Page({
     totalLabel: "",
     awakeLabel: "",
     quick: "",
+    viewMode: "day",
+    viewTabs: [
+      { id: "day", label: "日时间轴" }, { id: "wakeup", label: "WakeUp课表" }, { id: "milestone", label: "里程碑" },
+      { id: "chronicle", label: "横向时间轴" }, { id: "cards", label: "卡片时间轴" },
+      { id: "gantt", label: "年度甘特" }, { id: "swimlane", label: "阶段甘特" },
+    ],
+    visualEvents: [], visualGantt: [], visualSwim: [], wakeupDays: [], wakeupHours: [], wakeupWeekLabel: "",
   },
 
   onLoad() {
     const saved = store.getState().settings.lastDate;
-    this.setData({ curDate: saved || store.todayStr() });
+    const mode = store.getState().settings.timeViewModeMini || "day";
+    this.setData({ curDate: saved || store.todayStr(), viewMode: mode });
   },
   onShow() {
     // 捕获页「查看时间块」跳转：先定位到目标日期
@@ -155,6 +163,8 @@ Page({
       dur: store.durLabel(b.durMin),
     }));
 
+    const visual = this.buildVisualData(curDate);
+    const wakeup = this.buildWakeupData(curDate);
     this.setData({
       hours, blocks: list, pool, nowLine,
       dateLabel, sumLabel,
@@ -164,9 +174,75 @@ Page({
       tomEmpty: tomorrow.length === 0,
       totalLabel: store.durLabel(total),
       awakeLabel: store.durLabel(DAY_END - DAY_START),
+      visualEvents: visual.events,
+      visualGantt: visual.gantt,
+      visualSwim: visual.swim,
+      wakeupDays: wakeup.days, wakeupHours: wakeup.hours, wakeupWeekLabel: wakeup.label,
     });
   },
 
+
+  onViewTap(e) {
+    const mode = e.currentTarget.dataset.mode || "day";
+    this.setData({ viewMode: mode });
+    store.getState().settings.timeViewModeMini = mode;
+    store.saveNow();
+  },
+
+  buildWakeupData(anchorDate) {
+    const d = new Date((anchorDate || store.todayStr()) + "T12:00:00");
+    const wd = d.getDay() || 7;
+    const monday = store.addDays(anchorDate || store.todayStr(), 1 - wd);
+    const today = store.todayStr();
+    const names = ["周一","周二","周三","周四","周五","周六","周日"];
+    const colors = {work:"#5B9CF6",study:"#7CC9A8",sport:"#F08E8E",life:"#F4BC72",rest:"#A89BD8"};
+    const hours = [];
+    for (let h=7; h<=23; h++) hours.push({label:String(h).padStart(2,"0")+":00", top:(h-7)*64});
+    const days = [];
+    for (let i=0;i<7;i++) {
+      const date = store.addDays(monday,i), md=date.slice(5).replace("-","/");
+      const blocks = store.blocksOf(date).map((b)=>{
+        const start=store.mmOf(b.start), dur=Number(b.durMin)||30;
+        return {id:b.id,title:b.title,meta:b.start+"-"+store.hhmmOf(start+dur),top:Math.max(0,(start-420)/60*64),height:Math.max(42,dur/60*64-4),color:colors[b.cat]||colors.work};
+      });
+      days.push({name:names[i],date,md,today:date===today,blocks});
+    }
+    return { label:monday+" ～ "+store.addDays(monday,6), hours, days };
+  },
+
+  buildVisualData(anchorDate) {
+    const st = store.getState();
+    const colors = ["#2397e5", "#62b2ea", "#7bc886", "#ffbb52", "#e86d70", "#ff3d35", "#9061bd", "#42b6a2"];
+    const catNames = { work: "工作", study: "学习", sport: "运动", life: "生活", rest: "休息" };
+    const events = [];
+    (st.blocks || []).forEach((b) => events.push({ date: b.date, title: b.title, sub: b.start + " · " + store.durLabel(b.durMin), cat: b.cat || "work" }));
+    (st.tasks || []).filter((t) => !t.done && t.due).forEach((t) => events.push({ date: t.due.slice(0, 10), title: t.title, sub: t.project || "任务截止", cat: "work" }));
+    events.sort((a, b) => a.date.localeCompare(b.date));
+    const ve = events.slice(0, 16).map((e, i) => ({ ...e, color: colors[i % colors.length], side: i % 2 ? "right" : "left", catLabel: catNames[e.cat] || "安排", year: e.date.slice(0,4), md: e.date.slice(5).replace("-", "/") }));
+
+    const year = +(anchorDate || store.todayStr()).slice(0, 4);
+    const y0 = year + "-01-01", y1 = year + "-12-31";
+    const toDay = (s) => Math.round((new Date(s + "T00:00:00") - new Date(y0 + "T00:00:00")) / 86400000);
+    const gantt = (st.tasks || []).filter((t) => !t.done).slice(0, 14).map((t, i) => {
+      const due = (t.due || anchorDate || store.todayStr()).slice(0, 10);
+      const created = new Date(Number(t.createdAt) || Date.now());
+      let start = created.getFullYear() === year ? store.fmtDate(created) : y0;
+      let end = due.slice(0,4) === String(year) ? due : y1;
+      const a = Math.max(0, Math.min(364, toDay(start)));
+      const b = Math.max(a, Math.min(364, toDay(end)));
+      return { title: t.title, group: t.project || ((t.tags || [])[0]) || "任务", left: a / 365 * 100, width: Math.max(2, (b - a + 1) / 365 * 100), color: colors[i % colors.length] };
+    });
+
+    const [yy, mm] = (anchorDate || store.todayStr()).split("-").map(Number);
+    const days = new Date(yy, mm, 0).getDate();
+    const swim = ["work", "study", "sport", "life", "rest"].map((cat, ci) => ({
+      cat, label: catNames[cat], bars: (st.blocks || []).filter((b) => b.cat === cat && b.date.slice(0,7) === String(yy) + "-" + String(mm).padStart(2,"0")).map((b, i) => {
+        const d = +b.date.slice(8,10);
+        return { title: b.title, left: (d - 1) / days * 100, width: Math.max(7, Math.min(26, b.durMin / 8)), color: colors[(ci + i) % colors.length] };
+      })
+    }));
+    return { events: ve, gantt, swim };
+  },
   calcNowLine() {
     if (this.data.curDate !== store.todayStr()) return { show: false, top: 0, label: "" };
     const now = new Date();

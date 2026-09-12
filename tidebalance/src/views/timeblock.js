@@ -1,6 +1,7 @@
 // 时间块视图 —— 概念稿 04「潮汐」：任务池 + 24h 时间轴 + 右侧概览
 import * as S from "../store.js";
 import { el, popmenu, toast, pointerDrag } from "../ui.js";
+import { openTaskDrawer } from "./drawer.js";
 
 const DAY_START = 7 * 60;    // 07:00
 const DAY_END = 24 * 60;     // 24:00
@@ -44,7 +45,7 @@ export function renderTimeblock(container) {
     const items = S.poolOf(curDate);
     poolTitle.textContent = `待安排 · ${items.length} 件`;
     poolList.replaceChildren(
-      ...(items.length ? items.map(poolCard) : [el("div", { class: "empty" }, "全部安排完了 🎉", el("br"), "也可以在下方添加空白时间块")]),
+      ...(items.length ? items.map(poolCard) : [el("div", { class: "empty" }, "全部安排完了", el("br"), "也可以在下方添加空白时间块")]),
     );
   }
 
@@ -64,15 +65,14 @@ export function renderTimeblock(container) {
   );
   const timeline = el("div", { class: "timeline" }, tlHead, scroll);
 
-  const quickInput = el("input", { placeholder: "＋ 加一段空白时间，如「午休」——回车放到第一个空闲位" });
+  const quickInput = el("input", { placeholder: "加一段空白时间，如「午休」；回车放到第一个空闲位" });
   quickInput.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
+    if (e.key !== "Enter" || e.isComposing) return;
     const v = quickInput.value.trim();
     if (!v) return;
-    autoPlace({ title: v, estMin: 30, id: null, __cat: "rest" });
-    quickInput.value = "";
+    if (autoPlace({ title: v, estMin: 30, id: null, __cat: "rest" })) quickInput.value = "";
   });
-  const addbar = el("div", { class: "tl-addbar" }, quickInput);
+  const addbar = el("div", { class: "tl-addbar" }, quickInput, el("button", { class: "btn pri sm", onclick: () => { const title = quickInput.value.trim(); if (!title) { quickInput.focus(); toast("先写时间块名称"); return; } if (autoPlace({ title, estMin: 30, id: null, __cat: "rest" })) quickInput.value = ""; } }, "添加"));
   timeline.append(addbar);
 
   const hint = el("div", { class: "drop-hint", style: "display:none" });
@@ -89,36 +89,51 @@ export function renderTimeblock(container) {
   }
   function hideHint() { hint.style.display = "none"; }
 
-  function dropTask({ y }, t) {
+  function dropTask({ x, y }, t) {
     const rect = canvas.getBoundingClientRect();
-    if (y < rect.top - 40 || y > rect.bottom + 40) return;
-    const min = Math.min(DAY_END - 15, Math.max(DAY_START, Math.round((y - rect.top - 10) / PX_PER_MIN / 15) * 15 + DAY_START));
-    const dur = Math.max(15, t.estMin);
-    if (t.id) {
-      // 若该任务已在别处排程，先移除
-      S.getState().blocks.filter((b) => b.taskId === t.id).forEach((b) => S.removeBlock(b.id));
-      S.addBlock({ date: curDate, start: S.hhmmOf(min), durMin: dur, title: t.title, taskId: t.id, cat: catOf(t) });
-    } else {
-      S.addBlock({ date: curDate, start: S.hhmmOf(min), durMin: dur, title: t.title, taskId: null, cat: t.__cat || "rest" });
-    }
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return;
+    const min = Math.max(DAY_START, Math.round((y - rect.top - 10) / PX_PER_MIN / 15) * 15 + DAY_START);
+    try { S.placeTask(t, curDate, min, t.__cat || catOf(t)); }
+    catch (e) { toast(e.message); }
   }
 
   function autoPlace(t) {
-    const dur = Math.max(15, t.estMin);
-    const busy = S.blocksOf(curDate).map((b) => [S.mmOf(b.start), S.mmOf(b.start) + b.durMin]).sort((a, b) => a[0] - b[0]);
-    let cursor = DAY_START;
-    for (const [s, e] of busy) {
-      if (e <= cursor) continue;
-      if (s - cursor >= dur) break;
-      cursor = Math.max(cursor, e);
-    }
-    if (DAY_END - cursor < dur) { toast("这一天已经排满了"); return; }
-    if (t.id) {
-      S.getState().blocks.filter((b) => b.taskId === t.id).forEach((b) => S.removeBlock(b.id));
-      S.addBlock({ date: curDate, start: S.hhmmOf(cursor), durMin: dur, title: t.title, taskId: t.id, cat: catOf(t) });
-    } else {
-      S.addBlock({ date: curDate, start: S.hhmmOf(cursor), durMin: dur, title: t.title, taskId: null, cat: t.__cat || "rest" });
-    }
+    try {
+      const b = S.placeTask(t, curDate, null, t.__cat || catOf(t));
+      toast(`已安排 ${b.start} · ${b.title}`);
+      return true;
+    } catch (e) { toast(e.message); return false; }
+  }
+
+  function editBlock(b) {
+    document.querySelector(".drawer")?._close?.();
+    const mask = el("div", { class: "drawer-mask", onclick: close });
+    const title = el("input", { value: b.title, required: "", "aria-label": "时间块名称" });
+    const date = el("input", { type: "date", value: b.date, required: "" });
+    const start = el("input", { type: "time", value: b.start, required: "" });
+    const duration = el("input", { type: "number", min: 1, max: 1440, value: b.durMin, required: "" });
+    const category = el("select", {});
+    S.CATEGORIES.forEach(c => category.append(el("option", { value: c.id }, c.label)));
+    category.value = b.cat;
+    const form = el("form", { class: "dbody", onsubmit: (e) => {
+      e.preventDefault();
+      const name = title.value.trim(), min = S.mmOf(start.value), dur = Number(duration.value);
+      if (!name) { toast("时间块名称不能为空"); return; }
+      if (min + dur > 1440) { toast("时间块不能跨越当天午夜"); return; }
+      const conflict = S.blocksOf(date.value).some(x => x.id !== b.id && min < S.mmOf(x.start) + x.durMin && min + dur > S.mmOf(x.start));
+      if (conflict) { toast("这个时段已有安排，请调整时间"); return; }
+      S.updateBlock(b.id, { title: name, date: date.value, start: start.value, durMin: dur, cat: category.value });
+      close(); toast("时间块已保存");
+    } });
+    for (const [label, input] of [["名称", title], ["日期", date], ["开始时间", start], ["时长（分钟）", duration], ["分类", category]]) form.append(el("label", { class: "kv" }, el("span", {}, label), input));
+    form.append(el("button", { class: "btn pri", type: "submit" }, "保存时间块"));
+    const drawer = el("div", { class: "drawer", role: "dialog", "aria-label": "编辑时间块" }, el("div", { class: "dh" }, el("h3", {}, "编辑时间块"), el("button", { class: "btn ghost sm", onclick: close }, "关闭")), form);
+    const onKey = e => { if (e.key === "Escape") close(); };
+    function close() { document.removeEventListener("keydown", onKey); mask.remove(); drawer.remove(); }
+    drawer._close = close;
+    document.addEventListener("keydown", onKey);
+    document.body.append(mask, drawer);
+    title.focus();
   }
 
   function blockEl(b) {
@@ -139,8 +154,9 @@ export function renderTimeblock(container) {
         onDrop: (d) => {
           hideHint();
           const rect = canvas.getBoundingClientRect();
-          if (d.y < rect.top - 40 || d.y > rect.bottom + 40) return;
+          if (d.x < rect.left || d.x > rect.right || d.y < rect.top || d.y > rect.bottom) return;
           const min = Math.min(DAY_END - b.durMin, Math.max(DAY_START, Math.round((d.y - rect.top - 10) / PX_PER_MIN / 15) * 15 + DAY_START));
+          if (S.blocksOf(curDate).some(x => x.id !== b.id && min < S.mmOf(x.start) + x.durMin && min + b.durMin > S.mmOf(x.start))) { toast("这个时段已有安排"); return; }
           S.updateBlock(b.id, { date: curDate, start: S.hhmmOf(min) });
         },
         onClick: (ev) => { hideHint(); blockMenu(ev, b); },
@@ -152,14 +168,16 @@ export function renderTimeblock(container) {
 
   function blockMenu(ev, b) {
     popmenu(ev.clientX, ev.clientY, [
-      { label: "时长 +15 分钟", icon: "＋", run: () => S.updateBlock(b.id, { durMin: Math.min(480, b.durMin + 15) }) },
+      { label: "编辑时间块", run: () => editBlock(b) },
+      ...(b.taskId ? [{ label: "打开任务详情", run: () => openTaskDrawer(b.taskId) }, { label: S.taskById(b.taskId)?.done ? "标记未完成" : "标记任务完成", run: () => S.toggleTask(b.taskId) }] : []),
+      { label: "时长 +15 分钟", run: () => { const end = S.mmOf(b.start) + b.durMin + 15; if (end > DAY_END || S.blocksOf(b.date).some(x => x.id !== b.id && S.mmOf(b.start) < S.mmOf(x.start) + x.durMin && end > S.mmOf(x.start))) { toast("延长后会与已有安排冲突或超出当天"); return; } S.updateBlock(b.id, { durMin: b.durMin + 15 }); } },
       { label: "时长 −15 分钟", icon: "－", run: () => S.updateBlock(b.id, { durMin: Math.max(15, b.durMin - 15) }) },
-      { label: "换分类", icon: "◈", run: () => {
+      { label: "换分类", run: () => {
         const cats = ["work", "study", "sport", "life", "rest"];
         S.updateBlock(b.id, { cat: cats[(cats.indexOf(b.cat) + 1) % cats.length] });
       } },
       "-",
-      ...(b.taskId ? [{ label: "移回任务池", icon: "↩", run: () => S.updateBlock(b.id, { taskId: null }) }] : []),
+      ...(b.taskId ? [{ label: "移回任务池", icon: "↩", run: () => { const removed = S.removeBlock(b.id); toast("已移回任务池", { action: () => S.addBlock(removed) }); } }] : []),
       { label: "删除时间块", icon: "✕", warn: true, run: () => {
         const b2 = S.removeBlock(b.id);
         toast("已删除时间块", { actionLabel: "撤销", action: () => S.addBlock(b2) });
@@ -171,7 +189,7 @@ export function renderTimeblock(container) {
     hideHint();
     canvas.replaceChildren(hint);
     for (let m = DAY_START; m <= DAY_END; m += 60) {
-      const row = el("div", { class: "hour-row" }, el("span", { class: "h" }, S.hhmmOf(m)));
+      const row = el("div", { class: "hour-row" }, el("span", { class: "h" }, m === 1440 ? "24:00" : S.hhmmOf(m)));
       canvas.append(row);
     }
     for (const b of S.blocksOf(curDate)) canvas.append(blockEl(b));
@@ -247,7 +265,7 @@ export function renderTimeblock(container) {
   wrap.append(pool, timeline, aside);
   renderAll();
   const un = S.subscribe(renderAll);
-  container._unsub = un;
+  container._unsub = () => { un(); clearTimeout(hintTimer); container.classList.remove("tb-root"); };
 }
 
 function catOf(t) {

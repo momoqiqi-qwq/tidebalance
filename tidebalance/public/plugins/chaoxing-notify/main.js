@@ -217,7 +217,7 @@
 
   function paintLogin(el) {
     el.innerHTML = `<div class="cx-login">
-      <h3>🎓 登录学习通</h3>
+      <h3>登录学习通</h3>
       <div class="d">使用超星学习通账号（手机号/学号）登录。密码 DES 加密在本机 Rust 端完成，凭据只保存在本机数据文件中。</div>
       <label>账号（手机号 / 学号）</label><input data-u type="text" autocomplete="off">
       <label>密码</label><input data-p type="password">
@@ -232,7 +232,7 @@
       const password = el.querySelector("[data-p]").value;
       const remember = el.querySelector("[data-r]").checked;
       if (!uname || !password) { errEl.textContent = "请填写账号和密码"; return; }
-      errEl.textContent = "⏳ 正在登录…";
+      errEl.textContent = "正在登录…";
       try {
         const uid = await cxLogin(uname, password);
         if (remember) { state.creds = { uname, password }; await tide.storage.set("creds", state.creds); }
@@ -240,7 +240,7 @@
         paintMain(el);
         refreshAll();
       } catch (e) {
-        errEl.textContent = `⚠ ${e.message || e}`;
+        errEl.textContent = e.message || e;
       }
     });
   }
@@ -249,7 +249,7 @@
     el.innerHTML = `<div class="cx-wrap">
       <div style="font-size:11px;letter-spacing:.3em;color:#7E8B94;margin:16px 0 4px">学 习 通 通 知 · 内 置 插 件</div>
       <div class="cx-toolbar">
-        <button class="cx-btn pri" data-refresh>⟳ 刷新</button>
+        <button class="cx-btn pri" data-refresh>刷新</button>
         <input class="cx-kw" data-kw type="text" placeholder="关键词过滤：课程 / 老师 / 作业 / 考试…">
         <label class="gx-toggle" data-hs><i></i>只看未读</label>
         <span style="flex:1"></span>
@@ -315,7 +315,7 @@
     // 消息中心
     if (state.msgError) {
       mst.innerHTML = "";
-      mlist.innerHTML = `<div class="cx-banner">⚠ ${esc(state.msgError)}<br>学习通「消息中心」接口有来源 IP 白名单（平台限制，非账号问题）。被拒时请换到常用网络重试；课程列表与「通知分享码查询」不受影响。</div>`;
+      mlist.innerHTML = `<div class="cx-banner">${esc(state.msgError)}<br>学习通「消息中心」接口有来源 IP 白名单（平台限制，非账号问题）。被拒时请换到常用网络重试；课程列表与「通知分享码查询」不受影响。</div>`;
     } else {
       mst.innerHTML = `消息中心 · ${msgs.length} 条${state.msgs.length ? `（共拉取 ${state.msgs.length} 条）` : ""}`;
       mlist.innerHTML = msgs.length ? msgs.map((m) => {
@@ -324,10 +324,10 @@
         return `<div class="cx-card${isNew ? "" : " seen"}" data-k="${esc(k)}">
           <div class="cx-main">
             <div class="cx-title">${esc(m.title)}</div>
-            <div class="cx-meta">${m.sender ? `<span class="cx-tag g">${esc(m.sender)}</span>` : ""}<span>🕐 ${esc(m.time || "未知时间")}</span>${isNew ? '<span class="cx-new">NEW</span>' : ""}</div>
+            <div class="cx-meta">${m.sender ? `<span class="cx-tag g">${esc(m.sender)}</span>` : ""}<span>${esc(m.time || "未知时间")}</span>${isNew ? '<span class="cx-new">NEW</span>' : ""}</div>
             ${m.snippet ? `<div class="cx-snip">${esc(m.snippet)}</div>` : ""}
           </div>
-          <div class="cx-act"><button class="cx-btn" data-act="remind">＋ 提醒</button>${m.url ? '<button class="cx-btn" data-act="open">打开 ↗</button>' : ""}</div>
+          <div class="cx-act"><button class="cx-btn" data-act="remind">提醒</button>${m.url ? '<button class="cx-btn" data-act="open">打开</button>' : ""}</div>
         </div>`;
       }).join("") : `<div class="cx-empty">暂无消息 · 点上方「刷新」拉取</div>`;
     }
@@ -339,14 +339,14 @@
 
     // 分享码查询状态
     if (state.noticeError) {
-      ndetail.innerHTML = `<div class="cx-banner">⚠ ${esc(state.noticeError)}</div>`;
+      ndetail.innerHTML = `<div class="cx-banner">${esc(state.noticeError)}</div>`;
     } else if (state.notice) {
       const n = state.notice;
       ndetail.innerHTML = `<div class="cx-notice-card">
         <div class="cx-title" style="white-space:normal">${esc(n.title)}</div>
-        <div class="cx-meta"><span class="cx-tag">${esc(n.createrName || "教师")}</span><span>🕐 ${esc(n.insertTime)}</span>${n.toNames ? `<span>发给：${esc(n.toNames)}</span>` : ""}</div>
+        <div class="cx-meta"><span class="cx-tag">${esc(n.createrName || "教师")}</span><span>${esc(n.insertTime)}</span>${n.toNames ? `<span>发给：${esc(n.toNames)}</span>` : ""}</div>
         <div class="c">${esc(n.content)}</div>
-        <div class="cx-act" style="flex-direction:row;margin-top:10px"><button class="cx-btn" data-nremind>＋ 转为提醒</button></div>
+        <div class="cx-act" style="flex-direction:row;margin-top:10px"><button class="cx-btn" data-nremind>转为提醒</button></div>
       </div>`;
       ndetail.querySelector("[data-nremind]").addEventListener("click", async () => {
         await toReminder(n.title, n.content, "");
@@ -376,7 +376,7 @@
         const nd = el.querySelector("[data-ndetail]");
         if (!code) { nd.innerHTML = `<div class="cx-banner">请先粘贴通知分享码（在课程通知的分享链接里）</div>`; return; }
         state.noticeError = null;
-        nd.innerHTML = `<div class="cx-empty">⏳ 正在查询…</div>`;
+        nd.innerHTML = `<div class="cx-empty">正在查询…</div>`;
         try { await loadNotice(code); } catch (err) { state.notice = null; state.noticeError = String(err.message || err); }
         paintSections();
         el.querySelector("[data-code]").value = code;
@@ -387,7 +387,7 @@
   async function refreshAll() {
     if (!ui || !state.loggedIn) return;
     state.loading = "refresh";
-    ui.status.innerHTML = "⏳ 正在刷新消息与课程…";
+    ui.status.innerHTML = "正在刷新消息与课程…";
     state.msgError = null;
     try {
       await loadMessages();
@@ -411,11 +411,11 @@
 
   function render(el) {
     ensureStyle();
-    el.innerHTML = '<div style="padding:30px;text-align:center;color:#A9B2BA;font-size:12.5px">⏳ 正在读取凭据…</div>';
+    el.innerHTML = '<div style="padding:30px;text-align:center;color:#A9B2BA;font-size:12.5px">正在读取凭据…</div>';
     loadPrefs().then(() => {
       if (state.creds && state.creds.uname) {
         // 有记住的凭据：自动登录
-        el.innerHTML = '<div style="padding:30px;text-align:center;color:#A9B2BA;font-size:12.5px">⏳ 正在登录学习通…</div>';
+        el.innerHTML = '<div style="padding:30px;text-align:center;color:#A9B2BA;font-size:12.5px">正在登录学习通…</div>';
         cxLogin(state.creds.uname, state.creds.password)
           .then((uid) => {
             tide.notify(`已自动登录学习通${uid ? `（uid ${uid}）` : ""}`);
@@ -426,7 +426,7 @@
             tide.storage.set("creds", null);
             paintLogin(el);
             const errEl = el.querySelector("[data-err]");
-            if (errEl) errEl.textContent = `⚠ 自动登录失败：${e.message || e}`;
+            if (errEl) errEl.textContent = `自动登录失败：${e.message || e}`;
           });
       } else {
         paintLogin(el);
@@ -434,5 +434,5 @@
     });
   }
 
-  tide.ui.registerView({ id: "chaoxing-notify", title: "学习通通知", icon: "🎓", render });
+  tide.ui.registerView({ id: "chaoxing-notify", title: "学习通通知", icon: "学", render });
 })();

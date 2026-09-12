@@ -1,0 +1,25 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    alias(libs.plugins.android.application) apply false
+    id("com.android.library") version "9.3.1" apply false
+    alias(libs.plugins.android.multiplatform.library) apply false
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.compose.multiplatform) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.koin.compiler) apply false
+    alias(libs.plugins.androidx.room3) apply false
+    alias(libs.plugins.aboutLibraries) apply false
+    alias(libs.plugins.wire) apply false
+}
+
+allprojects {
+    configurations.all {
+        exclude(group = "io.opencensus", module = "opencensus-api")
+        exclude(group = "io.opencensus", module = "opencensus-proto")
+        exclude(group = "io.opentelemetry", module = "opentelemetry-api")
+        exclude(group = "io.opentelemetry", module = "opentelemetry-context")
+    }
+}

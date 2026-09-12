@@ -1,3 +1,5 @@
+mod care_voice;
+mod native_schedule;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
@@ -155,6 +157,135 @@ fn read_plugin_file(app: AppHandle, rel_path: String) -> Result<String, String> 
         return Err("禁止访问插件目录之外的文件".into());
     }
     fs::read_to_string(&canon_target).map_err(|e| format!("读取失败: {e}"))
+}
+
+/// 删除用户插件目录（仅允许 data_dir/plugins/<id> 一级目录，内置插件不可删除）
+#[tauri::command]
+fn delete_plugin(app: AppHandle, id: String) -> Result<(), String> {
+    if id.contains('/') || id.contains('\\') || id == "." || id == ".." || id.trim().is_empty() {
+        return Err("插件 ID 不合法".into());
+    }
+    let root = plugins_dir(&app)?;
+    let target = root.join(&id);
+    let canon_root = root.canonicalize().map_err(|e| format!("插件目录异常: {e}"))?;
+    let canon_target = target
+        .canonicalize()
+        .map_err(|_| format!("用户插件不存在: {id}"))?;
+    if !canon_target.starts_with(&canon_root) || canon_target == canon_root {
+        return Err("禁止删除插件目录之外的文件".into());
+    }
+    if !canon_target.is_dir() {
+        return Err("目标不是插件目录".into());
+    }
+    if !canon_target.join("manifest.json").exists() {
+        return Err("目标目录缺少 manifest.json，拒绝删除".into());
+    }
+    fs::remove_dir_all(&canon_target).map_err(|e| format!("删除插件失败: {e}"))
+}
+
+
+
+fn valid_plugin_id(id: &str) -> bool {
+    !id.trim().is_empty()
+        && id != "."
+        && id != ".."
+        && !id.contains('/')
+        && !id.contains('\\')
+        && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.')
+}
+
+/// 从 zip 导入一个或多个用户插件。支持 `<id>/manifest.json` 和 zip 根目录直接放 manifest.json 两种格式。
+#[tauri::command]
+fn import_plugin_zip(app: AppHandle, bytes: Vec<u8>) -> Result<Vec<String>, String> {
+    use std::io::{Cursor, Read};
+    let root = plugins_dir(&app)?;
+    let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).map_err(|e| format!("ZIP 无法打开: {e}"))?;
+
+    // 先定位 manifest，确定 zip 中的源前缀和最终插件 id。
+    let mut plugins: Vec<(String, String)> = Vec::new(); // (source prefix, plugin id)
+    for i in 0..archive.len() {
+        let mut f = archive.by_index(i).map_err(|e| format!("读取 ZIP 失败: {e}"))?;
+        let Some(path) = f.enclosed_name().map(|p| p.to_path_buf()) else { continue };
+        if path.file_name().and_then(|x| x.to_str()) != Some("manifest.json") { continue; }
+        let mut raw = String::new();
+        f.read_to_string(&mut raw).map_err(|e| format!("读取 manifest.json 失败: {e}"))?;
+        let man: Value = serde_json::from_str(&raw).map_err(|e| format!("manifest.json 格式错误: {e}"))?;
+        let id = man.get("id").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+        if !valid_plugin_id(&id) { return Err(format!("插件 ID 不合法: {id}")); }
+        let prefix = path.parent().map(|x| x.to_string_lossy().replace('\\', "/")).unwrap_or_default();
+        plugins.push((prefix, id));
+    }
+    if plugins.is_empty() { return Err("ZIP 中未找到 manifest.json".into()); }
+    plugins.sort();
+    plugins.dedup();
+
+    let mut imported = Vec::new();
+    for (prefix, id) in &plugins {
+        let dest = root.join(id);
+        if dest.exists() { fs::remove_dir_all(&dest).map_err(|e| format!("覆盖旧插件失败: {e}"))?; }
+        fs::create_dir_all(&dest).map_err(|e| format!("创建插件目录失败: {e}"))?;
+
+        for i in 0..archive.len() {
+            let mut f = archive.by_index(i).map_err(|e| format!("读取 ZIP 失败: {e}"))?;
+            let Some(path) = f.enclosed_name().map(|p| p.to_path_buf()) else { continue };
+            let norm = path.to_string_lossy().replace('\\', "/");
+            let rel = if prefix.is_empty() {
+                // 根目录插件：保留 assets/data 等子目录。
+                norm.clone()
+            } else {
+                let pre = format!("{prefix}/");
+                if !norm.starts_with(&pre) { continue; }
+                norm[pre.len()..].to_string()
+            };
+            if rel.is_empty() { continue; }
+            let out = dest.join(&rel);
+            if f.is_dir() {
+                fs::create_dir_all(&out).map_err(|e| format!("创建目录失败: {e}"))?;
+            } else {
+                if let Some(parent) = out.parent() { fs::create_dir_all(parent).map_err(|e| format!("创建目录失败: {e}"))?; }
+                let mut data = Vec::new();
+                f.read_to_end(&mut data).map_err(|e| format!("解压插件失败: {e}"))?;
+                fs::write(&out, data).map_err(|e| format!("写入插件文件失败: {e}"))?;
+            }
+        }
+        if !dest.join("manifest.json").exists() { return Err(format!("插件 {id} 导入后缺少 manifest.json")); }
+        imported.push(id.clone());
+    }
+    Ok(imported)
+}
+
+/// 将所选用户插件打包为 zip，返回 base64，前端负责保存下载。
+#[tauri::command]
+fn export_plugins_zip(app: AppHandle, ids: Vec<String>) -> Result<String, String> {
+    use base64::Engine as _;
+    use std::io::{Cursor, Write};
+    use zip::write::SimpleFileOptions;
+    if ids.is_empty() { return Err("请先选择要导出的用户插件".into()); }
+    let root = plugins_dir(&app)?;
+    let mut cur = Cursor::new(Vec::<u8>::new());
+    {
+        let mut writer = zip::ZipWriter::new(&mut cur);
+        let opt = SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+        for id in ids {
+            if !valid_plugin_id(&id) { return Err(format!("插件 ID 不合法: {id}")); }
+            let dir = root.join(&id);
+            if !dir.join("manifest.json").exists() { return Err(format!("用户插件不存在: {id}")); }
+            let mut stack = vec![dir.clone()];
+            while let Some(path) = stack.pop() {
+                for entry in fs::read_dir(&path).map_err(|e| format!("读取插件失败: {e}"))? {
+                    let entry = entry.map_err(|e| e.to_string())?;
+                    let p = entry.path();
+                    if p.is_dir() { stack.push(p); continue; }
+                    let rel = p.strip_prefix(&dir).map_err(|e| e.to_string())?.to_string_lossy().replace('\\', "/");
+                    writer.start_file(format!("{id}/{rel}"), opt).map_err(|e| format!("创建 ZIP 失败: {e}"))?;
+                    let data = fs::read(&p).map_err(|e| format!("读取插件文件失败: {e}"))?;
+                    writer.write_all(&data).map_err(|e| format!("写入 ZIP 失败: {e}"))?;
+                }
+            }
+        }
+        writer.finish().map_err(|e| format!("完成 ZIP 失败: {e}"))?;
+    }
+    Ok(base64::engine::general_purpose::STANDARD.encode(cur.into_inner()))
 }
 
 #[derive(serde::Serialize)]
@@ -393,15 +524,23 @@ pub fn run() {
             }
         }));
     }
+    #[cfg(target_os = "android")]
+    { builder = builder.plugin(care_voice::init()).plugin(native_schedule::init()); }
     builder
         .plugin(tauri_plugin_opener::init())
         .manage(HttpSessions(Mutex::new(HashMap::new())))
         .manage(LanHandle(Mutex::new(None)))
+        .manage(native_schedule::NativeSchedule::default())
         .invoke_handler(tauri::generate_handler![
+            care_voice::care_voice,
+            native_schedule::native_schedule,
             load_data,
             save_data,
             list_plugins,
             read_plugin_file,
+            delete_plugin,
+            import_plugin_zip,
+            export_plugins_zip,
             app_info,
             http_get,
             open_external,

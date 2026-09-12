@@ -73,5 +73,5 @@
     });
   }
 
-  tide.ui.registerView({ id: "weekly-report", title: "周度报告", icon: "📊", render });
+  tide.ui.registerView({ id: "weekly-report", title: "周度报告", icon: "报", render });
 })();

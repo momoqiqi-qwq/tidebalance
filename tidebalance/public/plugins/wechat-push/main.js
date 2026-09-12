@@ -148,7 +148,7 @@
       : `<div style="font-size:11px;color:#A9B2BA">还没有推送记录</div>`;
   }
 
-  tide.ui.registerView({ id: "wechat-push", title: "微信推送", icon: "📲", render });
+  tide.ui.registerView({ id: "wechat-push", title: "微信推送", icon: "微", render });
   startTimer(); // 插件加载即跑，界面只是配置入口
   loadPrefs().then(() => { if (state.enabled && state.key) tick(); });
 })();

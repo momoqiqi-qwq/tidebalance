@@ -1,4 +1,4 @@
-// 警大门户通知 —— 改造自 cppu-notify-skill v1.0.0（Python + tesseract OCR → 潮衡插件）
+// 警大门户通知 —— 对齐 cppu-notify-skill v1.2.1（Python + tesseract OCR → 潮衡插件）
 // 相比原 skill 的优化：移除 74MB OCR 运行时，验证码改为界面内手输；
 // 保留完整 SSO 链路（主 SSO → sso-jw bridge → 门户 tp_up）与 rememberMe 5 天免密。
 // 安全：学号存本机，密码不落盘；会话 Cookie 只在内存。
@@ -36,20 +36,21 @@
   }
 
   const state = {
-    sid: null, token: "", username: "",
+    sid: null, token: "", username: "", rememberUsername: true,
     notices: [], page: 1, hasMore: true,
     fetching: false, error: null, fetchedAt: 0,
+    expanded: new Set(),
     details: {},           // rid -> {content, loading, error}
     seen: new Set(),
     filter: { kw: "", month: "all", hideSeen: false },
     captcha: "", pending: null, renderedCount: CHUNK,
   };
-  let ui = null, io = null, sentinelCb = null;
+  let ui = null, io = null, sentinelCb = null, paintToken = 0;
 
   function observeSentinel(node, cb) {
     sentinelCb = cb;
     if (io) io.disconnect();
-    if (node) io.observe(node);
+    if (node && io) io.observe(node);
   }
 
   function esc(s) {
@@ -78,13 +79,27 @@
     t = ta.value.replace(/&ldquo;/g, "\u201c").replace(/&rdquo;/g, "\u201d");
     const out = [];
     for (const ln of t.split("\n").map((s) => s.trim())) {
-      if (ln && (out.length === 0 || out[out.length - 1] !== "")) out.push(ln);
+      if (ln) out.push(ln);
       else if (!ln && out.length && out[out.length - 1] !== "") out.push("");
     }
     return out.join("\n").trim();
   }
   const titleOf = (it) => String(it.PIM_TITLE || "(无标题)").replace(/&ldquo;/g, "\u201c").replace(/&rdquo;/g, "\u201d");
   const itemKey = (it) => String(it.RESOURCE_ID || "");
+  function tokenFromText(...parts) {
+    for (const part of parts) {
+      const m = String(part || "").match(/tp_up[=;]([^&?;\s"'<>]+)/);
+      if (m) return m[1];
+    }
+    return "";
+  }
+  function explainHttpError(e) {
+    const msg = String(e && (e.message || e) || "");
+    if (/Failed to fetch|Load failed|NetworkError/i.test(msg)) {
+      return "网络桥不可用：浏览器预览会被智慧警大跨域策略拦截，请在桌面版 TideBalance 中打开本插件。";
+    }
+    return msg || "网络请求失败";
+  }
 
   function ensureStyle() {
     if (document.getElementById("pp-notify-style")) return;
@@ -109,8 +124,12 @@
       .pp-toggle.on i::after{left:17px}
       .pp-status{font-size:12px;color:#7E8B94;margin:2px 0 8px}
       .pp-status .err{color:#B03535}
-      .pp-month{position:sticky;top:-4px;z-index:3;background:#F2EFEA;font-size:12.5px;font-weight:700;color:#0F4C5C;padding:9px 2px 7px;letter-spacing:.05em}
+      .pp-month{font-size:12.5px;font-weight:700;color:#0F4C5C;padding:9px 2px 7px;letter-spacing:.05em}
       .pp-card{background:#fff;border:1px solid #E4DFD6;border-radius:14px;padding:12px 14px;margin-bottom:9px;cursor:pointer;content-visibility:auto;contain-intrinsic-size:auto 74px}
+      .pp-heading{display:block;width:100%;text-align:left;background:transparent;border:0;color:inherit;padding:4px 0;cursor:pointer;font-family:inherit;min-height:44px}
+      .pp-expand{margin-top:10px;min-height:44px}
+      .pp-heading:focus-visible,.pp-btn:focus-visible{outline:3px solid #2EC4B6;outline-offset:2px}
+      @media(max-width:600px){.pp-wrap{width:100%;min-width:0}.pp-login{margin:12px auto;padding:20px 16px;max-width:100%;box-sizing:border-box}.pp-title{font-size:17px!important}.pp-meta{font-size:13px!important}.pp-detail .c{font-size:16px!important;max-height:none!important;overflow-wrap:anywhere}.pp-btn,.pp-chip{min-height:44px;font-size:14px!important}.pp-kw{width:100%;flex-basis:100%;box-sizing:border-box;min-height:44px}.pp-card{padding:14px;cursor:default}.pp-caprow input{min-width:0}.pp-detail .pp-act{flex-wrap:wrap}}
       .pp-card:hover{background:#FBFAF5;border-color:#D8D2C4}
       .pp-card.seen{opacity:.6}
       .pp-title{font-size:13.5px;font-weight:600;line-height:1.5}
@@ -132,6 +151,7 @@
       .pp-caprow small{font-size:10px;color:#A9B2BA;display:block;margin-top:3px}
       .pp-login .err{color:#B03535;font-size:12px;margin-top:10px;min-height:16px}
       .pp-login .sec{font-size:10.5px;color:#A9B2BA;margin-top:12px;line-height:1.7}
+      .pp-login .saved{background:#F6FBFA;border:1px solid #D6EBE8;color:#42656A;border-radius:10px;padding:9px 11px;font-size:12px;line-height:1.65;margin:10px 0 12px}
       .pp-empty{border:1.5px dashed #CFC8BA;border-radius:12px;padding:20px;text-align:center;color:#A9B2BA;font-size:12.5px;line-height:1.8}
       .pp-banner{background:#FFF7E8;border:1px solid #F2D9A6;color:#8A6420;border-radius:12px;padding:12px 15px;font-size:12px;line-height:1.8;margin-bottom:10px}
       .pp-more{display:flex;justify-content:center;padding:8px 0 4px}
@@ -144,18 +164,22 @@
     const f = await tide.storage.get("filter", null);
     if (f) state.filter = { ...state.filter, ...f };
     state.username = (await tide.storage.get("username", "")) || "";
+    state.rememberUsername = await tide.storage.get("rememberUsername", true) !== false;
     state.seen = new Set(await tide.storage.get("seen", []));
   }
   const saveFilter = () => tide.storage.set("filter", state.filter);
   const saveSeen = () => tide.storage.set("seen", [...state.seen].slice(-500));
 
   /* ── SSO 登录链路 ── */
-  async function newSession() { state.sid = await tide.http.session(); }
+  async function newSession() { if (!state.sid) state.sid = await tide.http.session(); }
   const referer = () => PORTAL + "/tp_up/view;tp_up=" + state.token + "?m=up";
 
-  async function getPage(url, useBinary = false) {
-    const res = await tide.http.fetch(state.sid, "GET", url, { binary: useBinary });
-    return res;
+  async function getPage(url, useBinary = false, opts = {}) {
+    try {
+      return await tide.http.fetch(state.sid, "GET", url, { ...opts, binary: useBinary });
+    } catch (e) {
+      throw new Error(explainHttpError(e));
+    }
   }
 
   async function fetchLoginHtml() {
@@ -174,23 +198,35 @@
     return state.captcha;
   }
 
+  async function finishPortalLogin(firstRes) {
+    const direct = tokenFromText(firstRes?.finalUrl, firstRes?.body);
+    if (direct) { state.token = direct; return true; }
+
+    // 对齐原 skill：主 SSO 登录成功后，显式补走 sso-jw -> 门户换 tp_up。
+    // HTTP 桥已经跟随 bridge 重定向；不要重复消费一次性 ticket。
+    const renew = await getPage(SILENT_LOGIN).catch(() => null);
+    const renewed = tokenFromText(renew?.finalUrl, renew?.body);
+    if (renewed) { state.token = renewed; return true; }
+    return false;
+  }
+
   async function submitLogin(code) {
     const p = state.pending;
-    const res = await tide.http.fetch(state.sid, "POST", LOGIN_URL, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Referer": LOGIN_URL,
-      },
-      body: `username=${encodeURIComponent(p.username)}&password=${encodeURIComponent(rsaEncrypt(p.password))}` +
-        `&authcode=${encodeURIComponent(code)}&execution=${encodeURIComponent(p.execution)}` +
-        `&encrypted=true&_eventId=submit&loginType=1&rememberMe=true&submit=${encodeURIComponent("登 录")}`,
-    });
-    if (res.finalUrl && res.finalUrl.includes("tp_up=")) {
-      const m = res.finalUrl.match(/tp_up=([^&?;]+)/);
-      if (m) { state.token = m[1]; return; }
+    let res;
+    try {
+      res = await tide.http.fetch(state.sid, "POST", LOGIN_URL, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Referer": LOGIN_URL,
+        },
+        body: `username=${encodeURIComponent(p.username)}&password=${encodeURIComponent(rsaEncrypt(p.password))}` +
+          `&authcode=${encodeURIComponent(code)}&execution=${encodeURIComponent(p.execution)}` +
+          `&encrypted=true&_eventId=submit&loginType=1&rememberMe=true&submit=${encodeURIComponent("登 录")}`,
+      });
+    } catch (e) {
+      throw { retry: explainHttpError(e) };
     }
-    // CAS 对登录失败返回 500 +「提示信息」页（会作废 execution），先尝试静默续期兜底
-    if (await silentRenew()) return;
+    if (await finishPortalLogin(res)) { state.pending = null; return; }
     const body = res.body || "";
     let msg = null;
     if (/密码错误|账号或密码/.test(body)) throw { fatal: "账号或密码错误" };
@@ -200,37 +236,44 @@
     // 失败后 execution 已失效：重置登录页（新 execution + 新验证码）
     state.pending.execution = await fetchLoginHtml();
     await fetchCaptcha();
-    const diag = `诊断：HTTP ${res.status} · 落点 ${esc((res.finalUrl || "").slice(0, 60))} · 页面摘要「${esc(plain.slice(0, 90))}」`;
+    const diag = `诊断：HTTP ${res.status} · 登录未建立，请核对验证码`;
     throw { retry: msg || `登录未通过（HTTP ${res.status}），已重置登录页，请重试`, diag };
   }
 
   // 静默续期：CASTGC 5 天内有效时，sso-jw 会自动换 ticket，无需验证码
   async function silentRenew() {
     try {
-      const res = await tide.http.fetch(state.sid, "GET", SILENT_LOGIN);
-      const m = (res.finalUrl || "").match(/tp_up=([^&?;]+)/);
-      if (m) { state.token = m[1]; return true; }
+      const res = await getPage(SILENT_LOGIN);
+      const t = tokenFromText(res.finalUrl, res.body);
+      if (t) { state.token = t; return true; }
     } catch { /* ignore */ }
     return false;
   }
 
   /* ── 通知数据 ── */
-  async function loadPage(page = 1) {
+  async function loadPage(page = 1, renewed = false) {
     if (state.fetching) return;
     state.fetching = true;
     paintStatus();
     try {
-      const res = await tide.http.fetch(state.sid, "POST", PORTAL + "/up/pim/allpim/getAllPimList", {
-        headers: {
-          "Content-Type": "application/json;charset=utf-8",
-          "Referer": referer(),
-          "Cookie": "tp_up=" + state.token,
-        },
-        body: JSON.stringify({ pageNum: page, pageSize: PAGE_SIZE }),
-      });
+      let res;
+      try {
+        res = await tide.http.fetch(state.sid, "POST", PORTAL + "/tp_up/up/pim/allpim/getAllPimList", {
+          headers: {
+            "Content-Type": "application/json;charset=utf-8",
+            "Referer": referer(),
+            "Cookie": "tp_up=" + state.token,
+          },
+          body: JSON.stringify({ pageNum: page, pageSize: PAGE_SIZE }),
+        });
+      } catch (e) {
+        throw new Error(explainHttpError(e));
+      }
+      if (res.status !== 200) throw new Error(`列表接口 HTTP ${res.status}，会话可能已过期`);
       let d;
       try { d = JSON.parse(res.body); } catch { throw new Error("会话已过期，请重新登录"); }
-      const items = d.list || [];
+      if (!Array.isArray(d.list)) throw new Error("列表格式异常或会话已过期，请重新登录");
+      const items = d.list;
       if (page === 1) state.notices = items;
       else {
         const ids = new Set(state.notices.map((x) => x.RESOURCE_ID));
@@ -242,9 +285,9 @@
       state.error = null;
     } catch (e) {
       // 会话过期先尝试静默续期一次
-      if (await silentRenew()) {
+      if (!renewed && await silentRenew()) {
         state.fetching = false;
-        return loadPage(page);
+        return loadPage(page, true);
       }
       state.error = String(e.message || e);
     }
@@ -258,22 +301,29 @@
     state.details[rid] = { loading: true };
     paintList();
     try {
-      const res = await tide.http.fetch(state.sid, "POST", PORTAL + "/up/pim/showpim/getPimDetailInfoById", {
-        headers: {
-          "Content-Type": "application/json;charset=utf-8",
-          "Referer": referer(),
-          "Cookie": "tp_up=" + state.token,
-        },
-        body: JSON.stringify({ RESOURCE_ID: rid }),
-      });
+      let res;
+      try {
+        res = await tide.http.fetch(state.sid, "POST", PORTAL + "/tp_up/up/pim/showpim/getPimDetailInfoById", {
+          headers: {
+            "Content-Type": "application/json;charset=utf-8",
+            "Referer": referer(),
+            "Cookie": "tp_up=" + state.token,
+          },
+          body: JSON.stringify({ RESOURCE_ID: rid }),
+        });
+      } catch (e) {
+        throw new Error(explainHttpError(e));
+      }
+      if (res.status !== 200) throw new Error(`详情接口 HTTP ${res.status}`);
       const arr = JSON.parse(res.body);
       const d = Array.isArray(arr) ? arr[0] : null;
       let text = "";
       if (d) {
         const cu = d.CONTENT_URL || "";
         if (cu) {
-          const url = cu.startsWith("http") ? cu : PORTAL + "/" + cu.replace(/^\//, "");
-          const cres = await tide.http.fetch(state.sid, "GET", url, { headers: { "Referer": referer(), "Cookie": "tp_up=" + state.token } });
+          const url = cu.startsWith("http") ? cu : PORTAL + "/tp_up/" + cu.replace(/^\//, "");
+          const cres = await getPage(url, false, { headers: { "Referer": referer(), "Cookie": "tp_up=" + state.token } });
+          if (cres.status !== 200) throw new Error(`正文接口 HTTP ${cres.status}`);
           const mm = cres.body.match(/^[^(]*\(([\s\S]*)\)\s*;?\s*$/);
           let obj;
           try { obj = JSON.parse(mm ? mm[1] : cres.body); text = obj.result || obj.content || ""; }
@@ -306,8 +356,8 @@
 
   function paintStatus() {
     if (!ui) return;
-    if (state.fetching && !state.notices.length) { ui.status.innerHTML = "⏳ 正在拉取通知…"; return; }
-    if (state.error) { ui.status.innerHTML = `<span class="err">⚠ ${esc(state.error)}</span>`; return; }
+    if (state.fetching && !state.notices.length) { ui.status.innerHTML = "正在拉取通知…"; return; }
+    if (state.error) { ui.status.innerHTML = `<span class="err">${esc(state.error)}</span>`; return; }
     const at = state.fetchedAt ? new Date(state.fetchedAt).toTimeString().slice(0, 5) : "—";
     ui.status.innerHTML = `${esc(state.username ? "学号 " + state.username : "")} · 已更新 ${at} · 拉取 ${state.notices.length} 条 · 显示 <b>${filtered().length}</b> 条`;
   }
@@ -332,21 +382,22 @@
     const t = Number(it.CREATE_TIME || 0);
     const timeStr = t ? new Date(t).toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "";
     const det = state.details[rid];
-    const open = !!det && (det.content !== undefined || det.error !== undefined);
+    const open = state.expanded.has(rid);
     return `<div class="pp-card" data-rid="${esc(rid)}">
-      <div class="pp-title">${esc(titleOf(it))}</div>
+      <button class="pp-title pp-heading" data-toggle aria-expanded="${open}" aria-label="${esc(titleOf(it))}，${open ? "收起正文" : "展开正文"}">${esc(titleOf(it))}</button>
       <div class="pp-meta">
-        ${it.IS_TOP === "1" ? '<span class="pp-tag top">★ 置顶</span>' : ""}
+        ${it.IS_TOP === "1" ? '<span class="pp-tag top">置顶</span>' : ""}
         ${it.IS_READ === "0" ? '<span class="pp-tag unread">未读</span>' : ""}
         ${it.TYPE_NAME ? `<span class="pp-tag">${esc(it.TYPE_NAME)}</span>` : ""}
         <span>发布：${esc(it.CREATE_USER_NAME || "—")}（${esc(it.BELONG_UNIT_NAME || "—")}）</span>
-        <span>🕐 ${timeStr}</span>
+        <span>${timeStr}</span>
         ${isNew ? '<span class="pp-tag unread">NEW</span>' : ""}
       </div>
-      ${open ? `<div class="pp-detail">${det.loading ? "⏳ 正在加载正文…" :
-        det.error ? `<span style="color:#B03535;font-size:12px">⚠ ${esc(det.error)}</span>` :
+      <button class="pp-btn pp-expand" data-toggle aria-expanded="${open}">${open ? "收起正文" : "展开正文"}</button>
+      ${open ? `<div class="pp-detail">${!det || det.loading ? "正在加载正文…" :
+        det.error ? `<span style="color:#B03535;font-size:12px">${esc(det.error)}</span><button class="pp-btn" data-retry>重试加载正文</button>` :
         `<div class="c">${esc(det.content)}</div>
-         <div class="pp-act"><button class="pp-btn" data-remind>＋ 转为提醒</button></div>`}</div>` : ""}
+         <div class="pp-act"><button class="pp-btn" data-remind>转为提醒</button></div>`}</div>` : ""}
     </div>`;
   }
 
@@ -370,7 +421,7 @@
     for (const it of slice) {
       const mo = monthOf(it);
       if (mo !== lastMonth) {
-        html += `<div class="pp-month">📅 ${esc(monthLabel(mo))} · ${counts[mo]} 条</div>`;
+        html += `<div class="pp-month">${esc(monthLabel(mo))} · ${counts[mo]} 条</div>`;
         lastMonth = mo;
       }
       html += cardHtml(it);
@@ -388,7 +439,7 @@
     } else if (state.hasMore) {
       const b = document.createElement("button");
       b.className = "pp-btn";
-      b.textContent = state.fetching ? "⏳ 正在加载更早的通知…" : `⟳ 加载更早的通知（第 ${state.page + 1} 页）`;
+      b.textContent = state.fetching ? "正在加载更早的通知…" : `加载更早的通知（第 ${state.page + 1} 页）`;
       b.addEventListener("click", () => { if (token === paintToken) loadPage(state.page + 1); });
       more.append(b);
     } else if (state.notices.length) {
@@ -415,13 +466,13 @@
     const title = titleOf(it);
     const det = state.details[itemKey(it)];
     const content = det && det.content ? det.content : "";
-    const p = tide.util.parseWhen(`${title} ${strip(content).slice(0, 300)}`);
+    const p = tide.util.parseWhen(`${title} ${cleanText(content).slice(0, 300)}`);
     const cat = tide.util.guessCategory(`${title} ${content}`);
     const task = tide.tasks.create({
       title, quad: tide.util.guessQuad(p.date),
       estMin: p.endMin ? p.endMin - p.startMin : 60,
       due: p.date, tags: ["警大通知"],
-      note: PORTAL + "/tp_up/view;tp_up=" + state.token + "?m=up",
+      note: PORTAL + "/tp_up/view?m=up",
     });
     if (p.date && p.startMin !== null) {
       tide.blocks.create({ date: p.date, start: tide.util.hhmmOf(p.startMin), durMin: p.endMin ? p.endMin - p.startMin : 60, title, taskId: task.id, cat });
@@ -443,68 +494,107 @@
 
   /* ── 登录界面 ── */
   function paintLogin(el, errMsg) {
+    const hasSaved = !!state.username;
     el.innerHTML = `<div class="pp-login">
-      <h3>🛡 登录智慧警大门户</h3>
-      <div class="d">中国人民警察大学统一门户（portal-jw.cppu.edu.cn）。登录时勾选 5 天自动登录：CASTGC 票据 5 天内有效，期间静默续期，多数时候连验证码都不用输。</div>
-      <label>学号 / 用户名</label><input data-u type="text" value="${esc(state.username)}" autocomplete="off">
-      <label>密码</label><input data-p type="password">
+      <h3>登录智慧警大门户</h3>
+      <div class="d">中国人民警察大学统一门户（portal-jw.cppu.edu.cn）。系统会优先尝试当前会话自动登录；失效后只需要在这里输入密码和验证码。</div>
+      ${hasSaved ? `<div class="saved">已填入上次账号 ${esc(state.username)}。密码不会保存，每次只在这个登录框里输入。</div>` : ""}
+      <label>学号 / 用户名</label><input data-u aria-label="学号 / 用户名" type="text" value="${esc(state.username)}" autocomplete="off">
+      <label>密码</label><input data-p aria-label="密码" type="password" autocomplete="current-password">
       <label>验证码</label>
-      <div class="caprow">
-        <input data-code type="text" maxlength="4" placeholder="4 位字符">
+      <div class="pp-caprow">
+        <input data-code aria-label="验证码" type="text" maxlength="4" placeholder="4 位字符">
         <div class="capbox" data-capbox title="点击更换"><img data-cap src="${esc(state.captcha)}"><small>看不清？点图换一张</small></div>
       </div>
-      <div class="row" style="margin-top:12px"><span data-switchuser style="font-size:12px;color:#7E8B94;cursor:pointer"> ⟲ 清除记住的学号</span></div>
+      <div class="row" style="margin-top:12px;gap:12px;align-items:center;flex-wrap:wrap">
+        <label class="pp-toggle ${state.rememberUsername ? "on" : ""}" data-remember><i></i>记住账号</label>
+        <span data-switchuser style="font-size:12px;color:#7E8B94;cursor:pointer">清除上次账号</span>
+      </div>
       <button class="submit" data-go style="width:100%;height:40px;border-radius:10px;background:#0F4C5C;color:#fff;font-size:14px;font-weight:600;margin-top:14px;cursor:pointer">登 录</button>
       <div class="err" data-err>${esc(errMsg || "")}</div>
-      <div class="sec">登录后 rememberMe 票据 5 天有效，期间静默续期免验证码。学号只存本机；密码不落盘。</div>
+      <div class="sec">登录成功后会保存账号并在本次应用运行期间保留门户自动登录票据；密码只在内存中用于本次登录，不会落盘。</div>
     </div>`;
 
     const errEl = el.querySelector("[data-err]");
     const codeEl = el.querySelector("[data-code]");
     const capImg = el.querySelector("[data-cap]");
+    const userEl = el.querySelector("[data-u]");
+    const passEl = el.querySelector("[data-p]");
+    const rememberEl = el.querySelector("[data-remember]");
     el.querySelector("[data-capbox]").addEventListener("click", async () => {
-      errEl.textContent = "⏳ 正在换验证码…";
+      errEl.textContent = "正在换验证码…";
       try {
         const url = await fetchCaptcha();
         if (capImg) capImg.src = url;   // 直接更新登录表单里的验证码图
         errEl.textContent = "";
       } catch (e) {
-        errEl.textContent = "⚠ " + (e.message || e);
+        errEl.textContent = e.message || e;
       }
     });
-    el.querySelector("[data-switchuser]").addEventListener("click", () => { state.username = ""; tide.storage.set("username", ""); el.querySelector("[data-u]").value = ""; });
+    rememberEl.addEventListener("click", () => {
+      state.rememberUsername = !state.rememberUsername;
+      rememberEl.classList.toggle("on", state.rememberUsername);
+      tide.storage.set("rememberUsername", state.rememberUsername);
+      if (!state.rememberUsername) tide.storage.set("username", "");
+    });
+    el.querySelector("[data-switchuser]").addEventListener("click", () => {
+      state.username = "";
+      tide.storage.set("username", "");
+      userEl.value = "";
+      userEl.focus();
+    });
 
-    el.querySelector("[data-go]").addEventListener("click", async () => {
-      const username = el.querySelector("[data-u]").value.trim();
-      const password = el.querySelector("[data-p]").value;
+    let loggingIn = false;
+    const doLogin = async () => {
+      if (loggingIn) return;
+      const username = userEl.value.trim();
+      const password = passEl.value;
       const code = codeEl.value.trim();
       if (!username || !password || !code) { errEl.textContent = "请填写学号、密码和验证码"; return; }
-      errEl.textContent = "⏳ 正在走 SSO 链路（登录 → bridge → 门户）…";
+      if (!state.pending?.execution) { errEl.textContent = "登录页尚未准备好，请稍候再试"; return; }
+      loggingIn = true; el.querySelector("[data-go]").disabled = true;
+      errEl.textContent = "正在走 SSO 链路（登录 → bridge → 门户）…";
       try {
         state.pending = { username, password, execution: state.pending?.execution };
         await submitLogin(code);
         state.username = username;
-        tide.storage.set("username", username);
-        tide.notify("登录成功，门户会话已建立（5 天内免密续期）");
+        if (state.rememberUsername) tide.storage.set("username", username);
+        else tide.storage.set("username", "");
+        passEl.value = "";
+        tide.notify("登录成功，正在获取门户通知");
         buildMain(el);
         loadPage(1);
       } catch (e2) {
-        if (e2 && e2.fatal) { errEl.textContent = "⚠ " + e2.fatal; }
+        if (e2 && e2.fatal) { errEl.textContent = e2.fatal; }
         else {
-          errEl.innerHTML = "⚠ " + esc((e2 && e2.retry) || e2.message || "登录失败") +
+          errEl.innerHTML = esc((e2 && e2.retry) || e2.message || "登录失败") +
             (e2 && e2.diag ? `<br><span style="font-size:10.5px;color:#A9B2BA;word-break:break-all">${e2.diag}</span>` : "");
         }
+      } finally {
+        loggingIn = false;
+        const button = el.querySelector("[data-go]"); if (button) button.disabled = false;
+        if (state.pending) delete state.pending.password;
       }
-    });
+    };
+    el.querySelector("[data-go]").addEventListener("click", doLogin);
+    for (const input of [userEl, passEl, codeEl]) {
+      input.addEventListener("keydown", (e) => {
+        e.stopPropagation();
+        if (e.key === "Enter") doLogin();
+      });
+    }
+    setTimeout(() => (hasSaved ? passEl : userEl).focus(), 0);
 
     // 首次进入：拉登录页 + 验证码
     (async () => {
       try {
         await newSession();
-        state.pending = { execution: await fetchLoginHtml() };
-        await fetchCaptcha();
+        if (!state.pending?.execution || !state.captcha) {
+          state.pending = { execution: await fetchLoginHtml() };
+          await fetchCaptcha();
+        }
       } catch (e) {
-        errEl.textContent = "⚠ " + (e.message || e);
+        errEl.textContent = e.message || e;
       }
     })();
   }
@@ -513,11 +603,11 @@
     el.innerHTML = `<div class="pp-wrap">
       <div style="font-size:11px;letter-spacing:.3em;color:#7E8B94;margin:16px 0 4px">警 大 门 户 通 知 · 内 置 插 件</div>
       <div class="pp-toolbar">
-        <button class="pp-btn pri" data-refresh>⟳ 刷新</button>
+        <button class="pp-btn pri" data-refresh>刷新</button>
         <input class="pp-kw" data-kw type="text" placeholder="关键词过滤：标题 / 发布人 / 单位 / 分类…">
         <label class="pp-toggle" data-hs><i></i>只看未读</label>
         <span style="flex:1"></span>
-        <button class="pp-btn" data-relogin>⟲ 重新登录</button>
+        <button class="pp-btn" data-relogin>重新登录</button>
       </div>
       <div class="pp-toolbar"><span class="pp-lab">月份</span><div class="pp-chips" data-months></div></div>
       <div class="pp-status" data-status></div>
@@ -544,7 +634,7 @@
     ui.hs.addEventListener("click", () => { state.filter.hideSeen = !state.filter.hideSeen; saveFilter(); paintChips(); paintList(true); });
     el.querySelector("[data-refresh]").addEventListener("click", () => loadPage(1));
     el.querySelector("[data-relogin]").addEventListener("click", () => {
-      state.token = ""; state.notices = [];
+      state.token = ""; state.notices = []; state.details = {}; state.expanded.clear(); state.pending = null; state.captcha = ""; state.sid = null; ui = null;
       paintLogin(el);
     });
 
@@ -559,9 +649,10 @@
       const it = state.notices.find((x) => itemKey(x) === rid);
       if (!it) return;
       if (e.target.closest("[data-remind]")) { await toReminder(it); return; }
-      setSeen(rid);
-      paintList();
-      loadDetail(rid);
+      if (e.target.closest("[data-retry]")) { loadDetail(rid); return; }
+      if (!e.target.closest("[data-toggle]")) return;
+      if (state.expanded.has(rid)) { state.expanded.delete(rid); paintList(); }
+      else { state.expanded.add(rid); setSeen(rid); paintList(); loadDetail(rid); }
     });
 
     paintAll();
@@ -570,9 +661,10 @@
 
   function render(el) {
     ensureStyle();
-    el.innerHTML = '<div style="padding:30px;text-align:center;color:#A9B2BA;font-size:12.5px">⏳ 正在读取偏好…</div>';
+    el.innerHTML = '<div style="padding:30px;text-align:center;color:#A9B2BA;font-size:12.5px">正在读取偏好…</div>';
     loadPrefs().then(async () => {
       await newSession();
+      if (state.token) { buildMain(el); return; }
       // 有记住的学号：先试静默续期（CASTGC 5 天内有效时免验证码）
       if (state.username && await silentRenew()) {
         tide.notify("已通过 5 天票据静默续期门户会话");
@@ -585,5 +677,5 @@
     });
   }
 
-  tide.ui.registerView({ id: "cppu-notify", title: "警大通知", icon: "🛡", render });
+  tide.ui.registerView({ id: "cppu-notify", title: "警大通知", icon: "警", render });
 })();

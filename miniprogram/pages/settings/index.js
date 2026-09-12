@@ -1,10 +1,15 @@
 // 设置页：数据统计、备份导出/导入（与桌面端同一 JSON 格式）、关于
 const store = require("../../core/store.js");
+const taskReminder = require("../../core/taskReminder.js");
+const appMeta = require("../../core/appMeta.js");
 
 Page({
   data: {
     stats: { tasks: 0, open: 0, done: 0, blocks: 0, kb: "0" },
     importText: "",
+    reminder: { enabled: true, volume: 75, sound: "beep", customAudioName: "尚未导入" },
+    soundOptions: ["内置提示音", "自定义音频"],
+    about: appMeta,
   },
 
   onShow() { this.refresh(); },
@@ -20,7 +25,9 @@ Page({
     try {
       total = wx.getStorageInfoSync().currentSize || 0; // 全部本地存储占用（KB，上限 10MB）
     } catch (e) { /* 忽略 */ }
+    const rc = taskReminder.cfg();
     this.setData({
+      reminder: { enabled: rc.enabled !== false, volume: Math.round((Number(rc.volume)||0)*100), sound: rc.sound || "beep", customAudioName: rc.customAudioName || "尚未导入" },
       stats: {
         tasks: st.tasks.length,
         open,
@@ -33,6 +40,20 @@ Page({
       },
     });
   },
+
+  onReminderEnabled(e) { const c=taskReminder.cfg(); c.enabled=!!e.detail.value; store.saveNow(); this.refresh(); },
+  onReminderVolume(e) { const c=taskReminder.cfg(); c.volume=Number(e.detail.value)/100; store.saveNow(); this.setData({"reminder.volume":Number(e.detail.value)}); },
+  onSoundChange(e) { const c=taskReminder.cfg(); c.sound=+e.detail.value===1?"custom":"beep"; store.saveNow(); this.refresh(); },
+  onTestSound() { taskReminder.play(); },
+  onImportAudio() {
+    wx.chooseMessageFile({count:1,type:"file",extension:["mp3","wav","m4a","aac","ogg"],success:(r)=>{
+      const f=r.tempFiles&&r.tempFiles[0]; if(!f)return;
+      if(f.size>8*1024*1024){wx.showToast({title:"音频请控制在 8MB 内",icon:"none"});return;}
+      wx.saveFile({tempFilePath:f.path,success:(x)=>{const c=taskReminder.cfg(); c.customAudioPath=x.savedFilePath; c.customAudioName=f.name||"自定义音频"; c.sound="custom"; store.saveNow(); this.refresh(); wx.showToast({title:"提醒音已导入",icon:"none"});},fail:()=>wx.showToast({title:"音频保存失败",icon:"none"})});
+    }});
+  },
+
+  onPlugins() { wx.navigateTo({ url: "/pages/plugins/index" }); },
 
   onExport() {
     wx.setClipboardData({

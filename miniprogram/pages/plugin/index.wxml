@@ -1,0 +1,102 @@
+<view class="page-body" wx:if="{{plugin}}">
+  <view class="card plugin-head">
+    <view class="icon"><image class="fa-icon" src="{{plugin.iconPath}}" mode="aspectFit" /></view>
+    <view class="head-copy">
+      <view class="title">{{plugin.name}}</view>
+      <view class="meta">v{{plugin.version}} · 小程序原生适配</view>
+    </view>
+  </view>
+
+  <!-- 番茄专注 -->
+  <block wx:if="{{id === 'pomodoro' && pomodoro}}">
+    <view class="card pomo-card">
+      <view class="modes">
+        <button class="mode {{item.active ? 'on' : ''}}" wx:for="{{pomodoro.modes}}" wx:key="id" data-id="{{item.id}}" bindtap="onPomoMode">{{item.label}}</button>
+      </view>
+      <view class="custom-row"><input type="number" value="{{pomodoro.customMin}}" bindinput="onPomoCustomInput" placeholder="分钟"/><button class="btn ghost" bindtap="onPomoSetCustom">设置自定义倒计时</button></view>
+      <view class="clock">{{pomodoro.timeText}}</view>
+      <view class="label">专注哪个任务（可选）</view>
+      <picker mode="selector" range="{{pomodoro.tasks}}" range-key="title" value="{{pomodoro.taskIndex}}" bindchange="onPomoTask">
+        <view class="pickerbox">{{pomodoro.tasks[pomodoro.taskIndex].title}}</view>
+      </picker>
+      <view class="custom-row"><input value="{{pomodoro.newTaskTitle}}" bindinput="onPomoNewTaskInput" placeholder="直接新建本次专注任务"/><button class="btn ghost" bindtap="onPomoAddTask">新建任务</button></view>
+      <view class="controls">
+        <button class="btn pri" bindtap="onPomoToggle">{{pomodoro.running ? '暂停' : '开始 / 继续'}}</button>
+        <button class="btn ghost" bindtap="onPomoReset">重置</button>
+      </view>
+      <view class="pomo-stats">累计 <text>{{pomodoro.doneCount}}</text> 个番茄 · <text>{{pomodoro.focusMin}}</text> 分钟</view>
+      <view class="desc hint">小程序退到后台时不会依赖持续计时器，而是记录结束时间；回到页面后按真实经过时间恢复。</view>
+    </view>
+  </block>
+
+  <!-- 周度报告 -->
+  <block wx:if="{{id === 'weekly-report' && weekly}}">
+    <view class="card">
+      <view class="section-title">过去 7 天</view>
+      <view class="day" wx:for="{{weekly.days}}" wx:key="date">
+        <view class="daytop"><text>{{item.weekday}} · {{item.date}}</text><text>{{item.label}}</text></view>
+        <view class="bartrack"><view class="bar" style="width: {{item.pct}}%;"></view></view>
+      </view>
+      <view class="summary">排程合计 <text class="strong">{{weekly.totalLabel}}</text> · 日均 <text class="strong">{{weekly.averageLabel}}</text> · 任务完成 <text class="strong">{{weekly.done}}/{{weekly.taskCount}}</text></view>
+    </view>
+    <view class="card">
+      <view class="section-title">分类占比</view>
+      <view class="catrow" wx:for="{{weekly.cats}}" wx:key="id">
+        <view class="catdot cat-{{item.id}}"></view><text class="catname">{{item.label}}</text><text class="catvalue">{{item.value}}</text>
+      </view>
+    </view>
+  </block>
+
+  <!-- 中国节假日 -->
+  <block wx:if="{{id === 'cn-holiday' && holiday}}">
+    <view class="card">
+      <view class="section-title">今天 · {{holiday.today}}</view>
+      <view class="hero-status">{{holiday.todayText}}</view>
+      <view class="desc" wx:if="{{!holiday.available}}">当前包里没有 {{holiday.year}} 年离线数据，可在桌面 / Android 插件联网更新。</view>
+    </view>
+    <view class="card" wx:if="{{holiday.available}}">
+      <view class="section-title">接下来的法定休息安排</view>
+      <view class="holiday-row" wx:for="{{holiday.upcoming}}" wx:key="startDate">
+        <view>
+          <view class="holiday-name">{{item.name}} · {{item.days}} 天</view>
+          <view class="meta">{{item.range}}</view>
+        </view>
+        <view class="countdown">{{item.countdown}}</view>
+      </view>
+      <view class="desc hint">数据与 Windows / Android 的中国节假日插件使用同一份离线快照，由同步脚本生成。</view>
+    </view>
+  </block>
+
+  <!-- 考试日历 -->
+  <block wx:if="{{id === 'exam-calendar'}}">
+    <view class="card">
+      <view class="section-title">考试筛选</view>
+      <picker mode="selector" range="{{examFilters}}" range-key="label" value="{{examFilterIndex}}" bindchange="onExamFilter">
+        <view class="pickerbox">{{examFilters[examFilterIndex].label}}</view>
+      </picker>
+      <view class="desc hint">选择某一项后，只显示该考试从报名、准考证到口试/笔试等已收录全流程。</view>
+    </view>
+    <view class="card" wx:if="{{examFlow && examFlow.id !== 'all'}}">
+      <view class="section-title">{{examFlow.label}} · 报名与全流程</view>
+      <view class="desc">{{examFlow.registrationText}}</view>
+      <view class="exam-notice" wx:if="{{examFlow.cetNotice}}">{{examFlow.cetNotice}}</view>
+      <button wx:if="{{examFlow.signupUrl}}" class="btn ghost exam-signup" bindtap="onOpenExamSignup">复制 CET 报名系统网址</button>
+    </view>
+    <view class="card">
+      <view class="section-title">未来考试 · 同步桌面内嵌数据</view>
+      <view class="desc" wx:if="{{!exams.length}}">当前筛选条件下没有更晚的考试安排。</view>
+      <view class="exam" wx:for="{{exams}}" wx:key="key">
+        <view class="exam-top">
+          <view class="exam-title">{{item.name}}</view>
+          <view class="badge {{item.confirmed ? 'ok' : 'estimate'}}">{{item.statusText}}</view>
+        </view>
+        <view class="meta">{{item.dateRange}} · {{item.typeName}} · {{item.category}} · {{item.countdown}}</view>
+        <view class="exam-actions">
+          <button class="btn small ghost" data-key="{{item.key}}" bindtap="onExamFullFlow">看全流程</button>
+          <button class="btn small pri" data-key="{{item.key}}" bindtap="onAddExam">排进日程</button>
+          <button wx:if="{{item.url}}" class="btn small ghost" data-key="{{item.key}}" bindtap="onCopyExamLink">复制官方链接</button>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

@@ -1,0 +1,16 @@
+{
+  "name": "tidebalance-plugin-guide",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dry-run": "wrangler deploy --dry-run",
+    "cf:whoami": "wrangler whoami",
+    "cf:versions": "wrangler versions list",
+    "cf:tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

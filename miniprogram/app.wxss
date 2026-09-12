@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   潮衡 TideBalance · 小程序设计系统
+   Le时间管理 · 小程序设计系统
    与桌面端 src/styles.css 同源：
    03「权衡」四象限（纸面质感、四色象限）
    04「潮汐」时间块（暖沙底、深青/珊瑚/日黄/海蓝）
@@ -38,6 +38,7 @@ page {
   color: var(--ink);
   font-size: 28rpx;
   font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  min-height: 100vh;
 }
 
 /* ── 暗色模式（app.json darkmode: true 时生效） ── */
@@ -74,12 +75,14 @@ page {
 
 /* ── 通用布局 ── */
 .page-body {
-  padding: 20rpx 24rpx 40rpx;
+  min-height: 100vh;
+  padding: calc(20rpx + env(safe-area-inset-top)) 24rpx calc(48rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
 }
 .card {
   background: var(--panel);
-  border-radius: 24rpx;
-  box-shadow: 0 4rpx 20rpx rgba(34, 48, 58, 0.06);
+  border-radius: 22rpx;
+  box-shadow: 0 2rpx 12rpx rgba(34, 48, 58, 0.055);
   padding: 26rpx;
   margin-bottom: 22rpx;
 }
@@ -108,6 +111,7 @@ page {
   align-items: center;
   justify-content: center;
   gap: 8rpx;
+  min-height: 88rpx;
   font-size: 26rpx;
   padding: 16rpx 28rpx;
   border-radius: 14rpx;
@@ -115,10 +119,11 @@ page {
   border: none;
 }
 .btn::after { border: none; }
+.btn:active { transform: scale(0.99); opacity: 0.92; }
 .btn.pri { background: var(--deep); color: var(--on-deep); font-weight: 600; }
 .btn.ghost { background: transparent; color: var(--deep); border: 2rpx solid var(--line); }
 .btn.danger { background: var(--danger-bg); color: var(--danger-ink); }
-.btn.small { font-size: 23rpx; padding: 10rpx 20rpx; }
+.btn.small { min-height: 68rpx; font-size: 23rpx; padding: 10rpx 20rpx; }
 .btn.block { display: flex; width: 100%; }
 .btn[disabled] { opacity: 0.45; }
 
@@ -134,7 +139,14 @@ page {
   width: 100%;
   box-sizing: border-box;
 }
+.input { min-height: 82rpx; }
 .textarea { min-height: 160rpx; }
+
+@media (max-width: 340px) {
+  .page-body { padding-left: 18rpx; padding-right: 18rpx; }
+  .card { padding: 22rpx; border-radius: 20rpx; }
+  .btn { font-size: 25rpx; padding-left: 22rpx; padding-right: 22rpx; }
+}
 
 /* ── 分类色 ── */
 .cat-work { background: var(--deep); }
@@ -149,4 +161,52 @@ page {
   border-radius: 8rpx;
   padding: 3rpx 12rpx;
   line-height: 1.4;
+}
+
+/* v0.9 · 参考 tauri-app-template 的统一组件风格 */
+page {
+  --ui-radius: 20rpx;
+  --ui-radius-sm: 14rpx;
+  --ui-shadow: 0 2rpx 6rpx rgba(15, 23, 42, .035);
+  --ui-hover: rgba(15, 23, 42, .04);
+}
+.page-body {
+  padding-left: 22rpx;
+  padding-right: 22rpx;
+}
+.card {
+  border: 2rpx solid var(--line);
+  border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow);
+  padding: 24rpx;
+  margin-bottom: 18rpx;
+}
+.sec-title {
+  letter-spacing: .12em;
+  font-size: 21rpx;
+  margin-bottom: 12rpx;
+}
+.btn {
+  min-height: 78rpx;
+  padding: 14rpx 24rpx;
+  border-radius: var(--ui-radius-sm);
+  font-size: 25rpx;
+}
+.btn.ghost {
+  background: var(--panel);
+  border: 2rpx solid var(--line);
+  color: var(--ink);
+}
+.btn.small { min-height: 62rpx; padding: 8rpx 18rpx; }
+.input, .textarea {
+  background: var(--panel);
+  border-radius: var(--ui-radius-sm);
+  padding: 14rpx 18rpx;
+}
+.input { min-height: 76rpx; }
+.empty {
+  border: 2rpx dashed var(--line);
+  border-radius: var(--ui-radius-sm);
+  background: var(--paper);
+  padding: 26rpx 18rpx;
 }

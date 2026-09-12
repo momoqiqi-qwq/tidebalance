@@ -2,14 +2,17 @@
   "pages": [
     "pages/quadrant/index",
     "pages/timeblock/index",
+    "pages/webview/index",
     "pages/capture/index",
     "pages/settings/index",
-    "pages/task/index"
+    "pages/task/index",
+    "pages/plugins/index",
+    "pages/plugin/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "@navBg",
     "navigationBarTextStyle": "@navTxt",
-    "navigationBarTitleText": "潮衡 TideBalance",
+    "navigationBarTitleText": "Le时间管理",
     "backgroundColor": "@bg",
     "backgroundTextStyle": "@bgTxt"
   },
@@ -19,6 +22,12 @@
     "backgroundColor": "@tabBg",
     "borderStyle": "@tabBorder",
     "list": [
+      {
+        "pagePath": "pages/settings/index",
+        "text": "设置",
+        "iconPath": "images/tab/settings.png",
+        "selectedIconPath": "images/tab/settings-on.png"
+      },
       {
         "pagePath": "pages/quadrant/index",
         "text": "四象限",
@@ -36,12 +45,6 @@
         "text": "捕获",
         "iconPath": "images/tab/capture.png",
         "selectedIconPath": "images/tab/capture-on.png"
-      },
-      {
-        "pagePath": "pages/settings/index",
-        "text": "设置",
-        "iconPath": "images/tab/settings.png",
-        "selectedIconPath": "images/tab/settings-on.png"
       }
     ]
   },

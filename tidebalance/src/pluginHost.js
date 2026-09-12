@@ -1,21 +1,23 @@
+import { registerCareChannel, removeCareChannels, receiveCareEvent, getCare, careChanged } from "./care.js";
 // 插件宿主：加载内置插件与用户插件目录里的插件，注入受控 API
 import { api } from "./api.js";
 import * as S from "./store.js";
 import { toast } from "./ui.js";
 import { parseWhen, guessCategory, guessQuad } from "./timeParser.js";
+import { renderNativeSchedule } from "./nativeSchedule.js";
 
 const registry = new Map();   // id -> { manifest, source, enabled, error }
-const eventBus = new Map();   // event -> Set<fn>
+const eventBus = new Map();   // event -> Set<{ pluginId, fn }>
 const listeners = { navChanged: new Set(), taskActionsChanged: new Set() };
 
 export const pluginViews = [];       // { id, title, icon, render, pluginId }
 export const taskActions = [];       // { id, label, icon, run(task), pluginId }
 
-export function onNavChanged(fn) { listeners.navChanged.add(fn); }
-export function onTaskActionsChanged(fn) { listeners.taskActionsChanged.add(fn); }
+export function onNavChanged(fn) { listeners.navChanged.add(fn); return () => listeners.navChanged.delete(fn); }
+export function onTaskActionsChanged(fn) { listeners.taskActionsChanged.add(fn); return () => listeners.taskActionsChanged.delete(fn); }
 function emitNavChanged() { listeners.navChanged.forEach((f) => f()); }
 
-const BUILTIN_IDS = ["pomodoro", "weekly-report", "gx-news", "chaoxing-notify", "cppu-notify", "wechat-push"];
+const BUILTIN_IDS = ["shiguang-schedule", "pomodoro", "weekly-report", "elder-care", "gx-news", "chaoxing-notify", "cppu-notify", "wechat-push", "cn-holiday", "exam-calendar"];
 
 export function getRegistry() { return [...registry.values()]; }
 
@@ -40,16 +42,20 @@ async function loadCode(man, source) {
 }
 
 /* ── 注入给插件的 API ── */
-function makeApi(man) {
+function makeApi(man, source) {
   const pid = man.id;
   const ns = () => S.pluginState(pid).storage;
   return {
+    care: {
+      registerChannel: def => registerCareChannel(pid, def),
+      reportEvent: event => receiveCareEvent(pid, event),
+    },
     id: pid,
     manifest: man,
 
     storage: {
-      async get(key, fallback = null) { return ns()[key] ?? fallback; },
-      async set(key, value) { ns()[key] = value; S.saveNow(); },
+      async get(key, fallback = null) { return pid === "elder-care" && key === "reminders" ? getCare().reminders : ns()[key] ?? fallback; },
+      async set(key, value) { if (pid === "elder-care" && key === "reminders") { getCare().reminders = value; careChanged(); } else { ns()[key] = value; S.saveNow(); } },
     },
 
     tasks: {
@@ -68,7 +74,8 @@ function makeApi(man) {
 
     ui: {
       registerView(def) {
-        pluginViews.push({ ...def, pluginId: pid });
+        pluginViews.push({ ...def, pluginId: pid,
+          ...(pid === "shiguang-schedule" && api.isTauri ? { render: renderNativeSchedule } : {}) });
         emitNavChanged();
       },
       registerTaskAction(def) {
@@ -77,14 +84,28 @@ function makeApi(man) {
       },
     },
 
-    notify: (msg, opts) => toast(`◈ ${man.name}：${msg}`, opts),
+    assets: {
+      async text(path) {
+        const clean = String(path || "").replace(/\\/g, "/");
+        if (!clean || clean.startsWith("/") || clean.includes("..")) throw new Error("资源路径必须是插件目录内的相对路径");
+        if (source === "builtin") {
+          const res = await fetch(`/plugins/${pid}/${clean}`);
+          if (!res.ok) throw new Error(`资源拉取失败 (${res.status})`);
+          return res.text();
+        }
+        return api.readPluginFile(`${pid}/${clean}`);
+      },
+      async json(path) { return JSON.parse(await this.text(path)); },
+    },
+
+    notify: (msg, opts) => toast(`${man.name}：${msg}`, opts),
     events: {
       on(name, fn) {
         if (!eventBus.has(name)) eventBus.set(name, new Set());
-        eventBus.get(name).add(fn);
+        eventBus.get(name).add({ pluginId: pid, fn });
       },
       emit(name, data) {
-        (eventBus.get(name) || []).forEach((f) => { try { f(data); } catch (e) { console.error(e); } });
+        (eventBus.get(name) || []).forEach((entry) => { try { entry.fn(data); } catch (e) { console.error(e); } });
       },
     },
 
@@ -106,13 +127,25 @@ function makeApi(man) {
   };
 }
 
+function removeRegistrations(id) {
+  removeCareChannels(id);
+  for (let i = pluginViews.length - 1; i >= 0; i--) if (pluginViews[i].pluginId === id) pluginViews.splice(i, 1);
+  for (let i = taskActions.length - 1; i >= 0; i--) if (taskActions[i].pluginId === id) taskActions.splice(i, 1);
+  for (const [name, set] of eventBus) {
+    for (const entry of [...set]) if (entry.pluginId === id) set.delete(entry);
+    if (!set.size) eventBus.delete(name);
+  }
+  listeners.taskActionsChanged.forEach((f) => f());
+}
+
 async function runPlugin(id, source) {
   const rec = registry.get(id);
   try {
     rec.error = null;
+    removeRegistrations(id);
     const code = await loadCode(rec.manifest, source);
     // 受控沙箱：插件只拿到 tide API，拿不到全局 window
-    new Function("tide", `"use strict";\n${code}`)(makeApi(rec.manifest));
+    new Function("tide", `"use strict";\n${code}`)(makeApi(rec.manifest, source));
     rec.loaded = true;
   } catch (e) {
     rec.error = String(e && e.message || e);
@@ -148,13 +181,23 @@ export async function setEnabled(id, on) {
   const rec = registry.get(id);
   if (!rec) return;
   rec.enabled = on;
-  if (on && !rec.loaded) await runPlugin(id, rec.source);
+  if (on) await runPlugin(id, rec.source);
   if (!on) {
-    // 从导航与任务动作里摘掉该插件注册的内容
-    for (let i = pluginViews.length - 1; i >= 0; i--) if (pluginViews[i].pluginId === id) pluginViews.splice(i, 1);
-    for (let i = taskActions.length - 1; i >= 0; i--) if (taskActions[i].pluginId === id) taskActions.splice(i, 1);
-    listeners.taskActionsChanged.forEach((f) => f());
+    // 从导航、任务动作、事件订阅里摘掉该插件注册的内容
+    removeRegistrations(id);
+    rec.loaded = false;
   }
+  emitNavChanged();
+}
+
+export async function removeExternalPlugin(id) {
+  const rec = registry.get(id);
+  if (!rec) throw new Error("插件不存在");
+  if (rec.source === "builtin") throw new Error("内置插件不能删除，可停用");
+  await setEnabled(id, false);
+  await api.deletePlugin(id);
+  S.removePluginState(id);
+  registry.delete(id);
   emitNavChanged();
 }
 
@@ -167,5 +210,5 @@ export async function rescan() {
 }
 
 export function emitLocal(name, data) {
-  (eventBus.get(name) || []).forEach((f) => { try { f(data); } catch (e) { console.error(e); } });
+  (eventBus.get(name) || []).forEach((entry) => { try { entry.fn(data); } catch (e) { console.error(e); } });
 }

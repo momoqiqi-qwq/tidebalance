@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const source = fs.readFileSync(new URL('../public/plugins/cppu-notify/main.js',import.meta.url),'utf8');
+let response, calls=[];
+const context = vm.createContext({URL,Set,Map,Date,console,setTimeout,clearTimeout,
+  document:{createElement:()=>({set innerHTML(x){this.value=x;}})},
+  tide:{ui:{registerView(){}},http:{session:async()=>'s1',fetch:async(...args)=>{calls.push(args);return typeof response==='function'?response(...args):response;}},storage:{set:async()=>{},get:async()=>null}}
+});
+vm.runInContext(source.replace('  tide.ui.registerView({','  globalThis.testApi = {state,cardHtml,loadDetail,loadPage,newSession,cleanText};\n  tide.ui.registerView({'),context);
+const {state,cardHtml,loadDetail,loadPage,newSession,cleanText}=context.testApi;
+const item={RESOURCE_ID:'test',PIM_TITLE:'Test <notice>',CREATE_TIME:1};
+assert.match(cardHtml(item),/展开正文/);
+assert.doesNotMatch(cardHtml(item),/class="pp-detail"/);
+state.expanded.add('test');
+assert.match(cardHtml(item),/aria-expanded="true"/);
+assert.match(cardHtml(item),/正在加载正文/);
+let release;
+response=()=>new Promise(resolve=>{release=resolve;});
+const pending=loadDetail('test');
+state.expanded.delete('test');
+release({status:200,body:JSON.stringify([{PIM_CONTENT:'First<br><br>Second'}])});
+await pending;
+assert.doesNotMatch(cardHtml(item),/class="pp-detail"/,'Late response must not reopen collapsed card');
+state.expanded.add('test');
+assert.match(cardHtml(item),/First\n\nSecond/);
+const count=calls.length;
+await loadDetail('test');
+assert.equal(calls.length,count,'Reopen uses cached content');
+assert.match(calls[0][2],/\/tp_up\/up\/pim\/showpim\//);
+assert.equal(cleanText('First<br><br>Second'),'First\n\nSecond');
+state.details.test={error:'network unavailable'};
+assert.match(cardHtml(item),/重试加载正文/);
+response={status:200,body:'{"list":[]}'};
+await loadPage(1);
+assert.match(calls.at(-1)[2],/\/tp_up\/up\/pim\/allpim\//);
+state.token='test-token';calls=[];
+response=(sid,method,url)=>url.includes('allpim')?{status:503,body:''}:{status:200,body:'',finalUrl:'https://portal-jw.cppu.edu.cn/tp_up/view;tp_up=renewed?m=up'};
+await loadPage(1);
+assert.equal(calls.filter(c=>c[2].includes('allpim')).length,2,'Only one renewal retry');
+assert.equal(state.fetching,false);
+await newSession();const sid=state.sid;await newSession();assert.equal(state.sid,sid);
+assert.ok(source.includes('if (!e.target.closest("[data-toggle]")) return;'),'Selecting body text must not collapse');
+console.log('PASS: expand/collapse, loading, late response, cache, retry, paragraph preservation, API paths and bounded renewal');

@@ -11,9 +11,10 @@
   display: flex;
   gap: 10rpx;
   margin: 22rpx 0;
+  flex-wrap: wrap;
 }
 .stat {
-  flex: 1;
+  flex: 1 1 118rpx;
   background: var(--paper);
   border-radius: 14rpx;
   padding: 16rpx 0;
@@ -42,3 +43,22 @@
 .about .line { font-size: 24rpx; line-height: 1.9; }
 .about .line.dim { color: var(--ink-3); font-size: 22rpx; }
 .danger-zone { margin-top: 24rpx; }
+
+@media (max-width: 340px) {
+  .stat { flex-basis: 160rpx; }
+  .setbtns { flex-direction: column; }
+}
+
+.plugins-entry { margin-top: 20rpx; margin-bottom: 0; }
+
+.setting-line{display:flex;align-items:center;justify-content:space-between;gap:20rpx;padding:18rpx 0;border-bottom:1rpx solid var(--line-soft);font-size:25rpx}.setting-col{padding:18rpx 0;border-bottom:1rpx solid var(--line-soft);font-size:25rpx}.audio-file{max-width:280rpx;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}.audio-btns{display:flex;gap:10rpx}.pv{font-size:24rpx;color:var(--deep);background:var(--paper);border:2rpx solid var(--line);border-radius:12rpx;padding:10rpx 18rpx}
+
+/* v0.9 template-inspired settings */
+.at { letter-spacing: .05em; font-size: 25rpx; }
+.stat { border: 2rpx solid var(--line); border-radius: 16rpx; background: var(--panel); }
+.warn { border: 2rpx solid rgba(227,160,8,.20); border-radius: 14rpx; }
+.setting-line, .setting-col { padding: 16rpx 0; }
+.pv { border-radius: 12rpx; background: var(--panel); }
+
+/* v0.9.1 about */
+.about-head-mini{display:flex;align-items:flex-start;justify-content:space-between;gap:18rpx}.version-pill{flex:none;border:2rpx solid var(--line);border-radius:999rpx;background:var(--panel);padding:8rpx 16rpx;font-size:22rpx;font-weight:700;color:var(--deep)}.about-section{margin-top:24rpx;padding-top:20rpx;border-top:2rpx solid var(--line-soft)}.about-title{font-size:24rpx;font-weight:700;margin-bottom:10rpx}.about-item{font-size:23rpx;line-height:1.7;color:var(--ink-2);padding:3rpx 0}.about-item.dim{color:var(--ink-3)}.about-note{font-size:21rpx;line-height:1.65;color:var(--ink-3);margin-top:12rpx}

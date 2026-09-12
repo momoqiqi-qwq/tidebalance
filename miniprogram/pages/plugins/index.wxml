@@ -1,0 +1,46 @@
+<view class="page-body">
+  <view class="head card">
+    <view class="eyebrow">三 端 插 件 中 心</view>
+    <view class="title">{{pluginCount}} 个内置插件 · {{nativeCount}} 个小程序原生适配</view>
+    <view class="desc">Windows 与 Android 共用同一套插件宿主；小程序展示同一清单，并对可移植插件提供原生页面。启用/停用状态写入同一个 <text class="mono">plugins</text> 字段，备份互通。</view>
+  </view>
+
+  <view class="plugin-tools card">
+    <input class="plugin-search" value="{{query}}" bindinput="onSearch" placeholder="搜索插件名称 / ID / 功能…" confirm-type="search" />
+    <view class="filter-row">
+      <view class="filter-chip {{filter === 'all' ? 'on' : ''}}" data-filter="all" bindtap="onFilter">全部</view>
+      <view class="filter-chip {{filter === 'enabled' ? 'on' : ''}}" data-filter="enabled" bindtap="onFilter">已启用</view>
+      <view class="filter-chip {{filter === 'disabled' ? 'on' : ''}}" data-filter="disabled" bindtap="onFilter">已停用</view>
+      <view class="filter-chip {{filter === 'native' ? 'on' : ''}}" data-filter="native" bindtap="onFilter">小程序可用</view>
+      <view class="filter-count">{{plugins.length}} / {{pluginCount}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{plugins.length === 0}}" class="empty card">没有符合当前搜索 / 筛选条件的插件</view>
+
+  <view class="plugin card" wx:for="{{plugins}}" wx:key="id">
+    <view class="row top">
+      <view class="identity" bindtap="onOpen" data-id="{{item.id}}">
+        <view class="icon"><image class="fa-icon" src="{{item.iconPath}}" mode="aspectFit" /></view>
+        <view class="namebox">
+          <view class="name">{{item.name}}</view>
+          <view class="ver">v{{item.version}} · {{item.id}}</view>
+        </view>
+      </view>
+      <switch checked="{{item.enabled}}" data-id="{{item.id}}" bindchange="onToggle" color="#0F4C5C" />
+    </view>
+
+    <view class="desc plugin-desc">{{item.description}}</view>
+
+    <view class="platforms">
+      <view class="plat {{p.status}}" wx:for="{{item.platforms}}" wx:for-item="p" wx:key="key">
+        <text class="plat-name">{{p.label}}</text>
+        <text>{{p.text}}</text>
+      </view>
+    </view>
+
+    <button class="btn block {{item.miniNative ? 'pri' : 'ghost'}}" data-id="{{item.id}}" bindtap="onOpen">
+      {{item.miniNative ? (item.enabled ? '打开插件' : '启用后打开') : '查看平台说明'}}
+    </button>
+  </view>
+</view>

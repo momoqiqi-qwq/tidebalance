@@ -24,6 +24,7 @@ hex = "0.4"
 base64 = "0.22"
 tiny_http = "0.12"
 qrcode = { version = "0.14", features = ["svg"] }
+zip = { version = "2", default-features = false, features = ["deflate"] }
 
 [target."cfg(any(target_os = \"windows\", target_os = \"linux\", target_os = \"macos\"))".dependencies]
 tauri-plugin-single-instance = "2"

@@ -138,11 +138,11 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: "潮衡 · 粘贴一句话，自动排进时间块",
+      title: "Le时间管理 · 粘贴一句话，自动排进时间块",
       path: "/pages/capture/index",
     };
   },
   onShareTimeline() {
-    return { title: "潮衡 · 粘贴一句话，自动排进时间块" };
+    return { title: "Le时间管理 · 粘贴一句话，自动排进时间块" };
   },
 });

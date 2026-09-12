@@ -71,7 +71,11 @@ export function addTask(patch) {
 }
 export function updateTask(id, patch) {
   const t = state.tasks.find((x) => x.id === id);
-  if (t) { Object.assign(t, patch); changed(); }
+  if (t) {
+    Object.assign(t, patch);
+    if (patch.title !== undefined) state.blocks.filter((b) => b.taskId === id).forEach((b) => { b.title = t.title; });
+    changed();
+  }
   return t;
 }
 export function removeTask(id) {
@@ -85,6 +89,39 @@ export function toggleTask(id) {
   const t = state.tasks.find((x) => x.id === id);
   if (t) { t.done = !t.done; changed(); }
   return t;
+}
+
+// 删除与撤销作为一个操作，完整保留关联排程。
+export function deleteTaskUndoable(id) {
+  const task = taskById(id);
+  if (!task) return null;
+  const snapshot = JSON.parse(JSON.stringify({ task, blocks: state.blocks.filter((b) => b.taskId === id) }));
+  removeTask(id);
+  return () => {
+    if (taskById(id)) return;
+    state.tasks.unshift(snapshot.task);
+    state.blocks.push(...snapshot.blocks.filter((b) => !state.blocks.some((x) => x.id === b.id)));
+    changed();
+  };
+}
+
+export function placeTask(t, date, startMin = null, cat = "work") {
+  const dur = Math.max(15, Number(t.estMin) || 30);
+  const busy = blocksOf(date).filter((b) => !t.id || b.taskId !== t.id);
+  let cursor = startMin ?? 420;
+  if (startMin === null) {
+    for (const b of busy) {
+      const start = mmOf(b.start), end = start + b.durMin;
+      if (end <= cursor) continue;
+      if (start - cursor >= dur) break;
+      cursor = Math.max(cursor, end);
+    }
+  }
+  if (!Number.isFinite(cursor) || cursor < 0 || cursor + dur > 1440) throw new Error("这一天没有足够的空闲时间");
+  if (busy.some((b) => cursor < mmOf(b.start) + b.durMin && cursor + dur > mmOf(b.start))) throw new Error("这个时段已有安排，请选择空闲时段");
+  // 验证成功后再替换所选日期的安排，保留其他日期的记录。
+  if (t.id) state.blocks = state.blocks.filter((b) => b.taskId !== t.id || b.date !== date);
+  return addBlock({ date, start: hhmmOf(cursor), durMin: dur, title: t.title, taskId: t.id || null, cat });
 }
 
 /* ── 时间块 ── */
@@ -117,8 +154,7 @@ export function taskById(id) { return state.tasks.find((t) => t.id === id); }
 export function tasksOfQuad(q) {
   return state.tasks
     .filter((t) => t.quad === q)
-    .sort((a, b) => Number(a.done) - Number(b.done) || (a.due || "9999") < (b.due || "9999") ? -1 : 1)
-    .sort((a, b) => Number(a.done) - Number(b.done));
+    .sort((a, b) => Number(a.done) - Number(b.done) || (a.due || "9999").localeCompare(b.due || "9999"));
 }
 
 /* ── 插件状态 ── */
@@ -129,6 +165,12 @@ export function pluginState(id) {
 }
 export function setPluginEnabled(id, on) {
   pluginState(id).enabled = on; changed();
+}
+export function removePluginState(id) {
+  if (state.plugins[id]) {
+    delete state.plugins[id];
+    changed();
+  }
 }
 export function replaceAll(next) {
   next.tasks ??= []; next.blocks ??= []; next.settings ??= {}; next.plugins ??= {};

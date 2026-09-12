@@ -1,10 +1,19 @@
 {
   "id": "cppu-notify",
   "name": "警大门户通知",
-  "version": "1.0.0",
-  "author": "改造自 dsh-user/cppu-notify-skill v1.0.0",
-  "icon": "🛡",
-  "description": "中国人民警察大学智慧警大门户(portal-jw.cppu.edu.cn)通知公告：SSO 登录（验证码手输 + rememberMe 5 天免密）、按月分组浏览通知列表、查看正文、一键转潮衡提醒。相比原 skill 移除了 74MB 的 OCR 运行时——验证码改为界面内手输。",
-  "permissions": ["ui", "tasks", "blocks", "storage", "notify", "events", "http", "timeParse"],
+  "version": "1.2.1",
+  "author": "基于 dsh-user/cppu-notify-skill v1.2.1",
+  "icon": "警",
+  "description": "智慧警大门户通知：SSO 验证码登录、当前会话续期、按月筛选、正文阅读与转为提醒。密码不保存，退出应用后可能需要重新登录。",
+  "permissions": [
+    "ui",
+    "tasks",
+    "blocks",
+    "storage",
+    "notify",
+    "events",
+    "http",
+    "timeParse"
+  ],
   "entry": "main.js"
 }

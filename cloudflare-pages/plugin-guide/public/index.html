@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="潮衡 TideBalance 插件开发与适配手册：结构、权限、API、兼容性、测试和发布。">
+  <meta name="theme-color" content="#073b4c">
+  <title>潮衡插件开发手册 · TideBalance</title>
+  <style>
+    :root {
+      --deep: #073b4c;
+      --deep-2: #0b5368;
+      --tide: #19a89b;
+      --coral: #ff6b5e;
+      --foam: #edf8f6;
+      --paper: #f7f8f4;
+      --ink: #152c35;
+      --muted: #60747b;
+      --line: #c9dcda;
+      --code: #092d38;
+      --white: #fff;
+      --shadow: 0 14px 36px rgba(7, 59, 76, .09);
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --body: "Noto Sans SC", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+      --display: "STZhongsong", "FZSongKeBenXiuKaiS-R-GB", "Songti SC", serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 86px; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(--body); line-height: 1.72; }
+    a { color: inherit; }
+    button, input { font: inherit; }
+    :focus-visible { outline: 3px solid rgba(255, 107, 94, .45); outline-offset: 3px; }
+    .skip { position: fixed; left: 16px; top: -80px; z-index: 100; padding: 9px 14px; background: var(--white); border-radius: 8px; }
+    .skip:focus { top: 14px; }
+    .topbar { position: sticky; top: 0; z-index: 50; height: 64px; border-bottom: 1px solid rgba(201, 220, 218, .85); background: rgba(247, 248, 244, .94); backdrop-filter: blur(12px); }
+    .topbar-inner { max-width: 1240px; height: 100%; margin: auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; font-weight: 800; letter-spacing: .02em; }
+    .brand-mark { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; color: white; background: var(--deep); font-family: var(--display); }
+    .brand small { color: var(--muted); font-family: var(--mono); font-size: 10px; font-weight: 500; margin-left: 4px; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .pill { border: 1px solid var(--line); background: var(--white); color: var(--deep); padding: 7px 12px; border-radius: 999px; font-size: 12px; text-decoration: none; }
+    .pill.primary { border-color: var(--deep); background: var(--deep); color: white; }
+    .hero { color: white; background: var(--deep); overflow: hidden; }
+    .hero-inner { max-width: 1240px; min-height: 590px; margin: auto; padding: 88px 24px 70px; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(340px, .92fr); gap: 70px; align-items: center; }
+    .eyebrow { display: flex; align-items: center; gap: 10px; color: #a7dcd6; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 36px; height: 1px; background: var(--tide); }
+    h1 { margin: 18px 0 22px; max-width: 700px; font-family: var(--display); font-size: clamp(48px, 7vw, 90px); font-weight: 600; line-height: .98; letter-spacing: -.05em; }
+    h1 span { display: block; color: #75d4c9; font-family: var(--mono); font-size: .2em; letter-spacing: .14em; margin-top: 22px; }
+    .lede { max-width: 650px; color: #d5e8e8; font-size: 18px; }
+    .hero-meta { margin-top: 34px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .hero-meta span { border: 1px solid rgba(255,255,255,.24); border-radius: 999px; padding: 7px 12px; color: #d5e8e8; font-size: 12px; }
+    .tide-map { position: relative; height: 390px; min-width: 0; }
+    .tide-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: #75d4c9; transform: translateX(-50%); }
+    .tide-line::before, .tide-line::after { content: ""; position: absolute; left: 50%; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #75d4c9; background: var(--deep); transform: translateX(-50%); }
+    .tide-line::before { top: 0; } .tide-line::after { bottom: 0; }
+    .slot { position: absolute; width: 44%; padding: 16px 18px; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.07); }
+    .slot::after { content: ""; position: absolute; top: 50%; width: 14%; border-top: 1px solid #75d4c9; }
+    .slot.left { left: 0; text-align: right; } .slot.left::after { left: 100%; }
+    .slot.right { right: 0; } .slot.right::after { right: 100%; }
+    .slot:nth-of-type(2) { top: 28px; } .slot:nth-of-type(3) { top: 119px; }
+    .slot:nth-of-type(4) { top: 210px; } .slot:nth-of-type(5) { top: 301px; }
+    .slot b { display: block; font-size: 15px; } .slot code { color: #a7dcd6; font-family: var(--mono); font-size: 10px; }
+    .layout { max-width: 1240px; margin: 0 auto; padding: 64px 24px 100px; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 68px; }
+    aside { align-self: start; position: sticky; top: 92px; }
+    .toc-title { color: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; }
+    .toc { margin: 12px 0 28px; padding: 0; list-style: none; border-left: 1px solid var(--line); }
+    .toc a { display: block; margin-left: -1px; padding: 7px 0 7px 15px; border-left: 2px solid transparent; color: var(--muted); font-size: 13px; text-decoration: none; }
+    .toc a:hover, .toc a.active { color: var(--deep); border-color: var(--tide); font-weight: 700; }
+    .status-card { padding: 16px; border: 1px solid var(--line); background: var(--foam); }
+    .status-card b { display: block; font-size: 13px; margin-bottom: 4px; }
+    .status-card p { margin: 0; color: var(--muted); font-size: 11px; }
+    main { min-width: 0; }
+    section { margin-bottom: 82px; }
+    .section-head { display: grid; grid-template-columns: 52px 1fr; gap: 18px; align-items: start; margin-bottom: 28px; }
+    .chapter { width: 52px; height: 28px; display: grid; place-items: center; color: white; background: var(--coral); font-family: var(--mono); font-size: 11px; }
+    h2 { margin: -8px 0 5px; color: var(--deep); font-family: var(--display); font-size: clamp(31px, 4vw, 48px); font-weight: 600; letter-spacing: -.03em; line-height: 1.2; }
+    .section-head p { margin: 0; color: var(--muted); }
+    h3 { margin: 32px 0 12px; color: var(--deep); font-size: 18px; }
+    p { margin: 0 0 15px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .card { padding: 24px; border: 1px solid var(--line); background: var(--white); box-shadow: 0 1px 0 rgba(7,59,76,.03); }
+    .card h3 { margin: 0 0 8px; }
+    .card p { color: var(--muted); font-size: 14px; }
+    .card .tag { display: inline-block; margin-bottom: 16px; color: var(--deep-2); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; }
+    .verdict { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--line); background: white; }
+    .verdict > div { padding: 22px; border-right: 1px solid var(--line); }
+    .verdict > div:last-child { border-right: 0; }
+    .verdict b { display: block; color: var(--deep); margin-bottom: 5px; }
+    .verdict small { color: var(--muted); }
+    .good { color: #087d72 !important; } .no { color: #a23d36 !important; }
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); align-items: stretch; border: 1px solid var(--line); background: var(--white); }
+    .flow > div { min-height: 118px; padding: 18px 14px; border-right: 1px solid var(--line); position: relative; }
+    .flow > div:last-child { border: 0; }
+    .flow strong { display: block; color: var(--deep); font-size: 13px; }
+    .flow span { display: block; margin-top: 6px; color: var(--muted); font-size: 11px; }
+    .flow code { color: var(--coral); font-size: 10px; }
+    .callout { margin: 20px 0; padding: 18px 20px; border-left: 4px solid var(--coral); background: #fff2ef; }
+    .callout strong { color: #81352f; }
+    .callout p { margin: 5px 0 0; color: #704f4b; font-size: 13px; }
+    .callout.info { border-color: var(--tide); background: var(--foam); }
+    .callout.info strong { color: var(--deep); } .callout.info p { color: var(--muted); }
+    pre { position: relative; margin: 14px 0 22px; padding: 22px; overflow: auto; border: 1px solid #174854; background: var(--code); color: #d9efec; font: 12px/1.7 var(--mono); tab-size: 2; box-shadow: var(--shadow); }
+    code { font-family: var(--mono); }
+    :not(pre) > code { padding: 2px 6px; border-radius: 4px; color: var(--deep-2); background: #e7f2f0; font-size: .88em; }
+    .copy { position: absolute; right: 9px; top: 9px; border: 1px solid #38626b; color: #bcd8d5; background: #113b46; border-radius: 5px; padding: 4px 8px; font-size: 10px; cursor: pointer; }
+    .copy:hover { color: white; border-color: #75d4c9; }
+    .api { width: 100%; border-collapse: collapse; background: white; border: 1px solid var(--line); font-size: 13px; }
+    .api th { padding: 11px 13px; text-align: left; color: var(--deep); background: var(--foam); border-bottom: 1px solid var(--line); }
+    .api td { padding: 11px 13px; vertical-align: top; border-bottom: 1px solid #e2ebea; }
+    .api tr:last-child td { border-bottom: 0; }
+    .api td:first-child { width: 36%; font-family: var(--mono); font-size: 11px; color: var(--deep-2); }
+    .api td:last-child { color: var(--muted); }
+    .permissions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 22px; }
+    .permissions span { border: 1px solid var(--line); background: white; padding: 6px 10px; font: 11px var(--mono); }
+    .checklist { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    .checklist li { position: relative; padding: 13px 16px 13px 45px; border: 1px solid var(--line); background: white; }
+    .checklist li::before { content: "✓"; position: absolute; left: 15px; top: 13px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; color: white; background: var(--tide); font-size: 11px; }
+    .source-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .source-list a { display: block; padding: 14px 16px; border: 1px solid var(--line); background: white; color: var(--deep); text-decoration: none; font-family: var(--mono); font-size: 11px; }
+    .source-list a:hover { border-color: var(--tide); }
+    footer { padding: 36px 24px; color: #bfd4d3; background: var(--deep); text-align: center; font-size: 12px; }
+    footer b { color: white; }
+    @media (max-width: 900px) {
+      .hero-inner { grid-template-columns: 1fr; gap: 44px; }
+      .tide-map { height: 330px; }
+      .slot:nth-of-type(2) { top: 8px; } .slot:nth-of-type(3) { top: 86px; }
+      .slot:nth-of-type(4) { top: 164px; } .slot:nth-of-type(5) { top: 242px; }
+      .layout { grid-template-columns: 1fr; }
+      aside { position: static; }
+      .toc { display: grid; grid-template-columns: repeat(3, 1fr); border: 0; gap: 4px; }
+      .toc a { border: 1px solid var(--line); margin: 0; padding: 8px; background: white; }
+      .status-card { display: none; }
+      .flow { grid-template-columns: 1fr; }
+      .flow > div { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+    }
+    @media (max-width: 620px) {
+      .topbar-inner { padding: 0 15px; } .brand small, .top-actions .pill:first-child { display: none; }
+      .hero-inner { min-height: auto; padding: 62px 18px 54px; }
+      h1 { font-size: 48px; }
+      .lede { font-size: 16px; }
+      .tide-map { height: auto; display: grid; gap: 8px; }
+      .tide-line { display: none; }
+      .slot, .slot.left, .slot.right { position: static; width: 100%; text-align: left; }
+      .slot::after { display: none; }
+      .layout { padding: 42px 16px 70px; gap: 42px; }
+      .toc { grid-template-columns: repeat(2, 1fr); }
+      .grid, .verdict, .source-list { grid-template-columns: 1fr; }
+      .verdict > div { border-right: 0; border-bottom: 1px solid var(--line); }
+      .section-head { grid-template-columns: 42px 1fr; gap: 12px; }
+      .chapter { width: 42px; }
+      .card { padding: 19px; }
+      .api { display: block; overflow-x: auto; white-space: nowrap; }
+      pre { margin-left: -4px; margin-right: -4px; padding: 18px 15px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    @media print { .topbar, aside, .copy { display: none !important; } .hero-inner, .layout { display: block; } .hero { color: #111; background: white; } .hero * { color: #111 !important; } .tide-map { display: none; } section { break-inside: avoid; } pre { box-shadow: none; white-space: pre-wrap; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#content">跳到正文</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#top"><span class="brand-mark">潮</span>潮衡插件手册 <small>API · v0.1</small></a>
+      <div class="top-actions"><a class="pill" href="tech-stack.html">技术栈 ↗</a><a class="pill" href="#release">发布检查</a><a class="pill primary" href="#quickstart">开始开发</a></div>
+    </div>
+  </header>
+
+  <div class="hero" id="top">
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow">TideBalance extension field guide</div>
+        <h1>让时间管理<br>长出新能力<span>插件开发 · 适配 · 测试 · 发布</span></h1>
+        <p class="lede">面向潮衡桌面端插件开发者的单页参考。用两个文件注册新视图、任务动作、提醒、数据存储与网络会话，并在本地优先的边界内安全运行。</p>
+        <div class="hero-meta"><span>原生 JavaScript</span><span>Tauri 2</span><span>桌面端插件</span><span>无需构建工具</span></div>
+      </div>
+      <div class="tide-map" aria-label="插件生命周期示意图">
+        <div class="tide-line"></div>
+        <div class="slot left"><b>发现</b><code>manifest.json</code></div>
+        <div class="slot right"><b>加载</b><code>main.js → tide</code></div>
+        <div class="slot left"><b>注册</b><code>view · action · event</code></div>
+        <div class="slot right"><b>运行</b><code>task · block · storage</code></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside aria-label="页内导航">
+      <div class="toc-title">On this page</div>
+      <ol class="toc">
+        <li><a href="#decision">部署选择</a></li>
+        <li><a href="#model">运行模型</a></li>
+        <li><a href="#quickstart">快速开始</a></li>
+        <li><a href="#manifest">Manifest</a></li>
+        <li><a href="#api">API 参考</a></li>
+        <li><a href="#patterns">开发模式</a></li>
+        <li><a href="#compat">适配边界</a></li>
+        <li><a href="#release">测试发布</a></li>
+        <li><a href="#sources">依据</a></li>
+      </ol>
+      <div class="status-card"><b>文档状态 · 当前实现</b><p>根据仓库源码于 2026-09-08 整理。API 以 <code>src/pluginHost.js</code> 为准。</p></div>
+    </aside>
+
+    <main id="content">
+      <section id="decision">
+        <div class="section-head"><div class="chapter">00</div><div><h2>为什么选 Workers Static Assets</h2><p>这份手册是没有服务端状态的单文件站点，直接作为 Worker 的静态资产发布。</p></div></div>
+        <div class="verdict">
+          <div><b class="good">Workers Static Assets · 采用</b><small>静态文件按 Worker 资产部署、全球分发、自动 HTTPS；后续需要 API、鉴权或动态路由时可原地扩展。</small></div>
+          <div><b class="no">Pages · 仅作兼容</b><small>Pages 仍可使用，但 Cloudflare 当前把 Workers 作为新项目的主要平台。</small></div>
+          <div><b class="no">D1 / KV / R2 · 暂不需要</b><small>文档没有数据库、配置状态或独立大文件存储需求。</small></div>
+        </div>
+        <div class="callout info"><strong>部署模式：Assets-only Worker</strong><p><code>wrangler.jsonc</code> 通过 <code>assets.directory</code> 指向 <code>./public</code>，不需要 <code>main</code> 入口或任何运行时绑定。Wrangler 会把静态资产与 Worker 配置作为一个部署单元发布。</p></div>
+      </section>
+
+      <section id="model">
+        <div class="section-head"><div class="chapter">01</div><div><h2>先理解插件如何进入潮衡</h2><p>插件宿主按固定顺序发现、读取、注入并注册扩展。</p></div></div>
+        <div class="flow" role="img" aria-label="插件加载过程">
+          <div><code>1</code><strong>扫描目录</strong><span>桌面端枚举数据目录下的 <code>plugins/*</code></span></div>
+          <div><code>2</code><strong>读取清单</strong><span>解析 <code>manifest.json</code>，入口默认 <code>main.js</code></span></div>
+          <div><code>3</code><strong>注入 API</strong><span>宿主构造当前插件专属的 <code>tide</code> 对象</span></div>
+          <div><code>4</code><strong>执行入口</strong><span>严格模式执行代码，完成视图与动作注册</span></div>
+          <div><code>5</code><strong>生命周期</strong><span>停用时移除视图、动作和事件订阅</span></div>
+        </div>
+        <div class="callout"><strong>插件必须被视为可信代码</strong><p>当前入口通过 <code>new Function</code> 执行，并不构成安全隔离；插件可以使用 DOM 全局对象。<code>permissions</code> 当前用于声明和设置页展示，宿主尚未按权限裁剪 API。只安装来源可信、经过审查的插件。</p></div>
+      </section>
+
+      <section id="quickstart">
+        <div class="section-head"><div class="chapter">02</div><div><h2>两文件快速开始</h2><p>无需 npm、打包器或框架。文件夹名最好与插件 ID 一致。</p></div></div>
+        <pre><button class="copy" type="button">复制</button><code>plugins/
+└─ hello-tide/
+   ├─ manifest.json
+   └─ main.js</code></pre>
+        <h3>manifest.json</h3>
+        <pre><button class="copy" type="button">复制</button><code>{
+  "id": "hello-tide",
+  "name": "今日一句",
+  "version": "0.1.0",
+  "author": "your-name",
+  "icon": "句",
+  "description": "在侧边栏显示一句今日提示。",
+  "permissions": ["ui", "storage", "notify"],
+  "entry": "main.js"
+}</code></pre>
+        <h3>main.js</h3>
+        <pre><button class="copy" type="button">复制</button><code>(function () {
+  tide.ui.registerView({
+    id: "hello",
+    title: "今日一句",
+    icon: "句",
+    async render(container) {
+      const count = await tide.storage.get("visits", 0);
+      await tide.storage.set("visits", count + 1);
+
+      const card = document.createElement("section");
+      card.style.cssText = "max-width:560px;margin:36px auto;padding:28px;background:#fff;border:1px solid #ddd";
+      card.textContent = `今天是 ${tide.util.today()}，这是第 ${count + 1} 次打开。`;
+      container.replaceChildren(card);
+    },
+  });
+
+  tide.ui.registerTaskAction({
+    id: "encourage",
+    label: "给我一点鼓励",
+    icon: "✓",
+    run(task) { tide.notify(`继续推进「${task.title}」`); },
+  });
+})();</code></pre>
+        <p>把文件夹复制到「设置 → 数据」显示的数据目录下的 <code>plugins/</code>，然后在「设置 → 插件」点击「重新扫描」。加载失败原因会直接显示在插件卡片中。</p>
+      </section>
+
+      <section id="manifest">
+        <div class="section-head"><div class="chapter">03</div><div><h2>Manifest 字段</h2><p>清单用于发现、标识和向用户解释插件能力。</p></div></div>
+        <table class="api">
+          <thead><tr><th>字段</th><th>用途与约束</th></tr></thead>
+          <tbody>
+            <tr><td>id</td><td>稳定且唯一，建议小写字母、数字和短横线；应与目录名一致，避免状态命名空间混乱。</td></tr>
+            <tr><td>name</td><td>设置页和提示消息中显示的名称。</td></tr>
+            <tr><td>version</td><td>建议使用 SemVer，例如 <code>1.2.0</code>。</td></tr>
+            <tr><td>author</td><td>作者或维护组织。</td></tr>
+            <tr><td>icon</td><td>短文本或单个字符；侧栏会直接显示。</td></tr>
+            <tr><td>description</td><td>说明数据来源、主要行为和必要配置，避免只写宣传语。</td></tr>
+            <tr><td>permissions</td><td>声明使用的能力。当前版本是可见性声明，不是运行时权限闸门。</td></tr>
+            <tr><td>entry</td><td>入口路径，省略时为 <code>main.js</code>；路径必须位于插件目录内。</td></tr>
+          </tbody>
+        </table>
+        <h3>可声明权限</h3>
+        <div class="permissions"><span>ui</span><span>tasks</span><span>blocks</span><span>storage</span><span>notify</span><span>events</span><span>http</span><span>openUrl</span><span>timeParse</span></div>
+      </section>
+
+      <section id="api">
+        <div class="section-head"><div class="chapter">04</div><div><h2><code>tide</code> API 参考</h2><p>插件唯一约定入口。数据集合读取时返回安全拷贝。</p></div></div>
+        <h3>身份与清单</h3>
+        <table class="api"><tbody>
+          <tr><td>tide.id</td><td>当前插件 ID。</td></tr>
+          <tr><td>tide.manifest</td><td>当前插件解析后的清单对象。</td></tr>
+        </tbody></table>
+        <h3>任务与时间块</h3>
+        <table class="api"><tbody>
+          <tr><td>tasks.list()</td><td>返回所有任务的深拷贝数组。</td></tr>
+          <tr><td>tasks.create(patch)</td><td>创建任务。常用字段：<code>title</code>、<code>quad</code>、<code>due</code>、<code>estMin</code>、<code>tags</code>、<code>project</code>。</td></tr>
+          <tr><td>tasks.update(id, patch)</td><td>更新指定任务。</td></tr>
+          <tr><td>tasks.remove(id)</td><td>删除指定任务。</td></tr>
+          <tr><td>blocks.list(date)</td><td>返回某日时间块，例如 <code>2026-09-08</code>。</td></tr>
+          <tr><td>blocks.create(patch)</td><td>创建时间块。常用字段：<code>date</code>、<code>start</code>、<code>durMin</code>、<code>title</code>、<code>taskId</code>、<code>cat</code>。</td></tr>
+          <tr><td>blocks.update(id, patch)</td><td>更新时间块。</td></tr>
+          <tr><td>blocks.remove(id)</td><td>删除时间块。</td></tr>
+        </tbody></table>
+        <h3>存储、界面与事件</h3>
+        <table class="api"><tbody>
+          <tr><td>storage.get(key, fallback)</td><td>异步读取插件私有命名空间，空值返回 fallback。</td></tr>
+          <tr><td>storage.set(key, value)</td><td>异步保存 JSON 可序列化值，并触发主数据写盘。</td></tr>
+          <tr><td>ui.registerView(def)</td><td>注册侧栏视图：<code>{ id, title, icon, render(container) }</code>。</td></tr>
+          <tr><td>ui.registerTaskAction(def)</td><td>注册任务动作：<code>{ id, label, icon, run(task) }</code>。</td></tr>
+          <tr><td>notify(message, options?)</td><td>显示带插件名称前缀的应用内提示。</td></tr>
+          <tr><td>events.on(name, handler)</td><td>订阅进程内事件；停用插件时自动移除订阅。</td></tr>
+          <tr><td>events.emit(name, data)</td><td>同步广播插件事件。建议事件名加插件前缀。</td></tr>
+        </tbody></table>
+        <h3>网络与工具</h3>
+        <table class="api"><tbody>
+          <tr><td>http.get(url)</td><td>GET 请求，仅允许 HTTP/HTTPS；桌面端经 Rust 发出并绕开 WebView CORS。</td></tr>
+          <tr><td>http.session()</td><td>创建带 Cookie Jar 的会话，返回会话 ID。</td></tr>
+          <tr><td>http.fetch(sid, method, url, opts)</td><td>会话请求；支持 GET/POST/PUT/DELETE、headers、body、binary。二进制响应 body 为 Base64。</td></tr>
+          <tr><td>util.openUrl(url)</td><td>用系统默认浏览器打开 HTTP/HTTPS 链接。</td></tr>
+          <tr><td>util.parseWhen(text)</td><td>解析中文日期时间，返回 date/startMin/endMin/title 等字段。</td></tr>
+          <tr><td>util.guessCategory(text)</td><td>推测 work/study/sport/life/rest 分类。</td></tr>
+          <tr><td>util.guessQuad(date)</td><td>根据期限推测四象限。</td></tr>
+          <tr><td>util.navigate(view)</td><td>跳转主视图，插件视图可用 <code>plug:视图ID</code>。</td></tr>
+          <tr><td>util.desEncryptHex(plain, key)</td><td>桌面端 DES-ECB/PKCS5 加密并返回 Hex；key 必须为 8 字节。</td></tr>
+          <tr><td>util.today() / addDays()</td><td>日期工具。</td></tr>
+          <tr><td>util.mmOf() / hhmmOf() / durLabel()</td><td>时间与时长格式工具。</td></tr>
+        </tbody></table>
+      </section>
+
+      <section id="patterns">
+        <div class="section-head"><div class="chapter">05</div><div><h2>常用适配模式</h2><p>从潮衡已有插件提炼的可复用写法。</p></div></div>
+        <div class="grid">
+          <article class="card"><span class="tag">DATA → REMINDER</span><h3>把外部消息转成提醒</h3><p>先用 <code>http</code> 拉取，交给 <code>parseWhen</code> 识别时间，再同时创建任务和时间块。远端 HTML 必须先净化，禁止直接注入 <code>innerHTML</code>。</p></article>
+          <article class="card"><span class="tag">STATE → VIEW</span><h3>保持插件偏好</h3><p>筛选器、已读 ID、计数等写入 <code>storage</code>。不要把账号密码长期明文保存；敏感配置应尽量由用户每次输入。</p></article>
+          <article class="card"><span class="tag">TASK → ACTION</span><h3>扩展任务动作</h3><p>动作 ID 在插件内保持稳定；传入的 task 用于读取上下文，修改统一走 <code>tasks.update</code>，让宿主完成持久化。</p></article>
+          <article class="card"><span class="tag">EVENT → LOOSE COUPLING</span><h3>插件间松耦合</h3><p>使用 <code>plugin-id:event-name</code> 命名。事件总线只在当前运行进程有效，不承担历史消息或可靠队列职责。</p></article>
+        </div>
+        <h3>网络会话示例</h3>
+        <pre><button class="copy" type="button">复制</button><code>const sid = await tide.http.session();
+
+const login = await tide.http.fetch(sid, "POST", "https://example.com/login", {
+  headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  body: new URLSearchParams({ username, password }).toString(),
+});
+if (login.status &lt; 200 || login.status &gt;= 400) {
+  tide.notify(`登录失败：HTTP ${login.status}`);
+  return;
+}
+
+const feed = await tide.http.fetch(sid, "GET", "https://example.com/api/feed");
+const rows = JSON.parse(feed.body);</code></pre>
+      </section>
+
+      <section id="compat">
+        <div class="section-head"><div class="chapter">06</div><div><h2>平台与安全边界</h2><p>写插件前先确定它在哪些运行环境中成立。</p></div></div>
+        <div class="grid">
+          <article class="card"><span class="tag">WINDOWS / LINUX DESKTOP</span><h3>完整支持</h3><p>外部目录扫描、文件读取、Rust 网络桥、Cookie 会话、系统浏览器与 DES 工具均由 Tauri 后端提供。</p></article>
+          <article class="card"><span class="tag">ANDROID</span><h3>仅内置插件</h3><p>当前项目说明明确：Android 暂不支持外部目录扫描。需要随应用发布的插件应放入 <code>public/plugins/</code> 并加入宿主内置 ID 列表。</p></article>
+          <article class="card"><span class="tag">BROWSER DEV</span><h3>部分降级</h3><p>用户插件列表为空；数据落 localStorage；网络改用浏览器 fetch，受 CORS 与 Cookie 策略限制；DES 不可用。</p></article>
+          <article class="card"><span class="tag">MINIPROGRAM</span><h3>不支持插件宿主</h3><p>微信小程序版共享数据格式与时间解析思路，但没有桌面端插件系统，不能直接复用 <code>main.js</code>。</p></article>
+        </div>
+        <div class="callout"><strong>网络边界仍需主动校验</strong><p>Rust 桥只检查 URL 以 <code>http://</code> 或 <code>https://</code> 开头。插件应自行限制可信域名、校验 HTTP 状态和响应结构、设置合理刷新频率，并避免在日志或提示中泄露凭据。</p></div>
+      </section>
+
+      <section id="release">
+        <div class="section-head"><div class="chapter">07</div><div><h2>测试与发布清单</h2><p>用最短路径排除最常见的插件故障。</p></div></div>
+        <ul class="checklist">
+          <li><strong>结构：</strong>目录包含可解析的 <code>manifest.json</code>，entry 文件存在，ID 与目录名一致。</li>
+          <li><strong>声明：</strong>只列出实际使用的 permissions，并在 description 里写清远端数据源与必要配置。</li>
+          <li><strong>视图：</strong>重复进入视图不会重复挂事件或定时器；render 使用传入 container，空状态和失败状态可操作。</li>
+          <li><strong>数据：</strong>所有 storage 值可被 JSON 序列化；任务、时间块字段完整；删除操作提供明确确认。</li>
+          <li><strong>网络：</strong>测试超时、非 2xx、HTML 错误页、JSON 字段缺失、登录过期与跨域降级。</li>
+          <li><strong>生命周期：</strong>停用/启用、重新扫描后无重复视图、重复事件订阅或悬挂计时器。</li>
+          <li><strong>兼容：</strong>如果使用 <code>desEncryptHex</code>、外部目录或 Cookie 会话，明确标注仅 Tauri 桌面端。</li>
+          <li><strong>安装：</strong>复制到数据目录 <code>plugins/</code>，重新扫描，检查设置页错误，再覆盖一条真实业务路径。</li>
+        </ul>
+        <h3>此文档站点的 Wrangler 命令</h3>
+        <pre><button class="copy" type="button">复制</button><code>cd cloudflare-pages/plugin-guide
+npm install
+npm run cf:whoami
+npm run dev
+npm run deploy</code></pre>
+      </section>
+
+      <section id="sources">
+        <div class="section-head"><div class="chapter">08</div><div><h2>实现依据</h2><p>文档描述来自当前仓库实现；部署决策参考 Cloudflare 官方文档。</p></div></div>
+        <div class="source-list">
+          <a href="https://developers.cloudflare.com/workers/static-assets/">Workers · Static Assets ↗</a>
+          <a href="https://developers.cloudflare.com/workers/static-assets/migration-guides/migrate-from-pages/">Pages → Workers migration ↗</a>
+          <a href="https://developers.cloudflare.com/workers/wrangler/configuration/#assets">Wrangler · Assets configuration ↗</a>
+          <a href="https://developers.cloudflare.com/workers/wrangler/commands/workers/">Wrangler · Workers commands ↗</a>
+        </div>
+        <p style="margin-top:18px;color:var(--muted);font-size:12px">仓库依据：<code>tidebalance/src/pluginHost.js</code>、<code>tidebalance/src/api.js</code>、<code>tidebalance/src/store.js</code>、<code>tidebalance/src-tauri/src/lib.rs</code> 与 <code>tidebalance/public/plugins/*</code>。</p>
+      </section>
+    </main>
+  </div>
+
+  <footer><b>潮衡 TideBalance</b> · 插件开发与适配手册 · 静态托管于 Cloudflare Workers</footer>
+  <script>
+    document.querySelectorAll("pre").forEach((pre) => {
+      const button = pre.querySelector(".copy");
+      button.addEventListener("click", async () => {
+        const value = pre.querySelector("code").textContent;
+        try {
+          await navigator.clipboard.writeText(value);
+          button.textContent = "已复制";
+        } catch {
+          const range = document.createRange();
+          range.selectNodeContents(pre.querySelector("code"));
+          getSelection().removeAllRanges();
+          getSelection().addRange(range);
+          button.textContent = "已选中";
+        }
+        setTimeout(() => { button.textContent = "复制"; }, 1500);
+      });
+    });
+
+    const links = [...document.querySelectorAll(".toc a")];
+    const targets = links.map((link) => document.querySelector(link.getAttribute("href"))).filter(Boolean);
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (!visible) return;
+      links.forEach((link) => link.classList.toggle("active", link.getAttribute("href") === `#${visible.target.id}`));
+    }, { rootMargin: "-15% 0px -70% 0px", threshold: 0 });
+    targets.forEach((target) => observer.observe(target));
+  </script>
+</body>
+</html>

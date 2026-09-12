@@ -89,7 +89,7 @@ function changed() {
 function addTask(patch) {
   const t = Object.assign({
     id: uid("t"), title: "新任务", note: "", quad: 1, done: false, estMin: 30,
-    tags: [], project: "", due: null, createdAt: Date.now(),
+    tags: [], project: "", due: null, dueTime: "23:59", reminderEnabled: true, reminderOffsets: null, createdAt: Date.now(),
   }, patch);
   state.tasks.unshift(t); changed(); return t;
 }
@@ -151,6 +151,27 @@ function tasksOfQuad(q) {
       String(a.due || "9999").localeCompare(String(b.due || "9999")));
 }
 
+/* ── 插件状态（字段与桌面端完全一致，备份可互通） ── */
+function pluginState(id) {
+  if (!state.plugins[id]) state.plugins[id] = { enabled: true, storage: {} };
+  if (!state.plugins[id].storage || typeof state.plugins[id].storage !== "object") state.plugins[id].storage = {};
+  return state.plugins[id];
+}
+function isPluginEnabled(id) {
+  return !state.plugins[id] || state.plugins[id].enabled !== false;
+}
+function setPluginEnabled(id, on) {
+  pluginState(id).enabled = !!on; changed();
+}
+function pluginStorageGet(id, key, fallback) {
+  const rec = state.plugins[id];
+  if (!rec || !rec.storage || rec.storage[key] === undefined) return fallback;
+  return rec.storage[key];
+}
+function pluginStorageSet(id, key, value) {
+  pluginState(id).storage[key] = value; changed();
+}
+
 /* ── 备份导入 / 手动保存 ── */
 function replaceAll(next) {
   state = normalize(next); changed();
@@ -203,5 +224,6 @@ module.exports = {
   addTask, updateTask, removeTask, toggleTask,
   blocksOf, addBlock, updateBlock, removeBlock,
   poolOf, taskById, tasksOfQuad,
+  pluginState, isPluginEnabled, setPluginEnabled, pluginStorageGet, pluginStorageSet,
   replaceAll, seed, CATEGORIES, catLabel,
 };

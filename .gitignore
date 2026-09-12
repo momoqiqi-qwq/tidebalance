@@ -14,3 +14,28 @@ desktop.ini
 
 # 签名密钥（泄露即可冒充应用发布，切勿提交）
 keystore/
+
+# 小程序代码上传密钥（miniprogram-ci 用，泄露可冒充提交代码）
+private.key
+*.upload.key
+upload-keys/
+
+# Isolated desktop verification build
+/tidebalance/src-tauri/target-care-windows/
+/releases/
+
+# Upstream native compilation caches
+/vendor/shiguangschedule/**/build/
+/vendor/shiguangschedule/.gradle/
+/vendor/shiguangschedule/.kotlin/
+/vendor/shiguangschedule/local.properties
+/tidebalance/src-tauri/native/shiguang/
+
+# WorkBuddy AI workspace
+.workbuddy-ai/
+
+# Downloaded archives
+*.zip
+
+# Old APK in root
+/TideBalance_*.apk

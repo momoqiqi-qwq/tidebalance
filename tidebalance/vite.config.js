@@ -1,7 +1,9 @@
 import { defineConfig } from "vite";
+import { cppuDevBridge } from "./dev/cppu-bridge.js";
 
 export default defineConfig({
   clearScreen: false,
+  plugins: [cppuDevBridge()],
   server: {
     port: 1420,
     strictPort: true,
@@ -12,5 +14,6 @@ export default defineConfig({
     minify: "esbuild",
     sourcemap: false,
     outDir: "dist",
+    emptyOutDir: false,
   },
 });

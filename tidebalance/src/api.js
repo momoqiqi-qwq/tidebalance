@@ -6,10 +6,18 @@ async function invoke(cmd, args = {}) {
   return window.__TAURI_INTERNALS__.invoke(cmd, args);
 }
 
+async function cppuBridge(op, args) {
+  const response = await fetch(`/__cppu/${op}`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(args)});
+  const data = await response.json();
+  if (!response.ok || data.error) throw new Error(data.error || "本地警大网络桥不可用");
+  return data.result;
+}
+
 const LS_KEY = "tidebalance-data";
 
 export const api = {
   isTauri,
+  nativeSchedule: (action, bounds) => invoke("native_schedule", { action, bounds }),
 
   async loadData() {
     if (isTauri) return invoke("load_data");
@@ -32,6 +40,21 @@ export const api = {
     return invoke("read_plugin_file", { relPath });
   },
 
+  async deletePlugin(id) {
+    if (!isTauri) throw new Error("插件删除仅在 Tauri 环境可用");
+    return invoke("delete_plugin", { id });
+  },
+
+  async importPluginZip(bytes) {
+    if (!isTauri) throw new Error("插件导入仅在 Tauri 环境可用");
+    return invoke("import_plugin_zip", { bytes });
+  },
+
+  async exportPluginsZip(ids) {
+    if (!isTauri) throw new Error("插件导出仅在 Tauri 环境可用");
+    return invoke("export_plugins_zip", { ids });
+  },
+
   async appInfo() {
     if (!isTauri) return { version: "web-dev", os: "browser", dataDir: "localStorage（浏览器调试模式）" };
     return invoke("app_info");
@@ -52,12 +75,18 @@ export const api = {
   // 会话化 HTTP：Tauri 端带 Cookie Jar（登录态跨请求保持）；浏览器端用 include 凭据
   async httpSessionNew() {
     if (isTauri) return invoke("http_session_new");
-    return "browser";
+    return "browser-" + crypto.randomUUID();
   },
 
   async httpFetch(sid, method, url, opts = {}) {
     if (isTauri) {
       return invoke("http_fetch", { sid, method, url, headers: opts.headers || null, body: opts.body || null, binary: opts.binary || null });
+    }
+    if (import.meta.env.DEV && /^https:\/\/(sso|sso-jw|portal-jw)\.cppu\.edu\.cn(?:\/|$)/.test(url)) {
+      api._cppuSessions ||= new Map();
+      if (!api._cppuSessions.has(sid)) api._cppuSessions.set(sid, cppuBridge("session", {}));
+      const cppuSid = await api._cppuSessions.get(sid);
+      return cppuBridge("fetch", { sid: cppuSid, method, url, ...opts });
     }
     const r = await fetch(url, {
       method, headers: opts.headers, body: opts.body, credentials: "include",

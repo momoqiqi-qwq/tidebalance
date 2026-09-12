@@ -1,7 +1,8 @@
 /* 捕获 */
 .cap-h { font-size: 30rpx; font-weight: 700; margin-bottom: 16rpx; }
 .cap-ta { width: 100%; min-height: 200rpx; }
-.cap-btns { display: flex; gap: 14rpx; margin-top: 18rpx; }
+.cap-btns { display: flex; gap: 14rpx; margin-top: 18rpx; flex-wrap: wrap; }
+.cap-btns .btn { flex: 1; min-width: 220rpx; }
 
 .pv .pv-row {
   display: flex;
@@ -32,6 +33,12 @@
 }
 
 .cap-act { display: flex; flex-direction: column; gap: 14rpx; margin-bottom: 22rpx; }
+
+@media (max-width: 340px) {
+  .pv .pv-row { gap: 14rpx; }
+  .pv .k { width: 72rpx; }
+  .cap-btns .btn { min-width: 100%; }
+}
 
 .ok { border: 2rpx solid var(--mint); }
 .ok-msg { font-size: 26rpx; line-height: 1.6; }

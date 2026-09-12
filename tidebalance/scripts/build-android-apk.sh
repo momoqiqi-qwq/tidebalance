@@ -18,9 +18,36 @@ NDKBIN="D:/Environment/android-sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/wi
 export JAVA_HOME="C:/Users/yile/AppData/Local/Programs/Eclipse Adoptium/jdk-21.0.10.7-hotspot"
 export ANDROID_HOME="D:/Environment/android-sdk"
 export NDK_HOME="D:/Environment/android-sdk/ndk/27.0.12077973"
-export PATH="$HOME/.cargo/bin:$JAVA_HOME/bin:$PATH"
+export ANDROID_NDK_ROOT="$NDK_HOME"   # cc-rs（ring 等 C 依赖）认这个
+# NDK 工具链在 Windows 上打开中文路径会编码损坏（lld 无法读取 .o/.rlib），
+# 所以 cargo 的 target 目录必须放纯 ASCII 路径；首次构建会全量重编依赖
+TARGET_DIR="D:/Environment/android-target"
+
+# 注入 MSVC 环境，避免 Git Bash /usr/bin/link 遮蔽 MSVC link.exe
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    MSVC=$(ls -d "/c/Program Files/Microsoft Visual Studio/"*/Community/VC/Tools/MSVC/*/ 2>/dev/null | sort -V | tail -1)
+    MSVC="${MSVC%/}"
+    if [ -d "$MSVC/bin/Hostx64/x64" ]; then
+      export PATH="$MSVC/bin/Hostx64/x64:$HOME/.cargo/bin:$JAVA_HOME/bin:$PATH"
+      SDK="/c/Program Files (x86)/Windows Kits/10"
+      SDK_VER=$(ls "$SDK/Include" 2>/dev/null | sort -V | tail -1)
+      win() { printf '%s' "$1" | sed -e 's|^/\([a-z]\)/|\1:\\|' -e 's|/|\\|g'; }
+      export INCLUDE="$(win "$MSVC")\\include;$(win "$SDK")\\Include\\$SDK_VER\\ucrt;$(win "$SDK")\\Include\\$SDK_VER\\shared;$(win "$SDK")\\Include\\$SDK_VER\\um;$(win "$SDK")\\Include\\$SDK_VER\\winrt;$(win "$SDK")\\Include\\$SDK_VER\\cppwinrt"
+      export LIB="$(win "$MSVC")\\lib\\x64;$(win "$SDK")\\Lib\\$SDK_VER\\ucrt\\x64;$(win "$SDK")\\Lib\\$SDK_VER\\um\\x64"
+    else
+      export PATH="$HOME/.cargo/bin:$JAVA_HOME/bin:$PATH"
+    fi
+    ;;
+  *)
+    export PATH="$HOME/.cargo/bin:$JAVA_HOME/bin:$PATH"
+    ;;
+esac
+
+node ../tools/sync-android-care.js
 
 # ① 前端构建（资产会被 Rust 库通过 custom-protocol 嵌入）
+# vite emptyOutDir 已设为 false；如需清理 dist 请在构建前手动删除
 npx vite build
 
 # ② 逐目标交叉编译 .so
@@ -33,18 +60,28 @@ for t in $TARGETS; do
     *) echo "未知目标: $t"; exit 1 ;;
   esac
   abi=$t; [ "$t" = "aarch64" ] && abi=arm64-v8a; [ "$t" = "armv7" ] && abi=armeabi-v7a
-  key=$(echo "$triple" | tr 'a-z-' 'A-Z_')   # 环境变量名用下划线
+  key=$(echo "$triple" | tr 'a-z-' 'A-Z_')   # CARGO_TARGET_* 环境变量名用下划线
   echo "── cargo build $triple ──"
-  env "CARGO_TARGET_${key}_LINKER=$NDKBIN/clang.exe" \
+  (cd src-tauri && env "CARGO_TARGET_${key}_LINKER=$NDKBIN/clang.exe" \
       "CARGO_TARGET_${key}_RUSTFLAGS=-Clink-arg=--target=$triple$api -Clink-arg=-landroid -Clink-arg=-llog -Clink-arg=-lOpenSLES" \
-    cargo build --lib --release --target "$triple" --features tauri/custom-protocol
+      "CC_$triple=$NDKBIN/clang.exe" "AR_$triple=$NDKBIN/llvm-ar.exe" \
+      "CFLAGS_$triple=--target=$triple$api" \
+    cargo build --lib --release --target "$triple" --features tauri/custom-protocol --target-dir "$TARGET_DIR")
   mkdir -p "src-tauri/gen/android/app/src/main/jniLibs/$abi"
-  cp -f "src-tauri/target/$triple/release/libtidebalance_lib.so" \
+  cp -f "$TARGET_DIR/$triple/release/libtidebalance_lib.so" \
         "src-tauri/gen/android/app/src/main/jniLibs/$abi/libtidebalance_lib.so"
   echo "── 已放入 jniLibs/$abi ──"
 done
 
+# 原版课表构建使用它的 AGP/Kotlin 工具链，同时把两套 Activity 放入同一 APK。
+if [ "${TIDE_NATIVE_SCHEDULE:-0}" = "1" ]; then
+  pwsh.exe -NoProfile -File "$ROOT/../tools/build-native-android.ps1" -Configuration Release
+  exit $?
+fi
+
 # ③ gradle 打包 + 签名（universal 变体包含 jniLibs 里现存的全部 ABI）
+#    -x 排除 rust 任务：.so 已手动放好，避免 gradle 再走一遍坏链路
 cd src-tauri/gen/android
-./gradlew.bat --no-daemon :app:assembleUniversalRelease
+./gradlew.bat --no-daemon :app:assembleUniversalRelease \
+  -x rustBuildUniversalRelease -x rustBuildArm64Release -x rustBuildX86_64Release
 echo "APK: $ROOT/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk"

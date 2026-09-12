@@ -1,8 +1,8 @@
 {
   "compileType": "miniprogram",
   "libVersion": "3.0.0",
-  "appid": "touristappid",
-  "projectname": "tidebalance-miniprogram",
+  "appid": "wxa3f6a0e1c89d36dd",
+  "projectname": "le-time-management-miniprogram",
   "setting": {
     "es6": true,
     "enhance": true,

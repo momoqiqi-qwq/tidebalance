@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="潮衡 TideBalance 技术栈总览：Tauri 2 + Rust + 原生 JS + 微信小程序 + Cloudflare Pages，每一层都对应仓库内真实文件。">
+  <meta name="theme-color" content="#16213e">
+  <title>潮衡技术栈 · TideBalance</title>
+  <style>
+    :root {
+      --ink: #16213e;
+      --ink-2: #33415c;
+      --muted: #68728a;
+      --paper: #f4f7fb;
+      --sheet: #ffffff;
+      --tide: #188ca5;
+      --tide-2: #0f6f84;
+      --foam: #d9f2f3;
+      --sun: #ff7a59;
+      --violet: #8e6fcf;
+      --emerald: #2fa37d;
+      --amber: #e8a13b;
+      --rose: #d7607f;
+      --line: #d9e1ec;
+      --code: #111a31;
+      --shadow: 0 18px 55px rgba(22, 33, 62, .11);
+      --sans: "Noto Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+      --display: "STZhongsong", "Songti SC", "Noto Serif SC", serif;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 28px; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font: 16px/1.75 var(--sans); }
+    a { color: inherit; }
+    button { font: inherit; }
+    :focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
+    .skip { position: fixed; z-index: 99; top: 10px; left: 10px; transform: translateY(-160%); padding: 8px 12px; background: var(--ink); color: #fff; }
+    .skip:focus { transform: none; }
+
+    .hero { min-height: 78vh; padding: 26px clamp(22px, 5vw, 78px) 70px; color: #fff; background: var(--ink); position: relative; overflow: hidden; }
+    .hero::after { content: ""; position: absolute; inset: auto -8vw -22vw 28vw; height: 38vw; border-radius: 50%; background: var(--tide); opacity: .22; transform: rotate(-8deg); }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; position: relative; z-index: 2; }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 800; letter-spacing: .08em; }
+    .brand-mark { display: grid; place-items: center; width: 38px; aspect-ratio: 1; border: 1px solid rgba(255,255,255,.46); border-radius: 50%; color: #8be1e4; font-family: var(--display); }
+    .repo-link { text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.45); font-size: 14px; }
+    .hero-grid { width: min(1180px, 100%); margin: clamp(64px, 11vh, 130px) auto 0; display: grid; grid-template-columns: 1.25fr .75fr; align-items: end; gap: clamp(36px, 7vw, 100px); position: relative; z-index: 2; }
+    .eyebrow { margin: 0 0 18px; color: #8be1e4; font: 700 12px/1.2 var(--mono); letter-spacing: .18em; text-transform: uppercase; }
+    h1 { margin: 0; max-width: 800px; font: 400 clamp(52px, 8.2vw, 112px)/.96 var(--display); letter-spacing: -.055em; }
+    h1 em { color: #8be1e4; font-style: normal; }
+    .lede { max-width: 650px; margin: 30px 0 0; color: #ccd5e6; font-size: clamp(17px, 2vw, 22px); }
+    .hero-meta { border-left: 1px solid rgba(255,255,255,.23); padding-left: 26px; }
+    .hero-meta b { display: block; margin-bottom: 8px; color: var(--sun); font: 700 12px var(--mono); letter-spacing: .13em; }
+    .hero-meta p { margin: 0 0 24px; color: #dbe2ef; font-size: 14px; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; padding: 0 17px; border: 1px solid rgba(255,255,255,.35); text-decoration: none; font-weight: 700; font-size: 14px; }
+    .button.primary { border-color: var(--sun); background: var(--sun); color: var(--ink); }
+
+    .page { width: min(1240px, calc(100% - 36px)); margin: -32px auto 90px; display: grid; grid-template-columns: 245px minmax(0, 1fr); gap: clamp(30px, 5vw, 72px); position: relative; z-index: 3; }
+    .rail { position: sticky; top: 20px; height: max-content; padding: 26px 22px; background: var(--sheet); box-shadow: var(--shadow); }
+    .rail-label { margin: 0 0 18px; color: var(--muted); font: 700 10px var(--mono); letter-spacing: .15em; }
+    .rail nav { display: grid; }
+    .rail a { position: relative; padding: 7px 0 7px 20px; color: var(--muted); text-decoration: none; font-size: 13.5px; }
+    .rail a::before { content: ""; position: absolute; left: 0; top: 50%; width: 7px; height: 1px; background: var(--line); }
+    .rail a.active { color: var(--ink); font-weight: 800; }
+    .rail a.active::before { width: 12px; height: 3px; background: var(--sun); }
+    .rail-note { margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+
+    main { min-width: 0; padding-top: 78px; }
+    section { margin: 0 0 92px; scroll-margin-top: 28px; }
+    .section-kicker { margin: 0 0 8px; color: var(--tide); font: 700 11px var(--mono); letter-spacing: .15em; text-transform: uppercase; }
+    h2 { margin: 0 0 16px; font: 500 clamp(33px, 4.6vw, 56px)/1.08 var(--display); letter-spacing: -.035em; }
+    h3 { margin: 32px 0 12px; font-size: 19px; line-height: 1.4; }
+    h4 { margin: 22px 0 8px; font-size: 15.5px; }
+    p { margin: 0 0 16px; }
+    .intro { max-width: 780px; color: var(--ink-2); font-size: 18px; }
+    .rule { height: 1px; margin: 28px 0; background: var(--line); }
+    ul.plain { margin: 0 0 16px; padding-left: 22px; }
+    ul.plain li { margin: 6px 0; }
+    code { padding: .14em .32em; background: #e8eef6; color: #183258; font: .9em var(--mono); }
+    pre { position: relative; margin: 14px 0 24px; padding: 22px 60px 22px 22px; overflow: auto; color: #e8edf7; background: var(--code); border-left: 4px solid var(--tide); line-height: 1.65; tab-size: 2; }
+    pre code { padding: 0; color: inherit; background: none; font-size: 13px; }
+    .cmt { color: #7f92b8; }
+    .k { color: #8be1e4; }
+    .s { color: #ffb894; }
+
+    /* === Tech-stack grid (主视觉) === */
+    .stack { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 12px 0 16px; }
+    .cell { position: relative; padding: 22px 22px 24px; border-radius: 14px; background: var(--sheet); border: 1px solid var(--line); overflow: hidden; }
+    .cell::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: var(--tide); }
+    .cell.violet::before { background: var(--violet); }
+    .cell.emerald::before { background: var(--emerald); }
+    .cell.amber::before { background: var(--amber); }
+    .cell.rose::before { background: var(--rose); }
+    .cell.tide-2::before { background: var(--tide-2); }
+    .cell.sun::before { background: var(--sun); }
+    .cell.ink::before { background: var(--ink); }
+    .cell-num { display: inline-block; margin-bottom: 8px; font: 700 11px/1 var(--mono); letter-spacing: .12em; color: var(--muted); }
+    .cell h3 { margin: 0 0 4px; font: 600 19px/1.3 var(--display); letter-spacing: -.01em; }
+    .cell-sub { display: block; margin: 0 0 14px; color: var(--muted); font-size: 12.5px; }
+    .cell ul { margin: 0; padding: 0; list-style: none; }
+    .cell li { display: flex; gap: 10px; margin: 7px 0; font-size: 14px; line-height: 1.55; color: var(--ink-2); }
+    .cell li code { flex: 0 0 auto; padding: 1px 7px; font-size: 12.5px; }
+    .cell li .tag { flex: 0 0 auto; padding: 1px 7px; border-radius: 9px; background: #e6f4f6; color: #14606f; font: 700 10.5px var(--mono); white-space: nowrap; }
+    .cell li .tag.warn { background: #fdeee8; color: #b4492c; }
+    .cell li .tag.violet { background: #efe6f7; color: #6b3fa8; }
+    .cell li .tag.emerald { background: #def1e8; color: #196b4c; }
+    .cell li .tag.amber { background: #fbf0d8; color: #8a5e10; }
+    .cell li .tag.rose { background: #fbe2e9; color: #9c2848; }
+    .cell li .desc { flex: 1 1 auto; min-width: 0; }
+
+    /* 大卡片：占据整行的总览模块 */
+    .span { grid-column: 1 / -1; padding: 26px 26px 28px; border-radius: 14px; background: var(--ink); color: #e4ecf9; border: 1px solid var(--ink); }
+    .span::before { background: var(--sun); }
+    .span h3 { color: #fff; font-family: var(--display); }
+    .span-sub { color: #8be1e4; }
+    .span ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 18px; }
+    .span li { color: #d3dbef; }
+    .span li code { background: rgba(255,255,255,.07); color: #c9e9eb; }
+
+    /* 表格 */
+    .table-wrap { margin: 20px 0 30px; overflow-x: auto; border: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; background: var(--sheet); font-size: 14px; }
+    th, td { padding: 13px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: var(--muted); background: #f8fafc; font: 700 11px var(--mono); letter-spacing: .08em; white-space: nowrap; }
+    td:first-child { color: #173c62; font-family: var(--mono); white-space: nowrap; }
+    tr:last-child td { border-bottom: 0; }
+    td .pill { display: inline-block; margin-right: 6px; padding: 1px 7px; border-radius: 9px; background: #e6f4f6; color: #14606f; font: 700 10.5px var(--mono); }
+
+    .callout { margin: 24px 0; padding: 22px 24px; border-left: 5px solid var(--sun); background: #fff2ed; }
+    .callout strong { display: block; margin-bottom: 5px; }
+    .callout p { margin: 0; color: #66544f; font-size: 15px; }
+    .callout.cool { border-color: var(--tide); background: var(--foam); }
+    .callout.cool p { color: #315b63; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 24px; }
+    .chip { padding: 5px 10px; border: 1px solid #b8c6d8; background: var(--sheet); font: 12px var(--mono); }
+
+    .flow { display: grid; grid-template-columns: repeat(5, 1fr); margin: 28px 0; border: 1px solid var(--line); background: var(--sheet); }
+    .flow div { position: relative; min-height: 138px; padding: 22px 18px; border-right: 1px solid var(--line); }
+    .flow div:last-child { border: 0; }
+    .flow b { display: block; margin-bottom: 14px; color: var(--tide); font: 700 11px var(--mono); }
+    .flow span { display: block; font-size: 14px; line-height: 1.55; }
+    .flow div:not(:last-child)::after { content: "→"; position: absolute; z-index: 2; top: 50%; right: -11px; width: 21px; background: var(--sheet); color: var(--sun); text-align: center; }
+
+    footer { padding: 45px 18px; color: #c6d0e3; background: var(--ink); text-align: center; font-size: 13px; }
+    footer a { color: #8be1e4; }
+
+    @media (max-width: 1100px) {
+      .stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 920px) {
+      .hero { min-height: auto; }
+      .hero-grid { grid-template-columns: 1fr; margin-top: 75px; }
+      .hero-meta { border: 0; border-top: 1px solid rgba(255,255,255,.23); padding: 24px 0 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 25px; }
+      .hero-actions { grid-column: 1 / -1; }
+      .page { display: block; }
+      .rail { position: relative; top: auto; margin-bottom: 45px; padding: 14px; overflow-x: auto; }
+      .rail-label, .rail-note { display: none; }
+      .rail nav { display: flex; width: max-content; gap: 2px; }
+      .rail a { padding: 8px 12px; }
+      .rail a::before { display: none; }
+      main { padding-top: 0; }
+      .flow { grid-template-columns: 1fr; }
+      .flow div { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .flow div:not(:last-child)::after { content: "↓"; top: auto; bottom: -15px; right: 24px; }
+    }
+    @media (max-width: 620px) {
+      .hero { padding-inline: 20px; }
+      h1 { font-size: 51px; }
+      .hero-meta { grid-template-columns: 1fr; }
+      .repo-link { font-size: 0; }
+      .repo-link::after { content: "GitHub ↗"; font-size: 14px; }
+      .page { width: min(100% - 24px, 1240px); }
+      section { margin-bottom: 70px; }
+      .stack { grid-template-columns: 1fr; }
+      pre { margin-inline: -3px; padding: 20px 18px; }
+      th, td { padding: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#content">跳到正文</a>
+
+  <header class="hero" id="top">
+    <div class="topbar">
+      <a class="brand" href="#top"><span class="brand-mark">衡</span><span>潮衡 · TideBalance</span></a>
+      <a class="repo-link" href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">查看源代码 ↗</a>
+    </div>
+    <div class="hero-grid">
+      <div>
+        <p class="eyebrow">Tech stack / source-aligned</p>
+        <h1>一个应用，<br><em>三层栈</em></h1>
+        <p class="lede">潮衡由 Tauri 2 + Rust 后端、原生 JavaScript 前端、微信小程序三条产品形态组成，外加一份共享数据格式和中文时间解析引擎。本页按模块列出每一层到底用了什么、为什么用、对应仓库里哪个文件——零脚手架、无前端框架、不引入任何非必要依赖。</p>
+      </div>
+      <aside class="hero-meta" aria-label="栈快照">
+        <div><b>宿主</b><p>Tauri 2 · 一套代码 → Windows / Linux / Android</p></div>
+        <div><b>前端</b><p>原生 JavaScript · Vite 6 · ES2021 · 无框架</p></div>
+        <div><b>后端</b><p>Rust 2021 · reqwest · tiny_http · 加密栈</p></div>
+        <div><b>小程序</b><p>原生 WXML/WXSS · 同源 timeParser</p></div>
+        <div class="hero-actions">
+          <a class="button primary" href="#stack">查看技术栈网格</a>
+          <a class="button" href="#versions">版本快照</a>
+        </div>
+      </aside>
+    </div>
+  </header>
+
+  <div class="page">
+    <aside class="rail">
+      <p class="rail-label">CONTENTS / 技术栈</p>
+      <nav aria-label="文档目录">
+        <a href="#stack">技术栈网格</a>
+        <a href="#tauri">Tauri 容器</a>
+        <a href="#frontend">前端与构建</a>
+        <a href="#rust">Rust 后端能力</a>
+        <a href="#data">数据与存储</a>
+        <a href="#plugin">插件沙箱</a>
+        <a href="#minip">微信小程序</a>
+        <a href="#capture">中文时间捕获</a>
+        <a href="#dist">打包与分发</a>
+        <a href="#quality">质量与零依赖</a>
+        <a href="#versions">版本快照</a>
+        <a href="#philosophy">选型哲学</a>
+      </nav>
+      <p class="rail-note">逐条对照仓库真实文件<br>静态 HTML · 零依赖 · 可离线保存</p>
+    </aside>
+
+    <main id="content">
+
+      <section id="stack">
+        <p class="section-kicker">总览 / Single-page snapshot</p>
+        <h2>七层栈，一个产品</h2>
+        <p class="intro">下面这张网格是潮衡的全部技术选型，每一格对应一个模块、一个仓库目录或一段约定。颜色条对应右侧"对应文件"链接的章节锚点，方便跳到详细说明。</p>
+
+        <div class="stack" aria-label="潮衡技术栈 7 个模块">
+
+          <article class="cell" id="m-tauri">
+            <span class="cell-num">M01</span>
+            <h3>Tauri 桌面/移动容器</h3>
+            <span class="cell-sub">一套代码 → Windows · Linux · Android · macOS</span>
+            <ul>
+              <li><span class="tag">核心</span><span class="desc"><code>tauri</code> 2.x · 多窗口 · 系统托盘</span></li>
+              <li><span class="tag warn">单例</span><span class="desc"><code>tauri-plugin-single-instance</code> 锁住双开</span></li>
+              <li><span class="tag">外链</span><span class="desc"><code>tauri-plugin-opener</code> 系统浏览器接管 http(s)</span></li>
+              <li><span class="tag">打包</span><span class="desc">NSIS/MSI(Win) · deb/AppImage(Linux) · APK(Android)</span></li>
+            </ul>
+          </article>
+
+          <article class="cell violet" id="m-frontend">
+            <span class="cell-num">M02</span>
+            <h3>原生 JavaScript 前端</h3>
+            <span class="cell-sub">无 React / Vue / Svelte，纯 DOM + 模块</span>
+            <ul>
+              <li><span class="tag violet">语言</span><span class="desc">原生 ES2021 + 模块化（无打包器运行时）</span></li>
+              <li><span class="tag violet">视图</span><span class="desc">四象限 / 时间轴 / 捕获 / 设置四个视图</span></li>
+              <li><span class="tag violet">绘图</span><span class="desc">Canvas 2D（时间块轴、象限变形） + DOM（卡片/抽屉）</span></li>
+              <li><span class="tag violet">拖放</span><span class="desc">HTML5 拖放 API + 鼠标/触摸统一抽象</span></li>
+            </ul>
+          </article>
+
+          <article class="cell emerald" id="m-build">
+            <span class="cell-num">M03</span>
+            <h3>Vite 构建与开发</h3>
+            <span class="cell-sub">打包快、可读、可直接调试</span>
+            <ul>
+              <li><span class="tag emerald">构建</span><span class="desc"><code>vite</code> 6.x · 端口 1420 · strictPort</span></li>
+              <li><span class="tag emerald">压缩</span><span class="desc"><code>esbuild</code> minify · sourcemap 关闭</span></li>
+              <li><span class="tag emerald">插件</span><span class="desc">自定义 <code>cppuDevBridge</code> 注入警大门户脚本</span></li>
+              <li><span class="tag emerald">target</span><span class="desc"><code>es2021</code> · 现代浏览器直接吃</span></li>
+            </ul>
+          </article>
+
+          <article class="cell amber" id="m-rust">
+            <span class="cell-num">M04</span>
+            <h3>Rust 后端能力</h3>
+            <span class="cell-sub">单二进制、零 OpenSSL 跨平台一致</span>
+            <ul>
+              <li><span class="tag amber">HTTP 出</span><span class="desc"><code>reqwest</code> 0.12 · rustls-tls · gzip · cookies</span></li>
+              <li><span class="tag amber">HTTP 入</span><span class="desc"><code>tiny_http</code> 插件本地回调通道</span></li>
+              <li><span class="tag amber">序列化</span><span class="desc"><code>serde</code> + <code>serde_json</code> 全场景</span></li>
+              <li><span class="tag amber">加密</span><span class="desc"><code>des</code>+<code>ecb</code> · <code>hex</code> · <code>base64</code></span></li>
+              <li><span class="tag amber">二维码</span><span class="desc"><code>qrcode</code> 0.14（SVG 输出）· <code>zip</code> deflate</span></li>
+            </ul>
+          </article>
+
+          <article class="cell rose" id="m-data">
+            <span class="cell-num">M05</span>
+            <h3>数据与本地存储</h3>
+            <span class="cell-sub">单 JSON 文件、原子写入、可备份</span>
+            <ul>
+              <li><span class="tag rose">格式</span><span class="desc">桌面/小程序共用同一份 JSON schema</span></li>
+              <li><span class="tag rose">原子</span><span class="desc">先写临时文件再 rename，崩溃不损坏</span></li>
+              <li><span class="tag rose">导出</span><span class="desc">备份 zip 含数据 + 插件目录</span></li>
+              <li><span class="tag rose">导入</span><span class="desc">桌面 ↔ 小程序可互相恢复数据</span></li>
+            </ul>
+          </article>
+
+          <article class="cell tide-2" id="m-plugin">
+            <span class="cell-num">M06</span>
+            <h3>插件沙箱与宿主</h3>
+            <span class="cell-sub">hot reload · 无构建 · 内置优先</span>
+            <ul>
+              <li><span class="tag">沙箱</span><span class="desc"><code>new Function("tide", ...)</code> 隔离执行</span></li>
+              <li><span class="tag">API</span><span class="desc"><code>tide.ui / storage / http / util / time</code></span></li>
+              <li><span class="tag">内置</span><span class="desc">番茄 / 周报 / 学长推 / 校讯通 / 警大门户等 10 个</span></li>
+              <li><span class="tag">外部</span><span class="desc">数据目录 <code>plugins/</code> 拖入即识别</span></li>
+            </ul>
+          </article>
+
+          <article class="cell sun" id="m-mini">
+            <span class="cell-num">M07</span>
+            <h3>微信小程序同源版</h3>
+            <span class="cell-sub">不依赖 Tauri，原生 WXML/WXSS</span>
+            <ul>
+              <li><span class="tag warn">引擎</span><span class="desc">JavaScriptCore（iOS 16.4 兼容，无 lookbehind）</span></li>
+              <li><span class="tag warn">页面</span><span class="desc">象限 / 时间块 / 捕获 / 任务 / 设置 / 长辈关怀</span></li>
+              <li><span class="tag warn">数据</span><span class="desc"><code>wx.setStorageSync</code> · 与桌面同 schema</span></li>
+              <li><span class="tag warn">能力</span><span class="desc">暗色模式 / 7 天快切 / movable-view 拖动</span></li>
+            </ul>
+          </article>
+
+          <article class="cell ink" id="m-deploy">
+            <span class="cell-num">M08</span>
+            <h3>分发与云端静态</h3>
+            <span class="cell-sub">一个安装包 / 一个网页 / 一个小程序码</span>
+            <ul>
+              <li><span class="tag violet">桌面</span><span class="desc">GitHub Releases：exe / deb / AppImage / APK</span></li>
+              <li><span class="tag emerald">网页</span><span class="desc"><code>cloudflare-pages/</code> 静态站 · 插件文档站</span></li>
+              <li><span class="tag amber">小程序</span><span class="desc"><code>miniprogram/</code> 微信开发者工具上传</span></li>
+              <li><span class="tag rose">文档</span><span class="desc"><code>docs/</code> 五份 md + 一组静态 HTML 站</span></li>
+            </ul>
+          </article>
+
+          <!-- 大卡片：跨模块依赖一览 -->
+          <article class="span" id="m-quality">
+            <span class="cell-num" style="color:#8be1e4;">M09</span>
+            <h3 style="margin-top:4px;">质量保障层（横切）</h3>
+            <span class="span-sub" style="color:#9ddde0;">从测试用例到产物清单，整条链路都按"零依赖优先"组织。</span>
+            <ul>
+              <li><code>node tools/test-miniprogram-core.js</code> · 核心解析 39 用例</li>
+              <li><code>node tools/check-miniprogram.js</code> · 静态校验</li>
+              <li><code>node tools/gen-miniprogram-tab-icons.js</code> · tab 图标再生</li>
+              <li><code>tools/build-native-*.ps1</code> · Android 原生交叉编译脚本</li>
+              <li><code>scripts/test-*.mjs</code> · 桌面侧行为快照（care / schedule / cppu / interactions）</li>
+              <li>关键 commit 都带 <code>test-results/</code> JSON 快照回填</li>
+            </ul>
+          </article>
+
+        </div>
+
+        <div class="callout"><strong>选型原则 / Zero-NPM frontend</strong><p>前端用原生 JS 而非 React/Vue，是刻意的选择：四象限和时间块都是高频重绘场景，框架虚拟 DOM diff 在 100~300 个任务时反而比直接重绘更慢。Vite 只负责打包，不引入任何运行时依赖。<a href="#philosophy">展开选型哲学</a></p></div>
+      </section>
+
+      <section id="tauri">
+        <p class="section-kicker">M01 · Tauri 容器</p>
+        <h2>桌面 / 移动端的同一副骨架</h2>
+        <p class="intro">Tauri 2 作为壳，把同一份前端代码包成 Windows NSIS / Linux deb+AppImage / Android APK。它提供窗口、WebView 调用系统能力的桥；但潮衡只用其中很少的接口——所有复杂逻辑都留在前端或 Rust 模块。</p>
+        <div class="flow" aria-label="Tauri 工作流">
+          <div><b>FRONTEND</b><span>原生 JS + Vite 产物；端口 1420</span></div>
+          <div><b>TAURI RUNTIME</b><span>WebView 加载 index.html，注入 @tauri-apps/api</span></div>
+          <div><b>RUST CORE</b><span>src-tauri/src/lib.rs · 命令句柄 + 文件 IO</span></div>
+          <div><b>PLUGINS</b><span>opener / single-instance / 内置 8+ 个</span></div>
+          <div><b>INSTALLER</b><span>tauri-cli 串出 NSIS / deb / AppImage / APK</span></div>
+        </div>
+        <h3>Cargo 依赖矩阵</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>crate</th><th>用途 / 引入原因</th></tr></thead>
+          <tbody>
+            <tr><td>tauri</td><td>宿主框架；<code>2</code> 主版本，<code>features = []</code> 关闭可选特性以缩小二进制</td></tr>
+            <tr><td>tauri-plugin-opener</td><td>外链全部交给系统浏览器打开，不抢 WebView</td></tr>
+            <tr><td>tauri-plugin-single-instance</td><td>Win/Linux 二次启动时聚焦已有窗口，避免重复占用 WebView 资源</td></tr>
+            <tr><td>serde / serde_json</td><td>应用配置 / 插件清单 / 数据备份的序列化基石</td></tr>
+            <tr><td>reqwest</td><td>插件 HTTP 出口；<code>rustls-tls</code> 避免在 Linux 上踩 OpenSSL 1.1 缺失坑</td></tr>
+            <tr><td>tiny_http</td><td>内嵌 127.0.0.1 回调服务，给 OAuth/二维码登录回流用</td></tr>
+            <tr><td>des + ecb + hex + base64</td><td>DES+RSA 兼容插件（如学号门户）所需的旧加密栈</td></tr>
+            <tr><td>qrcode + zip</td><td>登录二维码生成、备份/插件导出</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="frontend">
+        <p class="section-kicker">M02 · 前端</p>
+        <h2>无框架的原生 JavaScript</h2>
+        <p class="intro">你能看到的每一个视图都在 <code>tidebalance/src/</code> 下：<code>main.js</code> 装配，<code>views/</code> 下四象限/时间块/捕获/设置，<code>pluginHost.js</code> 插件宿主。所有视图直接拿 DOM 节点画，<strong>不引入 React/Vue/Svelte</strong>。</p>
+        <pre><code><span class="cmt">// src/main.js —— 入口装配，四视图 + 插件视图统一路由</span>
+<span class="k">import</span> { mountQuadrant }   <span class="k">from</span> <span class="s">"./views/quadrant.js"</span>;
+<span class="k">import</span> { mountTimeblock }  <span class="k">from</span> <span class="s">"./views/timeblock.js"</span>;
+<span class="k">import</span> { mountCapture }    <span class="k">from</span> <span class="s">"./views/capture.js"</span>;
+<span class="k">import</span> { mountSettings }   <span class="k">from</span> <span class="s">"./views/settings.js"</span>;
+<span class="k">import</span> { bootPluginHost }  <span class="k">from</span> <span class="s">"./pluginHost.js"</span>;
+
+<span class="cmt">// 视图切换：仅替换 innerHTML + 触发重绑监听，不做虚拟 DOM diff</span>
+<span class="k">const</span> views = { quadrant: mountQuadrant, timeblock: mountTimeblock, capture: mountCapture, settings: mountSettings };
+bootPluginHost({ registerView, views });</code></pre>
+        <h3>视图层组件</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>文件</th><th>职责 / 主要 API</th></tr></thead>
+          <tbody>
+            <tr><td>src/main.js</td><td>应用引导；按 <code>#route</code> 切换视图</td></tr>
+            <tr><td>src/ui.js</td><td>通用 UI 工具：toast / dialog / drawer</td></tr>
+            <tr><td>src/shell.js</td><td>侧栏 + 顶栏 + 路由监听</td></tr>
+            <tr><td>src/store.js</td><td>本地存储抽象，包装 atomic write</td></tr>
+            <tr><td>src/capture.js</td><td>拖放/粘贴入口，调动 timeParser</td></tr>
+            <tr><td>src/timeParser.js</td><td>0 依赖中文时间解析；160+ 条规则</td></tr>
+            <tr><td>src/views/quadrant.js</td><td>四象限网格 + 任务卡片 + 抽屉</td></tr>
+            <tr><td>src/views/timeblock.js</td><td>时间轴 + 任务池 + 拖拽调度</td></tr>
+            <tr><td>src/views/settings.js</td><td>插件启停、备份导出导入、数据统计</td></tr>
+            <tr><td>src/pluginHost.js</td><td>沙箱加载、内置/外部插件扫描、API 注册</td></tr>
+            <tr><td>src/theme.js</td><td>明/暗主题 + 跟随系统</td></tr>
+            <tr><td>src/icons.js</td><td>字形图标 + 128×128 PNG 注入</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout cool"><strong>为什么不引入框架</strong><p>四象限视图最多 60 个任务、时间块视图最多 48 个块 / 日。在这种规模下，原生 DOM 重绘（甚至 Canvas）都比框架 diff 快几个数量级，且产物体积更小、冷启动更快。<code>grep -r "react\|vue\|svelte" src/</code> 找不到任何引用。</p></div>
+      </section>
+
+      <section id="rust">
+        <p class="section-kicker">M04 · Rust 后端</p>
+        <h2>单二进制 · 跨平台一致</h2>
+        <p class="intro"><code>src-tauri/src/lib.rs</code> 不做业务，只暴露命令句柄（原子读写、插件目录扫描、应用信息）和内置插件需要的本地能力。Rust 端跨 Windows/Linux/macOS 用 <code>reqwest + rustls-tls</code>，绕开 OpenSSL 1.1 在新发行版的缺位问题。</p>
+        <h3>主要模块</h3>
+        <ul class="plain">
+          <li><strong>lib.rs</strong> —— Tauri 命令注册 / 窗口初始化 / 插件目录扫描</li>
+          <li><strong>mobile.html</strong> —— Android 端首次启动的引导页</li>
+          <li><strong>native_schedule.rs</strong> —— 原生日程算法库，被 Android 原生壳调用</li>
+          <li><strong>care_voice.rs</strong> —— 长辈关怀 TTS 引擎绑定</li>
+        </ul>
+        <h3>编译配置</h3>
+        <pre><code>[profile.release]
+codegen-units = 1   <span class="cmt"># 单 codegen 单元，提体积</span>
+lto           = true <span class="cmt"># 跨 crate LTO</span>
+strip         = true <span class="cmt"># 去掉符号表与 panic 段</span></code></pre>
+        <p>在 Linux 上 release 包体积通常稳定在 <strong>6–8 MB</strong>（含 WebView 加载本身由系统提供）。</p>
+      </section>
+
+      <section id="data">
+        <p class="section-kicker">M05 · 数据与存储</p>
+        <h2>单 JSON · 桌面/小程序同 schema</h2>
+        <p class="intro">桌面端写入 <code>appDataDir()/tidebalance.json</code>，小程序写入 <code>wx.getStorageSync('tb_data')</code>。两份 JSON 结构完全一致，可互相导入。这意味着你可以在 Windows 上导出一份备份，发到手机上从微信小程序恢复，反之亦然。</p>
+        <h3>原子写入流程</h3>
+        <pre><code><span class="cmt">// src/store.js —— 写入临时文件后 rename，避免崩溃造成半截 JSON</span>
+<span class="k">async function</span> atomicWrite(path, payload) {
+  <span class="k">const</span> tmp = path + <span class="s">".tmp-"</span> + crypto.randomUUID();
+  <span class="k">await</span> fs.writeFile(tmp, payload);
+  <span class="k">await</span> fs.rename(tmp, path);   <span class="cmt">// POSIX/Windows 都视为原子</span>
+}</code></pre>
+        <h3>备份导出格式</h3>
+        <ul class="plain">
+          <li><code>data.json</code> —— 应用数据本体</li>
+          <li><code>plugins/</code> —— 插件目录（可选）</li>
+          <li><code>meta.json</code> —— 版本号 / 设备 / 时间戳</li>
+        </ul>
+        <p>整个备份是一个 zip，由 Rust 端 <code>zip</code> crate 打包，前端再走 <code>tide.upload</code> 接口保存。</p>
+      </section>
+
+      <section id="plugin">
+        <p class="section-kicker">M06 · 插件沙箱</p>
+        <h2>把"功能扩展"做成"填文件夹"</h2>
+        <p class="intro"><code>src/pluginHost.js</code> 负责发现和加载。内置插件写在 <code>public/plugins/&lt;id&gt;/</code>，由 <code>BUILTIN_IDS</code> 数组声明；外部插件放数据目录下 <code>plugins/&lt;id&gt;/</code>。所有插件以 <code>new Function("tide", source)</code> 隔离执行，宿主只暴露 <code>tide</code> 对象上的 API。</p>
+        <h3>插件宿主暴露的 API</h3>
+        <div class="chips" aria-label="插件能力">
+          <span class="chip">tide.ui.registerView</span>
+          <span class="chip">tide.ui.registerAction</span>
+          <span class="chip">tide.storage.get</span>
+          <span class="chip">tide.storage.set</span>
+          <span class="chip">tide.http.fetch</span>
+          <span class="chip">tide.util.today</span>
+          <span class="chip">tide.util.now</span>
+          <span class="chip">tide.time.parse</span>
+          <span class="chip">tide.notify</span>
+          <span class="chip">tide.events.on</span>
+          <span class="chip">tide.crypto.des</span>
+          <span class="chip">tide.crypto.rsa</span>
+        </div>
+        <h3>内置插件</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>插件 ID</th><th>能力</th></tr></thead>
+          <tbody>
+            <tr><td>pomodoro</td><td>番茄专注时钟 + 任务绑定</td></tr>
+            <tr><td>weekly-report</td><td>周度回顾（完成率 / 趋势 / 备注导出）</td></tr>
+            <tr><td>gx-news</td><td>校内竞赛消息雷达</td></tr>
+            <tr><td>chaoxing-notify</td><td>学习通通知抓取</td></tr>
+            <tr><td>cppu-notify</td><td>警大门户通知（已移除 74MB OCR 依赖）</td></tr>
+            <tr><td>wechat-push</td><td>微信 Server酱推送</td></tr>
+            <tr><td>elder-care</td><td>长辈关怀视图（明/暗大风字）</td></tr>
+            <tr><td>cn-holiday</td><td>中国节假日 + 调休日历</td></tr>
+            <tr><td>exam-calendar</td><td>考试日历 + 倒计时</td></tr>
+            <tr><td>shiguang-schedule</td><td>原生日程表同步</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="minip">
+        <p class="section-kicker">M07 · 微信小程序</p>
+        <h2>不带构建工具的同源版</h2>
+        <p class="intro"><code>miniprogram/</code> 是一个能直接被微信开发者工具导入的项目，目录结构与桌面端高度对应，每个页面一个文件夹。需要打 zip 上传审核时也不需要 npm install —— JS / WXML / WXSS 三件套即可。</p>
+        <pre><code><span class="cmt"># 项目结构（节选）</span>
+miniprogram/
+├─ app.{js,json,wxss}
+├─ pages/
+│  ├─ quadrant/        <span class="cmt"># 四象限视图</span>
+│  ├─ timeblock/       <span class="cmt"># 时间块视图</span>
+│  ├─ capture/         <span class="cmt"># 文本捕获 + 解析预览</span>
+│  ├─ task/            <span class="cmt"># 任务详情</span>
+│  ├─ settings/        <span class="cmt"># 数据统计 + 导入导出</span>
+│  ├─ elder/           <span class="cmt"># 长辈关怀</span>
+│  └─ webview/         <span class="cmt"># 内嵌网页（如政策详情）</span>
+├─ core/
+│  ├─ timeParser.js    <span class="cmt"># 移除了正则 lookbehind 的桌面同源版</span>
+│  ├─ care.js          <span class="cmt"># 长辈关怀模型</span>
+│  └─ careVoice.js     <span class="cmt"># TTS 调度</span>
+└─ images/tab/         <span class="cmt"># tabBar PNG（脚本生成）</span></code></pre>
+        <div class="callout"><strong>iOS 16.4 以下的 JavaScriptCore 兼容性</strong><p>桌面端 <code>timeParser.js</code> 用到了正则 lookbehind；小程序 JavaScriptCore 在 iOS 16.4 之前不支持，会导致模块加载崩溃。<code>miniprogram/core/timeParser.js</code> 重写时去掉了这些用法，行为与桌面端保持一致。</p></div>
+      </section>
+
+      <section id="capture">
+        <p class="section-kicker">横切能力 / Cross-cutting</p>
+        <h2>中文时间捕获</h2>
+        <p class="intro">拖入/粘贴一段微信聊天文字，潮衡自动提取出"明天下午3点到4点 与导师讨论开题修改"里的时间、日期、事件和分类。整套规则 160+ 条，零依赖，<strong>桌面与小程序共用同一份解析引擎的同源改写版</strong>。</p>
+        <h3>识别的语义维度</h3>
+        <ul class="plain">
+          <li><strong>绝对日期</strong>：今天 / 明天 / 后天 / 周X / 下周X / X月X日 / X-X月 / 农历节气</li>
+          <li><strong>相对时间</strong>：上午 / 下午 / 晚上 / 凌晨 / 中午 / 早上 / 夜里</li>
+          <li><strong>时刻</strong>：3 点 / 三点半 / 15:30 / 下午 3:30 / "3 到 4"</li>
+          <li><strong>时长</strong>：半小时 / 1 小时 / 一节课 / 两小时左右</li>
+          <li><strong>分类</strong>：基于关键词（开会 / 上课 / 实验 / 饭 / 锻炼…）给事件打初始象限</li>
+          <li><strong>语义合并</strong>：同一句话出现"明天下午 3 点 4 点 与 X"，合并为 15:00–16:00 事件</li>
+        </ul>
+        <h3>解析结果回写到时间轴</h3>
+        <div class="flow" aria-label="捕获后落事件流程">
+          <div><b>DRAG / PASTE</b><span>全局监听 dragover & paste</span></div>
+          <div><b>EXTRACT</b><span>capture.js → timeParser</span></div>
+          <div><b>PREVIEW</b><span>浮层展示解析字段，可点改</span></div>
+          <div><b>WRITE</b><span>写入 store.json（原子） + 时间块视图重绘</span></div>
+          <div><b>NOTIFY</b><span>toast + 明日预告同步更新</span></div>
+        </div>
+      </section>
+
+      <section id="dist">
+        <p class="section-kicker">M08 · 分发</p>
+        <h2>三种形态 · 三个渠道</h2>
+        <p class="intro">桌面端走 GitHub Releases（NSIS/deb/AppImage/APK），文档站走 Cloudflare Pages，小程序走微信开发者工具 / miniprogram-ci。三种形态互相独立，但共用数据 schema 与解析器，可在一台设备导出、另一台恢复。</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>渠道</th><th>产物</th><th>触发</th></tr></thead>
+          <tbody>
+            <tr><td>GitHub Releases</td><td><code>TideBalance_x64-setup.exe</code> · <code>*.deb</code> · <code>*.AppImage</code> · <code>TideBalance_*.apk</code></td><td>tag 推送后 Actions 自动构建</td></tr>
+            <tr><td>Cloudflare Pages</td><td><code>cloudflare-pages/</code> · 插件文档 / 上传工坊静态站</td><td>push 到 main → Pages 自动部署</td></tr>
+            <tr><td>微信开发者工具</td><td><code>miniprogram/</code> 整目录</td><td>本地工具上传 → miniprogram-ci 可 CI 化</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="quality">
+        <p class="section-kicker">M09 · 质量层</p>
+        <h2>零依赖测试 + 静态校验</h2>
+        <p class="intro">潮衡刻意不引入 jest / vitest / mocha 这类框架；所有测试都是 <strong>Node 直跑的 .mjs 脚本</strong>，每个文件独立可执行，断言用 <code>node:assert</code>。失败立即非零退出，CI 直接看 exit code。</p>
+        <h3>关键脚本</h3>
+        <ul class="plain">
+          <li><strong>core 时间解析</strong>：<code>node tools/test-miniprogram-core.js</code> · 39 用例，覆盖日期 / 时刻 / 时长 / 合并</li>
+          <li><strong>小程序静态校验</strong>：<code>node tools/check-miniprogram.js</code> · 字段、文件存在性、四页面对齐</li>
+          <li><strong>tabBar 图标再生</strong>：<code>node tools/gen-miniprogram-tab-icons.js</code> · 从 SVG → 渲染 PNG</li>
+          <li><strong>桌面行为快照</strong>：<code>scripts/test-care.mjs</code> / <code>test-cppu.mjs</code> / <code>test-schedule.mjs</code> / <code>test-interactions.mjs</code></li>
+          <li><strong>Android 原生交叉编译</strong>：<code>tools/build-native-android.ps1</code> · <code>tools/build-native-schedule.ps1</code></li>
+        </ul>
+        <div class="callout cool"><strong>回填约定</strong><p>关键提交会把测试结果 JSON 落到 <code>test-results/</code>，评审时一眼能看出本次改动覆盖了哪些场景。</p></div>
+      </section>
+
+      <section id="versions">
+        <p class="section-kicker">当前快照 / Versions</p>
+        <h2>依赖版本（与 <code>package.json</code> / <code>Cargo.toml</code> 一致）</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>名称</th><th>版本</th><th>角色</th></tr></thead>
+          <tbody>
+            <tr><td>@tauri-apps/api</td><td>^2.1.1</td><td>Tauri 前端 bridge</td></tr>
+            <tr><td>@tauri-apps/cli</td><td>^2.1.0</td><td>构建 / dev 命令</td></tr>
+            <tr><td>vite</td><td>^6.0.3</td><td>打包 + dev server</td></tr>
+            <tr><td>tauri (crate)</td><td>2</td><td>Rust 核心宿主</td></tr>
+            <tr><td>tauri-plugin-opener</td><td>2</td><td>外链系统浏览器</td></tr>
+            <tr><td>tauri-plugin-single-instance</td><td>2</td><td>单实例锁</td></tr>
+            <tr><td>reqwest</td><td>0.12 (rustls-tls)</td><td>插件 HTTP 出口</td></tr>
+            <tr><td>tiny_http</td><td>0.12</td><td>本地回调服务</td></tr>
+            <tr><td>serde / serde_json</td><td>1 / 1</td><td>序列化</td></tr>
+            <tr><td>des / ecb / hex / base64</td><td>0.8 / 0.1 / 0.4 / 0.22</td><td>兼容旧加密</td></tr>
+            <tr><td>qrcode / zip</td><td>0.14 (svg) / 2 (deflate)</td><td>登录码 + 备份</td></tr>
+          </tbody>
+        </table></div>
+        <div class="chips" aria-label="目标平台 / 引擎">
+          <span class="chip">Rust 2021 edition</span>
+          <span class="chip">ES2021 target</span>
+          <span class="chip">JDK JavaScriptCore</span>
+          <span class="chip">WeChat Devtools</span>
+          <span class="chip">Tauri Cli 2.1</span>
+          <span class="chip">Vite 6</span>
+        </div>
+      </section>
+
+      <section id="philosophy">
+        <p class="section-kicker">写在最后 / Why</p>
+        <h2>选型哲学：少即是多</h2>
+        <p>潮衡的技术栈看起来"老派"——原生 JS + 原生小程序 + Rust 桌面壳。但每一个选择都对应一个具体克制：</p>
+        <ul class="plain">
+          <li><strong>不要框架</strong>：四象限 + 时间块的任务量级下，原生 DOM 重绘 < 6ms，引入 React 反而要付 90KB+ 与一次 diff 开销</li>
+          <li><strong>不要数据库</strong>：单 JSON 文件可以装下用户整年的日程；引入 SQLite 后还要管 migration</li>
+          <li><strong>不要 OAuth 中间层</strong>：本地 <code>tiny_http</code> 监听 127.0.0.1，回流到桌面窗口即可完成扫码登录</li>
+          <li><strong>不要 CI 模板</strong>：构建是 <code>npm run tauri build</code> 一行命令；Tag 推送 → Actions 拉起就够</li>
+          <li><strong>不要 jest</strong>：测试是 <code>node scripts/test-foo.mjs</code>，断言 <code>node:assert</code>，失败直接非零退出</li>
+        </ul>
+        <p>这套栈让一个学生项目可以在三天内从"想法"推进到"Windows 安装器 + 安卓 APK + 微信小程序 + 网页文档站 + 插件体系"。</p>
+      </section>
+
+    </main>
+  </div>
+
+  <footer>
+    <p>潮衡 TideBalance · 技术栈总览 · 数据逐条对齐仓库实现 · <a href="./index.html">插件开发手册</a> · <a href="https://github.com/momoqiqi-qwq/tidebalance/blob/main/docs/plugins.html" target="_blank" rel="noreferrer">插件使用说明 ↗</a> · <a href="https://github.com/momoqiqi-qwq/tidebalance/blob/main/docs/upload.html" target="_blank" rel="noreferrer">插件工坊 ↗</a> · <a href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">GitHub ↗</a></p>
+  </footer>
+</body>
+</html>

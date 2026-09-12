@@ -1,8 +1,10 @@
+import { initCare } from "./care.js";
 import { initStore, todayStr, getState } from "./store.js";
 import { renderShell } from "./shell.js";
 import { initPluginHost } from "./pluginHost.js";
 import { initCapture } from "./capture.js";
 import { api } from "./api.js";
+import { initTheme } from "./theme.js";
 
 // 首次启动的种子数据（Tauri 端由 Rust seed_data() 生成；浏览器调试用这份）
 function seed() {
@@ -31,8 +33,10 @@ function seed() {
 
 async function boot() {
   await initStore(seed());
+  initTheme();
   renderShell(document.getElementById("app"));
   initCapture();
+  initCare();
   // 手机端（局域网）指令 → 应用统一数据层
   if (api.isTauri) {
     const { listen } = await import("@tauri-apps/api/event");

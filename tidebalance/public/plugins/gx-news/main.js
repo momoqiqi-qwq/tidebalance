@@ -63,7 +63,7 @@
       .gx-btn{font-size:11px;border:1px solid #E4DFD6;border-radius:8px;padding:5px 10px;background:#fff;cursor:pointer;color:#22303A;white-space:nowrap}
       .gx-btn:hover{border-color:#0F4C5C;color:#0F4C5C}
       .gx-empty{border:1.5px dashed #CFC8BA;border-radius:12px;padding:26px;text-align:center;color:#A9B2BA;font-size:12.5px;line-height:1.8}
-      .gx-month{position:sticky;top:-4px;z-index:3;background:#F2EFEA;font-size:12.5px;font-weight:700;color:#0F4C5C;padding:9px 2px 7px;letter-spacing:.05em}
+      .gx-month{font-size:12.5px;font-weight:700;color:#0F4C5C;padding:9px 2px 7px;letter-spacing:.05em}
       .gx-more{display:flex;justify-content:center;padding:8px 0 4px}
       .gx-more .gx-btn{padding:8px 20px;font-size:12px}
       .gx-refresh{font-size:12.5px;font-weight:600;height:34px;padding:0 15px;border-radius:9px;background:#0F4C5C;color:#fff;cursor:pointer}
@@ -141,8 +141,8 @@
   function paintStatus() {
     if (!ui) return;
     const s = ui.status;
-    if (state.fetching && !state.list.length) { s.innerHTML = "⏳ 正在抓取消息…"; return; }
-    if (state.error) { s.innerHTML = `<span class="err">⚠ 抓取失败：${esc(state.error)}（点「刷新」重试）</span>`; return; }
+    if (state.fetching && !state.list.length) { s.innerHTML = "正在抓取消息…"; return; }
+    if (state.error) { s.innerHTML = `<span class="err">抓取失败：${esc(state.error)}（点「刷新」重试）</span>`; return; }
     const at = state.fetchedAt ? new Date(state.fetchedAt).toTimeString().slice(0, 5) : "—";
     s.innerHTML = `已更新 ${at} · 拉取 ${state.list.length} 条 · 显示 <b>${filtered().length}</b> 条`;
   }
@@ -185,14 +185,14 @@
         <div class="gx-title">${esc(m.title)}</div>
         <div class="gx-meta">
           <span class="gx-tag ${tn === "赛事动态" ? "n" : ""}">${esc(tn)}</span>
-          <span>🕐 ${esc(m.time)}</span>
+          <span>${esc(m.time)}</span>
           ${isNew ? '<span class="gx-new">NEW</span>' : ""}
         </div>
         ${m.snippet ? `<div class="gx-snip">${esc(m.snippet)}</div>` : ""}
       </div>
       <div class="gx-act">
         <button class="gx-btn" data-act="open">打开 ↗</button>
-        <button class="gx-btn" data-act="remind">＋ 提醒</button>
+        <button class="gx-btn" data-act="remind">提醒</button>
       </div>
     </div>`;
   }
@@ -212,14 +212,14 @@
       return;
     }
 
-    // 分月分组 + 粘性月份头
+    // 分月分组
     let html = "", lastMonth = "";
     const counts = {};
     for (const m of rows) counts[monthOf(m)] = (counts[monthOf(m)] || 0) + 1;
     for (const m of slice) {
       const mo = monthOf(m);
       if (mo !== lastMonth) {
-        html += `<div class="gx-month">📅 ${esc(monthLabel(mo))} · ${counts[mo]} 条</div>`;
+        html += `<div class="gx-month">${esc(monthLabel(mo))} · ${counts[mo]} 条</div>`;
         lastMonth = mo;
       }
       html += cardHtml(m);
@@ -242,7 +242,7 @@
     } else if (state.hasMore) {
       const b = document.createElement("button");
       b.className = "gx-btn";
-      b.textContent = state.fetching ? "⏳ 正在加载更早的消息…" : `⟳ 加载更早的消息（第 ${state.page + 1} 页）`;
+      b.textContent = state.fetching ? "正在加载更早的消息…" : `加载更早的消息（第 ${state.page + 1} 页）`;
       b.addEventListener("click", () => { if (token === paintToken) fetchList(state.page + 1); });
       more.append(b);
     } else if (state.list.length) {
@@ -307,7 +307,7 @@
     wrap.innerHTML = `
       <div style="font-size:11px;letter-spacing:.3em;color:#7E8B94;margin:16px 0 4px">竞 赛 消 息 雷 达 · 内 置 插 件</div>
       <div class="gx-toolbar">
-        <button class="gx-refresh">⟳ 刷新</button>
+        <button class="gx-refresh">刷新</button>
         <input class="gx-kw" type="text" placeholder="关键词过滤：如 答辩 / 数学 / 报名 / 截止…">
         <label class="gx-toggle hide-seen"><i></i>只看未读</label>
         <label class="gx-toggle show-cover"><i></i>封面图</label>
@@ -379,9 +379,9 @@
 
   function render(el) {
     ensureStyle();
-    el.innerHTML = '<div style="padding:30px;text-align:center;color:#A9B2BA;font-size:12.5px">⏳ 正在读取偏好…</div>';
+    el.innerHTML = '<div style="padding:30px;text-align:center;color:#A9B2BA;font-size:12.5px">正在读取偏好…</div>';
     loadPrefs().then(() => buildUI(el)).catch(() => buildUI(el));
   }
 
-  tide.ui.registerView({ id: "gx-news", title: "竞赛消息", icon: "📡", render });
+  tide.ui.registerView({ id: "gx-news", title: "竞赛消息", icon: "赛", render });
 })();

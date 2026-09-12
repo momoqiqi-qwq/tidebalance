@@ -3,7 +3,7 @@
   "name": "学习通通知",
   "version": "1.0.0",
   "author": "改造自 dsh-user/chaoxing-notify-skill v1.0.0",
-  "icon": "🎓",
+  "icon": "学",
   "description": "超星学习通消息与课程通知：账号密码登录（DES 加密仅在本机 Rust 端完成）→ 消息中心 / 课程列表 / 通知分享码查询，关键词过滤，一键转潮衡提醒。消息中心接口有平台 IP 白名单，被拒时会有提示。",
   "permissions": ["ui", "tasks", "blocks", "storage", "notify", "events", "http", "timeParse"],
   "entry": "main.js"

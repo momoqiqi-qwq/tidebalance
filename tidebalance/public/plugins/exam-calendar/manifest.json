@@ -1,0 +1,10 @@
+{
+  "id": "exam-calendar",
+  "name": "考试日历",
+  "version": "0.1.0",
+  "author": "your-name",
+  "icon": "考",
+  "description": "大学生国家级考试倒计时（四六级/考研/教师资格/计算机等级/专四专八）。数据在构建时由 exam-collector 从官方公告采集后内嵌，运行时不联网、不需要登录、不写入任何远端服务；每条日期都标注是「官方公告确认」还是「规则推算」。会把选中的考试作为任务与学习时间块写进本地日程。",
+  "permissions": ["ui", "tasks", "blocks", "storage", "notify", "events", "openUrl"],
+  "entry": "main.js"
+}

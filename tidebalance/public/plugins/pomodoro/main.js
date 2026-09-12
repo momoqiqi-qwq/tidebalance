@@ -158,6 +158,6 @@
     return b;
   }
 
-  tide.ui.registerView({ id: "pomodoro", title: "番茄专注", icon: "🍅", render });
+  tide.ui.registerView({ id: "pomodoro", title: "番茄专注", icon: "番", render });
   tide.events.on("tasks:changed", () => { if (taskSel) fillTasks(); });
 })();

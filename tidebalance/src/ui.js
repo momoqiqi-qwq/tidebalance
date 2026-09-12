@@ -45,19 +45,33 @@ export function popmenu(x, y, items) {
 // 指针拖拽（鼠标 + 触摸通用，Android 可用）
 // onDrop({x, y, payload, targetAt}) 由调用方决定放置逻辑
 export function pointerDrag(e, payload, { ghostHTML, onMove, onDrop, onClick }) {
+  if (e.button !== 0) return;
   const startX = e.clientX, startY = e.clientY;
   let ghost = null, moved = false;
+  let lastEv = null, raf = 0;
   const pid = e.pointerId;
 
   const onUp = (ev) => {
-    window.removeEventListener("pointermove", onMove, true);
+    if (ev.pointerId !== pid) return;
+    window.removeEventListener("pointermove", move, true);
     window.removeEventListener("pointerup", onUp, true);
     window.removeEventListener("pointercancel", onUp, true);
+    if (raf) cancelAnimationFrame(raf);
     if (ghost) ghost.remove();
+    if (ev.type === "pointercancel") return;
     if (moved) onDrop && onDrop({ x: ev.clientX, y: ev.clientY, payload });
     else onClick && onClick(ev);
   };
+  const paintMove = () => {
+    raf = 0;
+    if (!lastEv) return;
+    if (ghost) {
+      ghost.style.transform = `translate3d(${lastEv.clientX}px, ${lastEv.clientY}px, 0) translate(-50%, -50%) rotate(1deg)`;
+    }
+    onMove && onMove(lastEv);
+  };
   const move = (ev) => {
+    if (ev.pointerId !== pid) return;
     if (!moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 6) return;
     moved = true;
     if (!ghost) {
@@ -65,9 +79,8 @@ export function pointerDrag(e, payload, { ghostHTML, onMove, onDrop, onClick }) 
       if (ghostHTML) ghost.append(ghostHTML);
       document.body.append(ghost);
     }
-    ghost.style.left = `${ev.clientX}px`;
-    ghost.style.top = `${ev.clientY}px`;
-    onMove && onMove(ev);
+    lastEv = ev;
+    if (!raf) raf = requestAnimationFrame(paintMove);
     ev.preventDefault();
   };
   window.addEventListener("pointermove", move, true);

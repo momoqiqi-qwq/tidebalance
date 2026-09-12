@@ -48,15 +48,15 @@ function taskCard(t) {
       { label: t.done ? "标记为未完成" : "标记完成", icon: "✓", run: () => S.toggleTask(t.id) },
       "-",
       { label: "删除任务", icon: "✕", warn: true, run: () => {
-        const t2 = S.removeTask(t.id);
-        toast(`已删除「${t2.title}」`, { actionLabel: "撤销", action: () => { S.addTask(t2); } });
+        const undo = S.deleteTaskUndoable(t.id);
+        toast(`已删除「${t.title}」`, { actionLabel: "撤销", action: undo });
       } },
     ]);
   });
   return card;
 }
 
-function quadrantCell(def) {
+function quadrantCell(def, matches) {
   const list = el("div", { class: "tks" });
   const cell = el("div", { class: `q ${def.cls}` },
     el("span", { class: "rn" }, def.rn),
@@ -67,7 +67,7 @@ function quadrantCell(def) {
   );
 
   const renderList = () => {
-    const tasks = S.tasksOfQuad(def.q);
+    const tasks = S.tasksOfQuad(def.q).filter(matches);
     list.replaceChildren(...tasks.map(taskCard));
     cell.querySelector(".cnt").textContent = `${tasks.filter((t) => !t.done).length} 项`;
   };
@@ -75,7 +75,7 @@ function quadrantCell(def) {
   cell._refresh = renderList;
 
   // 快速添加
-  const addBtn = el("button", { class: "addq" }, "＋ 添加到这个象限");
+  const addBtn = el("button", { class: "addq" }, "添加到这个象限");
   const form = el("div", { class: "addform", style: "display:none" },
     Object.assign(el("input", { placeholder: "要做什么？回车保存", type: "text" }), {}),
     (() => {
@@ -92,31 +92,34 @@ function quadrantCell(def) {
     input.value = ""; input.focus();
   };
   input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") submit();
+    if (e.key === "Enter" && !e.isComposing) submit();
     if (e.key === "Escape") { form.style.display = "none"; addBtn.style.display = ""; }
   });
   addBtn.addEventListener("click", () => { addBtn.style.display = "none"; form.style.display = "flex"; input.focus(); });
   form.addEventListener("focusout", () => setTimeout(() => {
-    if (!input.value.trim()) { form.style.display = "none"; addBtn.style.display = ""; }
+    if (!form.contains(document.activeElement) && !input.value.trim()) { form.style.display = "none"; addBtn.style.display = ""; }
   }, 120));
+  form.append(el("button", { class: "btn pri sm", onclick: submit }, "保存"), el("button", { class: "btn ghost sm", onclick: () => { input.value = ""; form.style.display = "none"; addBtn.style.display = ""; } }, "取消"));
   cell.append(addBtn, form);
   cell._refresh = () => { renderList(); };
   return cell;
 }
 
 export function renderQuadrant(container) {
-  const cells = QUADS.map(quadrantCell);
+  let filter = "all", query = "";
+  const matches = (t) => (filter === "all" || (filter === "done" ? t.done : !t.done)) &&
+    [t.title, t.note, t.project, ...(t.tags || [])].join(" ").toLowerCase().includes(query);
+  const cells = QUADS.map((q) => quadrantCell(q, matches));
+  const search = el("input", { class: "task-search", placeholder: "搜索任务 / 备注 / 项目", "aria-label": "搜索任务", oninput: (e) => { query = e.target.value.trim().toLowerCase(); cells.forEach(c => c._refresh()); } });
   const grid = el("div", { class: "quad-grid" }, cells);
 
   const refreshChips = () => {
     const all = S.getState().tasks;
     const open = all.filter((t) => !t.done);
     chips.innerHTML = "";
-    chips.append(
-      el("span", { class: "chip" }, "全部 ", el("b", {}, String(all.length)), " 项"),
-      el("span", { class: "chip" }, "待办 ", el("b", {}, String(open.length)), " 项"),
-      el("span", { class: "chip" }, "已完成 ", el("b", {}, String(all.length - open.length)), " 项"),
-    );
+    for (const [id, label, count] of [["all", "全部", all.length], ["open", "待办", open.length], ["done", "已完成", all.length - open.length]]) {
+      chips.append(el("button", { class: "chip", "aria-pressed": String(filter === id), onclick: () => { filter = id; cells.forEach(c => c._refresh()); refreshChips(); } }, `${label} ${count} 项`));
+    }
   };
   const chips = el("div", {});
 
@@ -126,7 +129,7 @@ export function renderQuadrant(container) {
       el("span", { class: "sp" }),
       chips,
     ),
-    grid,
+    search, grid,
   );
   container.append(wrap);
 

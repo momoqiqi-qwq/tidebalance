@@ -1,0 +1,54 @@
+.plugin-head { display: flex; align-items: center; gap: 20rpx; }
+.icon { width: 84rpx; height: 84rpx; border-radius: 20rpx; background: var(--paper); border: 2rpx solid var(--line); display: flex; align-items: center; justify-content: center; color: var(--deep); font-size: 38rpx; font-weight: 800; }
+.head-copy { min-width: 0; }
+.title { font-size: 34rpx; font-weight: 750; }
+.meta { color: var(--ink-3); font-size: 21rpx; margin-top: 6rpx; line-height: 1.5; }
+.section-title { font-size: 28rpx; font-weight: 700; margin-bottom: 18rpx; }
+.hint { margin-top: 22rpx; padding-top: 18rpx; border-top: 1rpx dashed var(--line); }
+
+.pomo-card { text-align: center; }
+.modes { display: flex; justify-content: center; gap: 10rpx; flex-wrap: wrap; }
+.mode { margin: 0; min-height: 58rpx; line-height: 58rpx; padding: 0 20rpx; font-size: 22rpx; color: var(--ink-2); background: var(--paper); border: 1rpx solid var(--line); border-radius: 999rpx; }
+.mode::after { border: none; }
+.mode.on { background: var(--deep); color: var(--on-deep); border-color: var(--deep); }
+.clock { font-size: 92rpx; font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: .04em; margin: 44rpx 0 36rpx; }
+.label { font-size: 22rpx; color: var(--ink-2); margin-bottom: 10rpx; }
+.pickerbox { max-width: 520rpx; margin: 0 auto; min-height: 76rpx; line-height: 76rpx; background: var(--paper); border: 2rpx solid var(--line); border-radius: 14rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 18rpx; box-sizing: border-box; }
+.controls { display: flex; justify-content: center; gap: 14rpx; margin-top: 24rpx; }
+.pomo-stats { margin-top: 26rpx; color: var(--ink-2); font-size: 23rpx; }
+.pomo-stats text { color: var(--deep); font-weight: 700; }
+
+.day { margin-bottom: 16rpx; }
+.daytop { display: flex; justify-content: space-between; gap: 20rpx; font-size: 22rpx; color: var(--ink-2); }
+.bartrack { height: 16rpx; border-radius: 999rpx; background: var(--paper); overflow: hidden; margin-top: 8rpx; }
+.bar { height: 100%; min-width: 6rpx; border-radius: 999rpx; background: var(--sea); }
+.summary { margin-top: 22rpx; padding-top: 18rpx; border-top: 1rpx dashed var(--line); color: var(--ink-2); line-height: 1.7; font-size: 23rpx; }
+.summary .strong { color: var(--ink); font-weight: 700; }
+.catrow { display: flex; align-items: center; gap: 12rpx; padding: 12rpx 0; }
+.catdot { width: 18rpx; height: 18rpx; border-radius: 6rpx; flex: none; }
+.catname { flex: 1; font-size: 24rpx; }
+.catvalue { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.catdot.cat-work { background: var(--deep); }.catdot.cat-study { background: var(--grape); }.catdot.cat-sport { background: var(--coral); }.catdot.cat-life { background: var(--sun); }.catdot.cat-rest { background: var(--mint); }
+
+.hero-status { font-size: 42rpx; font-weight: 750; color: var(--deep); margin: 12rpx 0 4rpx; }
+.holiday-row { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; padding: 20rpx 0; border-bottom: 1rpx solid var(--line-soft); }
+.holiday-row:last-of-type { border-bottom: none; }
+.holiday-name { font-size: 26rpx; font-weight: 650; }
+.countdown { color: var(--deep); font-size: 23rpx; font-weight: 700; white-space: nowrap; }
+
+.exam { padding: 20rpx 0; border-bottom: 1rpx solid var(--line-soft); }
+.exam:last-child { border-bottom: none; }
+.exam-top { display: flex; align-items: flex-start; gap: 12rpx; }
+.exam-title { flex: 1; font-size: 26rpx; font-weight: 680; line-height: 1.5; }
+.badge { font-size: 19rpx; padding: 4rpx 9rpx; border-radius: 999rpx; border: 1rpx solid var(--line); white-space: nowrap; }
+.badge.ok { color: var(--deep); border-color: rgba(46,196,182,.5); }
+.badge.estimate { color: var(--sun); border-color: rgba(227,160,8,.5); }
+.exam-actions { display: flex; gap: 12rpx; margin-top: 14rpx; }
+.exam-actions .btn { margin: 0; }
+
+.fa-icon { width: 46rpx; height: 46rpx; display: block; }
+.custom-row{display:flex;gap:16rpx;align-items:center;margin:18rpx 0}.custom-row input{flex:1;min-width:0;height:72rpx;border:1px solid #e4dfd6;border-radius:14rpx;padding:0 18rpx;background:#fff}.custom-row .btn{margin:0;white-space:nowrap}
+
+.exam-notice { margin-top: 18rpx; padding: 16rpx 18rpx; border-left: 6rpx solid var(--deep); background: var(--paper); border-radius: 8rpx; color: var(--ink-2); font-size: 22rpx; line-height: 1.75; }
+.exam-signup { margin: 18rpx 0 0; }
+.exam-actions { flex-wrap: wrap; }

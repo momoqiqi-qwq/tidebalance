@@ -98,7 +98,7 @@ Page({
           noteOpen: this.openNotes.has(t.id),
           meta: (t.due ? "截止 " + t.due.slice(5).replace("-", "/") : "无截止") +
             (t.project ? " · " + t.project : "") +
-            (t.attachments && t.attachments.length ? " · 📷" : ""),
+            (t.attachments && t.attachments.length ? " · 有附件" : ""),
           schedLabel: sched ? "已排 " + sched.start : "",
           estLabel: store.durLabel(t.estMin),
           offset: 0,
@@ -233,11 +233,11 @@ Page({
 
   onShareAppMessage() {
     return {
-      title: "潮衡 · 四象限定的事，排进一天的时间块",
+      title: "Le时间管理 · 四象限定的事，排进一天的时间块",
       path: "/pages/quadrant/index",
     };
   },
   onShareTimeline() {
-    return { title: "潮衡 · 四象限定的事，排进一天的时间块" };
+    return { title: "Le时间管理 · 四象限定的事，排进一天的时间块" };
   },
 });

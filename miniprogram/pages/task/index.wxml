@@ -39,6 +39,22 @@
       </view>
     </view>
     <view class="kv">
+      <text class="k">截止时间</text>
+      <picker mode="time" value="{{dueTime}}" bindchange="onDueTimeChange"><view class="pv">{{dueTime}} ▾</view></picker>
+    </view>
+    <view class="kv">
+      <text class="k">任务提醒</text>
+      <switch checked="{{reminderEnabled}}" bindchange="onReminderToggle" />
+    </view>
+    <view class="kv col" wx:if="{{reminderEnabled}}">
+      <text class="k">提前预警</text>
+      <view class="reminder-picks">
+        <button wx:for="{{reminderOptions}}" wx:key="offset" class="rchip {{item.selected ? 'on' : ''}}" data-offset="{{item.offset}}" bindtap="onReminderPreset">{{item.label}}</button>
+      </view>
+      <view class="custom-reminder"><input type="number" value="{{customReminderMin}}" bindinput="onReminderCustomInput" placeholder="自定义分钟"/><button class="btn ghost small" bindtap="onReminderCustomAdd">添加</button></view>
+      <view wx:for="{{customReminderOffsets}}" wx:key="*this" class="custom-tag">自定义：提前 {{item}} 分钟</view>
+    </view>
+    <view class="kv">
       <text class="k">项目</text>
       <input class="inline-in" value="{{t.project}}" placeholder="无" maxlength="30" bindblur="onProjectBlur" />
     </view>
@@ -69,7 +85,7 @@
   </view>
 
   <view class="foot">
-    <button class="btn pri" bindtap="onScheduleToday">🕐 排入今天时间块</button>
+    <button class="btn pri" bindtap="onScheduleToday">排入今天时间块</button>
     <button class="btn danger" bindtap="onDelete">删除任务</button>
   </view>
 </view>

@@ -1,0 +1,38 @@
+.head { padding-bottom: 30rpx; }
+.eyebrow { font-size: 21rpx; letter-spacing: .28em; color: var(--ink-2); margin-bottom: 12rpx; }
+.title { font-size: 34rpx; line-height: 1.35; font-weight: 750; margin-bottom: 12rpx; }
+.mono { font-family: monospace; color: var(--deep); }
+.plugin { padding: 24rpx; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 18rpx; }
+.identity { display: flex; align-items: center; gap: 18rpx; min-width: 0; flex: 1; }
+.icon { width: 76rpx; height: 76rpx; border-radius: 18rpx; background: var(--paper); border: 2rpx solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 34rpx; font-weight: 800; color: var(--deep); flex: none; }
+.namebox { min-width: 0; }
+.name { font-size: 29rpx; font-weight: 700; }
+.ver { margin-top: 5rpx; font-size: 20rpx; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plugin-desc { margin: 18rpx 0; }
+.platforms { display: flex; flex-wrap: wrap; gap: 10rpx; margin-bottom: 20rpx; }
+.plat { display: inline-flex; align-items: center; gap: 8rpx; border-radius: 999rpx; padding: 7rpx 12rpx; font-size: 19rpx; color: var(--ink-2); background: var(--paper); border: 1rpx solid var(--line); }
+.plat-name { font-weight: 700; color: var(--ink); }
+.plat.full, .plat.native { border-color: rgba(46,196,182,.45); }
+.plat.conditional { border-color: rgba(227,160,8,.5); }
+.plat.unavailable { opacity: .62; }
+
+.fa-icon { width: 42rpx; height: 42rpx; display: block; }
+
+/* v0.9 template-inspired plugin cards */
+.head { padding-bottom: 22rpx; }
+.eyebrow { letter-spacing: .16em; color: var(--ink-3); }
+.plugin { padding: 22rpx; border: 2rpx solid var(--line); box-shadow: none; }
+.icon { width: 70rpx; height: 70rpx; border-radius: 16rpx; background: var(--panel); }
+.plugin-desc { margin: 14rpx 0 16rpx; }
+.plat { border-radius: 12rpx; background: var(--paper); }
+
+
+/* v0.10 插件搜索与管理 */
+.plugin-tools { padding: 20rpx 22rpx; }
+.plugin-search { height: 72rpx; box-sizing: border-box; border: 2rpx solid var(--line); border-radius: 16rpx; background: var(--paper); padding: 0 20rpx; font-size: 25rpx; }
+.filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 10rpx; margin-top: 16rpx; }
+.filter-chip { padding: 9rpx 16rpx; border: 2rpx solid var(--line); border-radius: 999rpx; color: var(--ink-2); background: var(--paper); font-size: 20rpx; }
+.filter-chip.on { color: #fff; background: var(--deep); border-color: var(--deep); }
+.filter-count { margin-left: auto; color: var(--ink-3); font-size: 20rpx; }
+.empty { text-align: center; color: var(--ink-3); font-size: 23rpx; padding: 38rpx 20rpx; }
