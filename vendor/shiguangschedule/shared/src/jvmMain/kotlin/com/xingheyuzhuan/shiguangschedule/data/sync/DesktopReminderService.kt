@@ -1,4 +1,4 @@
-// Added by TideBalance: consumes the same computed course instances as Android reminders.
+// Added by Le: consumes the same computed course instances as Android reminders.
 package com.xingheyuzhuan.shiguangschedule.data.sync
 
 import com.xingheyuzhuan.shiguangschedule.data.repository.AppSettingsRepository

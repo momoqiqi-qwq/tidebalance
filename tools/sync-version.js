@@ -31,12 +31,12 @@ if (cargoVersion !== version) {
 
 const cargoLock = path.join(ROOT, "01-windows/app/src-tauri/Cargo.lock");
 const lockText = fs.readFileSync(cargoLock, "utf8");
-const lockMatch = lockText.match(/(\[\[package\]\]\nname = "tidebalance"\nversion = ")([^"]+)(")/);
+const lockMatch = lockText.match(/(\[\[package\]\]\nname = "letime"\nversion = ")([^"]+)(")/);
 const lockVersion = lockMatch?.[2];
 if (lockVersion !== version) {
   if (CHECK) failures.push(`Cargo.lock: ${lockVersion || "<missing>"} != ${version}`);
   else if (lockMatch) fs.writeFileSync(cargoLock, lockText.replace(lockMatch[0], lockMatch[1] + version + lockMatch[3]));
-  else failures.push("Cargo.lock: 未找到 tidebalance 包版本");
+  else failures.push("Cargo.lock: 未找到 le-time-management 包版本");
 }
 
 const miniMeta = path.join(ROOT, "03-miniprogram/core/appMeta.js");

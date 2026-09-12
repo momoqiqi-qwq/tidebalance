@@ -10,8 +10,8 @@ class JvmAppStorage : AppStorage {
 
     private val appRootDir: File by lazy {
         val userHome = System.getProperty("user.home")
-        // TideBalance keeps its plugin database separate from a standalone upstream installation.
-        val folderName = "TideBalance/shiguang"
+        // Le keeps its plugin database separate from a standalone upstream installation.
+        val folderName = "Le/shiguang"
 
         // 结合 OperatingSystem 枚举进行类型安全的匹配
         val dir = System.getProperty("shiguang.dataDir")?.let(::File) ?: when (OperatingSystem.current) {

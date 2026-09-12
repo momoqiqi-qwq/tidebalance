@@ -112,7 +112,7 @@ kotlin {
         }
 
         jvmMain.dependencies {
-            // Added by TideBalance: native Chromium for original school import bridge.
+            // Added by Le: native Chromium for original school import bridge.
             implementation("me.friwi:jcefmaven:146.0.10")
             if (System.getProperty("os.name").startsWith("Windows")) {
                 runtimeOnly("me.friwi:jcef-natives-windows-amd64:jcef-d3de827+cef-146.0.10+g8219561+chromium-146.0.7680.179")

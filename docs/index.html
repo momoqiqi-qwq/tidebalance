@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="潮衡 TideBalance 插件开发、平台适配、调试与发布文档。内容逐条对应当前插件宿主实现。">
+  <meta name="description" content="Le时间管理 插件开发、平台适配、调试与发布文档。内容逐条对应当前插件宿主实现。">
   <meta name="theme-color" content="#16213e">
-  <title>潮衡插件开发手册 · TideBalance</title>
+  <title>Le时间管理插件开发手册 · Le</title>
   <style>
     :root {
       --ink: #16213e;
@@ -149,14 +149,14 @@
   <a class="skip" href="#content">跳到正文</a>
   <header class="hero" id="top">
     <div class="topbar">
-      <a class="brand" href="#top"><span class="brand-mark">衡</span><span>潮衡 · TideBalance</span></a>
-      <a class="repo-link" href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">查看源代码 ↗</a>
+      <a class="brand" href="#top"><span class="brand-mark">Le</span><span>Le时间管理</span></a>
+      <a class="repo-link" href="https://github.com/momoqiqi-qwq/le-time-management" target="_blank" rel="noreferrer">查看源代码 ↗</a>
     </div>
     <div class="hero-grid">
       <div>
         <p class="eyebrow">Plugin development manual / implementation-aligned</p>
         <h1>让时间<br>长出<em>新能力</em></h1>
-        <p class="lede">潮衡插件开发完整手册：运行模型、tide API 逐条说明、时间解析语法、四个取自真实内置插件的实战范例、调试排错与发布清单。每一句话都对应当前源码，不需要框架或构建工具。</p>
+        <p class="lede">Le时间管理插件开发完整手册：运行模型、tide API 逐条说明、时间解析语法、四个取自真实内置插件的实战范例、调试排错与发布清单。每一句话都对应当前源码，不需要框架或构建工具。</p>
       </div>
       <aside class="hero-meta" aria-label="文档摘要">
         <div><b>RUNTIME</b><p>Tauri 2 · 原生 JavaScript · Rust 网络桥</p></div>
@@ -197,7 +197,7 @@
     <main id="content">
       <section id="model">
         <p class="section-kicker">宿主 / Host lifecycle</p>
-        <h2>插件如何进入潮衡</h2>
+        <h2>插件如何进入Le时间管理</h2>
         <p class="intro">宿主发现插件目录，读取清单与入口文件，把受控的 <code>tide</code> 对象传给入口代码；插件在顶层调用注册 API 挂载视图、任务动作或事件监听。整个过程不需要 npm、打包器或构建步骤。</p>
         <div class="flow" aria-label="插件加载流程">
           <div><b>DISCOVER</b><span>先加载 10 个内置 ID，再扫描外部插件目录（仅桌面端）</span></div>
@@ -254,7 +254,7 @@ tide.notify("插件已加载");</code></pre>
         <h3>两条开发路径</h3>
         <div class="cards">
           <article class="card"><span class="tag">EXTERNAL 外部插件</span><h3>放数据目录，随时热改</h3><p>桌面端在「设置 → 数据」查看数据目录，把插件放进其中的 <code>plugins/</code>。改完 main.js 点「重新扫描」即生效，不需要重新构建应用。</p></article>
-          <article class="card"><span class="tag">BUILTIN 内置插件</span><h3>放进 public/plugins，随包分发</h3><p>把目录放入 <code>tidebalance/public/plugins/</code>，并同步把 ID 加进 <code>pluginHost.js</code> 的 <code>BUILTIN_IDS</code>。Android 端只能用这种方式。</p></article>
+          <article class="card"><span class="tag">BUILTIN 内置插件</span><h3>放进 public/plugins，随包分发</h3><p>把目录放入 <code>le-time-management/public/plugins/</code>，并同步把 ID 加进 <code>pluginHost.js</code> 的 <code>BUILTIN_IDS</code>。Android 端只能用这种方式。</p></article>
         </div>
         <div class="callout cool"><strong>建议用 IIFE 包住入口</strong><p>内置插件的通行写法是 <code>(function () { … })();</code> 把状态与函数封在闭包里，只把注册调用暴露在顶层。这样重新执行入口不会和上一轮的闭包互相串状态。写好后可到<a href="upload.html">插件工坊</a>上传校验、一键打包成合规 zip。</p></div>
       </section>
@@ -337,7 +337,7 @@ export function appIcon(key) {
         <div class="callout cool"><strong>署名是硬性要求</strong><p>随包素材来自 Magnific（原 Freepik）Lineal Color 库：新增图标必须同步 <code>public/icons/credits.json</code>（key/author/source/cdn/sha256）与 <code>ATTRIBUTION.md</code>，设置 → 关于页会展示署名。<strong>素材不得作为独立图标库转售。</strong></p></div>
 
         <p class="intro">完整规范（尺寸/位深/命名/别名/小程序 tabBar/应用图标/授权/自检清单/已知缺口）见仓库文档：
-          <a href="https://github.com/momoqiqi-qwq/tidebalance/blob/main/tidebalance/docs/plugin-icons.md" target="_blank" rel="noreferrer">tidebalance/docs/plugin-icons.md ↗</a>
+          <a href="https://github.com/momoqiqi-qwq/le-time-management/blob/main/le-time-management/docs/plugin-icons.md" target="_blank" rel="noreferrer">le-time-management/docs/plugin-icons.md ↗</a>
         </p>
       </section>
 
@@ -451,7 +451,7 @@ const task = tide.tasks.create({
   note: "先桌面端，再 Android 内置",
   quad: 2, estMin: 45,
   tags: ["插件", "开发"],
-  project: "TideBalance",
+  project: "Le",
   due: tide.util.today()
 });
 
@@ -517,7 +517,7 @@ if (date) {
       <section id="recipes">
         <p class="section-kicker">实战 / Recipes from builtin plugins</p>
         <h2>四个取自真实插件的范例</h2>
-        <p class="intro">下面的模式都来自当前随包分发的内置插件，按「要做什么」对号入座。完整源码在仓库 <code>tidebalance/public/plugins/</code> 里。</p>
+        <p class="intro">下面的模式都来自当前随包分发的内置插件，按「要做什么」对号入座。完整源码在仓库 <code>le-time-management/public/plugins/</code> 里。</p>
 
         <h3>1 · 计时器视图 —— 学 pomodoro</h3>
         <p>适合番茄钟、专注计时这类交互视图。三个关键动作：<strong>IIFE 封闭状态</strong>、<strong>render 先清空再重建</strong>、<strong>interval 存进闭包变量</strong>以便随时停。</p>
@@ -710,17 +710,17 @@ const feed = await tide.http.fetch(sid, "GET", "https://example.com/api/feed");<
           <li><div><strong>做目标平台实测</strong><br>外部插件在真实数据目录验证；内置插件必须随 APK 构建后在 Android 真机过一遍。</div></li>
         </ol>
         <h3>内置发布改动清单</h3>
-        <pre><code>tidebalance/public/plugins/&lt;plugin-id&gt;/manifest.json
-tidebalance/public/plugins/&lt;plugin-id&gt;/main.js
-tidebalance/src/pluginHost.js  <span class="cmt">// BUILTIN_IDS 加入 plugin-id</span></code></pre>
-        <p>实现依据：<a href="https://github.com/momoqiqi-qwq/tidebalance/blob/main/tidebalance/src/pluginHost.js" target="_blank" rel="noreferrer">pluginHost.js</a>、<a href="https://github.com/momoqiqi-qwq/tidebalance/blob/main/tidebalance/src/store.js" target="_blank" rel="noreferrer">store.js</a>、<a href="https://github.com/momoqiqi-qwq/tidebalance/blob/main/tidebalance/src/timeParser.js" target="_blank" rel="noreferrer">timeParser.js</a>、<a href="https://github.com/momoqiqi-qwq/tidebalance/tree/main/tidebalance/public/plugins" target="_blank" rel="noreferrer">内置插件示例</a>。</p>
+        <pre><code>le-time-management/public/plugins/&lt;plugin-id&gt;/manifest.json
+le-time-management/public/plugins/&lt;plugin-id&gt;/main.js
+le-time-management/src/pluginHost.js  <span class="cmt">// BUILTIN_IDS 加入 plugin-id</span></code></pre>
+        <p>实现依据：<a href="https://github.com/momoqiqi-qwq/le-time-management/blob/main/le-time-management/src/pluginHost.js" target="_blank" rel="noreferrer">pluginHost.js</a>、<a href="https://github.com/momoqiqi-qwq/le-time-management/blob/main/le-time-management/src/store.js" target="_blank" rel="noreferrer">store.js</a>、<a href="https://github.com/momoqiqi-qwq/le-time-management/blob/main/le-time-management/src/timeParser.js" target="_blank" rel="noreferrer">timeParser.js</a>、<a href="https://github.com/momoqiqi-qwq/le-time-management/tree/main/le-time-management/public/plugins" target="_blank" rel="noreferrer">内置插件示例</a>。</p>
       </section>
     </main>
   </div>
 
   <footer>
-    <p>潮衡 TideBalance · 本地优先的时间管理平台</p>
-    <p><a href="#top">回到顶部 ↑</a> · <a href="plugins.html">插件使用说明</a> · <a href="upload.html">插件工坊</a> · <a href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">GitHub 仓库</a></p>
+    <p>Le时间管理 · 本地优先的时间管理平台</p>
+    <p><a href="#top">回到顶部 ↑</a> · <a href="plugins.html">插件使用说明</a> · <a href="upload.html">插件工坊</a> · <a href="https://github.com/momoqiqi-qwq/le-time-management" target="_blank" rel="noreferrer">GitHub 仓库</a></p>
   </footer>
 
   <script>

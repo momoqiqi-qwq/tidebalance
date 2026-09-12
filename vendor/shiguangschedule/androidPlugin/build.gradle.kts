@@ -1,4 +1,4 @@
-// TideBalance wrapper; original Android sources and resources remain in androidApp.
+// Le wrapper; original Android sources and resources remain in androidApp.
 plugins {
     id("com.android.library")
     alias(libs.plugins.kotlin.compose)

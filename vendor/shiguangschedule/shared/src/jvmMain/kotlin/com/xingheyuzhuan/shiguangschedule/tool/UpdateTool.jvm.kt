@@ -1,4 +1,4 @@
-// Added by TideBalance: open official release pages with the desktop browser.
+// Added by Le: open official release pages with the desktop browser.
 package com.xingheyuzhuan.shiguangschedule.tool
 import java.awt.Desktop
 import java.net.URI

@@ -1,6 +1,6 @@
 # 安心日常：功能与设备接入
 
-Windows / Android 共用 `tidebalance/src/views/elder.js`；微信小程序入口为 `miniprogram/pages/elder/`。
+Windows / Android 共用 `le-time-management/src/views/elder.js`；微信小程序入口为 `miniprogram/pages/elder/`。
 
 ## 日常使用
 
@@ -72,14 +72,14 @@ tide.care.reportEvent({ type: "fall", id: "sensor-event-unique-id", deviceId: "�
 
 ## 图标与维护
 
-13 个 Magnific 彩色线条图标离线打包在 `tidebalance/public/icons`。来源、作者、校验值见 `credits.json`，设置中可查看署名。小程序 Tab 图标由 `node tools/gen-miniprogram-tab-icons.js` 同步（需要 Python Pillow）。
+13 个 Magnific 彩色线条图标离线打包在 `le-time-management/public/icons`。来源、作者、校验值见 `credits.json`，设置中可查看署名。小程序 Tab 图标由 `node tools/gen-miniprogram-tab-icons.js` 同步（需要 Python Pillow）。
 
 共享提醒模型修改后运行 `node tools/sync-care-model.js`。验证命令：
 
 ```
-node tidebalance/scripts/test-care.mjs
-node tidebalance/scripts/test-interactions.mjs
+node le-time-management/scripts/test-care.mjs
+node le-time-management/scripts/test-interactions.mjs
 node tools/test-miniprogram-core.js
 node tools/check-miniprogram.js
-npm --prefix tidebalance run build
+npm --prefix le-time-management run build
 ```

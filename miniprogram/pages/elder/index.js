@@ -116,7 +116,7 @@ Page({
     elderState().devices.push({ ...d, id: store.uid("device"), channel: "webhook", enabled:false });
     this.setData({ gateway: { name:"", url:"", token:"" } }); care.changed();
   },
-  onTestDevice(e) { const d = elderState().devices.find(x => x.id === e.currentTarget.dataset.id); if (d) care.deliver(d, { key: "test-" + Date.now(), title: "潮衡连接测试", message: "这是一条测试提醒", time:"00:00" }); },
+  onTestDevice(e) { const d = elderState().devices.find(x => x.id === e.currentTarget.dataset.id); if (d) care.deliver(d, { key: "test-" + Date.now(), title: "Le时间管理连接测试", message: "这是一条测试提醒", time:"00:00" }); },
   onToggleDevice(e) { const d = elderState().devices.find(x => x.id === e.currentTarget.dataset.id); if (d) { d.enabled = !d.enabled; care.changed(); } },
   onDeleteDevice(e) { elderState().devices = elderState().devices.filter(x => x.id !== e.currentTarget.dataset.id); care.changed(); },
   siteOf(e) {
@@ -237,6 +237,6 @@ Page({
     catch(error) { this.setData({ bleStatus: error.message || error.errMsg || "连接未完成" }); }
   },
   onBleEnabled(e) { this.setData({ "ble.enabled": e.detail.value }); },
-  onTestBle() { care.sendBle({ title:"潮衡连接测试", message:"这是一条测试提醒", time:"00:00", key:"test-" + Date.now() }).catch(() => {}); },
+  onTestBle() { care.sendBle({ title:"Le时间管理连接测试", message:"这是一条测试提醒", time:"00:00", key:"test-" + Date.now() }).catch(() => {}); },
   onVoiceEnabled(e) { this.setData({ "careSettings.voice": e.detail.value }); elderState().settings.voice = e.detail.value; care.changed(); },
 });

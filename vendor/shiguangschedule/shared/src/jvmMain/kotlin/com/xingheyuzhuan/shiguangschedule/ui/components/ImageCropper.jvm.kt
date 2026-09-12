@@ -10,7 +10,7 @@ import org.jetbrains.skia.Bitmap
 import org.jetbrains.skia.IRect
 
 /**
- * TideBalance: enable the upstream common crop preview on desktop too.
+ * Le: enable the upstream common crop preview on desktop too.
  */
 actual val isCropWindowEnabled: Boolean = true
 

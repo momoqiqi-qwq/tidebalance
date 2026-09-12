@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="潮衡 TideBalance 技术栈总览：Tauri 2 + Rust + 原生 JS + 微信小程序 + Cloudflare Pages，每一层都对应仓库内真实文件。">
+  <meta name="description" content="Le时间管理 技术栈总览：Tauri 2 + Rust + 原生 JS + 微信小程序 + Cloudflare Pages，每一层都对应仓库内真实文件。">
   <meta name="theme-color" content="#16213e">
-  <title>潮衡技术栈 · TideBalance</title>
+  <title>Le时间管理技术栈 · Le</title>
   <style>
     :root {
       --ink: #16213e;
@@ -184,14 +184,14 @@
 
   <header class="hero" id="top">
     <div class="topbar">
-      <a class="brand" href="#top"><span class="brand-mark">衡</span><span>潮衡 · TideBalance</span></a>
-      <a class="repo-link" href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">查看源代码 ↗</a>
+      <a class="brand" href="#top"><span class="brand-mark">Le</span><span>Le时间管理</span></a>
+      <a class="repo-link" href="https://github.com/momoqiqi-qwq/le-time-management" target="_blank" rel="noreferrer">查看源代码 ↗</a>
     </div>
     <div class="hero-grid">
       <div>
         <p class="eyebrow">Tech stack / source-aligned</p>
         <h1>一个应用，<br><em>三层栈</em></h1>
-        <p class="lede">潮衡由 Tauri 2 + Rust 后端、原生 JavaScript 前端、微信小程序三条产品形态组成，外加一份共享数据格式和中文时间解析引擎。本页按模块列出每一层到底用了什么、为什么用、对应仓库里哪个文件——零脚手架、无前端框架、不引入任何非必要依赖。</p>
+        <p class="lede">Le时间管理由 Tauri 2 + Rust 后端、原生 JavaScript 前端、微信小程序三条产品形态组成，外加一份共享数据格式和中文时间解析引擎。本页按模块列出每一层到底用了什么、为什么用、对应仓库里哪个文件——零脚手架、无前端框架、不引入任何非必要依赖。</p>
       </div>
       <aside class="hero-meta" aria-label="栈快照">
         <div><b>宿主</b><p>Tauri 2 · 一套代码 → Windows / Linux / Android</p></div>
@@ -231,9 +231,9 @@
       <section id="stack">
         <p class="section-kicker">总览 / Single-page snapshot</p>
         <h2>七层栈，一个产品</h2>
-        <p class="intro">下面这张网格是潮衡的全部技术选型，每一格对应一个模块、一个仓库目录或一段约定。颜色条对应右侧"对应文件"链接的章节锚点，方便跳到详细说明。</p>
+        <p class="intro">下面这张网格是Le时间管理的全部技术选型，每一格对应一个模块、一个仓库目录或一段约定。颜色条对应右侧"对应文件"链接的章节锚点，方便跳到详细说明。</p>
 
-        <div class="stack" aria-label="潮衡技术栈 7 个模块">
+        <div class="stack" aria-label="Le时间管理技术栈 7 个模块">
 
           <article class="cell" id="m-tauri">
             <span class="cell-num">M01</span>
@@ -355,7 +355,7 @@
       <section id="tauri">
         <p class="section-kicker">M01 · Tauri 容器</p>
         <h2>桌面 / 移动端的同一副骨架</h2>
-        <p class="intro">Tauri 2 作为壳，把同一份前端代码包成 Windows NSIS / Linux deb+AppImage / Android APK。它提供窗口、WebView 调用系统能力的桥；但潮衡只用其中很少的接口——所有复杂逻辑都留在前端或 Rust 模块。</p>
+        <p class="intro">Tauri 2 作为壳，把同一份前端代码包成 Windows NSIS / Linux deb+AppImage / Android APK。它提供窗口、WebView 调用系统能力的桥；但Le时间管理只用其中很少的接口——所有复杂逻辑都留在前端或 Rust 模块。</p>
         <div class="flow" aria-label="Tauri 工作流">
           <div><b>FRONTEND</b><span>原生 JS + Vite 产物；端口 1420</span></div>
           <div><b>TAURI RUNTIME</b><span>WebView 加载 index.html，注入 @tauri-apps/api</span></div>
@@ -382,7 +382,7 @@
       <section id="frontend">
         <p class="section-kicker">M02 · 前端</p>
         <h2>无框架的原生 JavaScript</h2>
-        <p class="intro">你能看到的每一个视图都在 <code>tidebalance/src/</code> 下：<code>main.js</code> 装配，<code>views/</code> 下四象限/时间块/捕获/设置，<code>pluginHost.js</code> 插件宿主。所有视图直接拿 DOM 节点画，<strong>不引入 React/Vue/Svelte</strong>。</p>
+        <p class="intro">你能看到的每一个视图都在 <code>le-time-management/src/</code> 下：<code>main.js</code> 装配，<code>views/</code> 下四象限/时间块/捕获/设置，<code>pluginHost.js</code> 插件宿主。所有视图直接拿 DOM 节点画，<strong>不引入 React/Vue/Svelte</strong>。</p>
         <pre><code><span class="cmt">// src/main.js —— 入口装配，四视图 + 插件视图统一路由</span>
 <span class="k">import</span> { mountQuadrant }   <span class="k">from</span> <span class="s">"./views/quadrant.js"</span>;
 <span class="k">import</span> { mountTimeblock }  <span class="k">from</span> <span class="s">"./views/timeblock.js"</span>;
@@ -436,7 +436,7 @@ strip         = true <span class="cmt"># 去掉符号表与 panic 段</span></co
       <section id="data">
         <p class="section-kicker">M05 · 数据与存储</p>
         <h2>单 JSON · 桌面/小程序同 schema</h2>
-        <p class="intro">桌面端写入 <code>appDataDir()/tidebalance.json</code>，小程序写入 <code>wx.getStorageSync('tb_data')</code>。两份 JSON 结构完全一致，可互相导入。这意味着你可以在 Windows 上导出一份备份，发到手机上从微信小程序恢复，反之亦然。</p>
+        <p class="intro">桌面端写入 <code>appDataDir()/le-time-management.json</code>，小程序写入 <code>wx.getStorageSync('tb_data')</code>。两份 JSON 结构完全一致，可互相导入。这意味着你可以在 Windows 上导出一份备份，发到手机上从微信小程序恢复，反之亦然。</p>
         <h3>原子写入流程</h3>
         <pre><code><span class="cmt">// src/store.js —— 写入临时文件后 rename，避免崩溃造成半截 JSON</span>
 <span class="k">async function</span> atomicWrite(path, payload) {
@@ -516,7 +516,7 @@ miniprogram/
       <section id="capture">
         <p class="section-kicker">横切能力 / Cross-cutting</p>
         <h2>中文时间捕获</h2>
-        <p class="intro">拖入/粘贴一段微信聊天文字，潮衡自动提取出"明天下午3点到4点 与导师讨论开题修改"里的时间、日期、事件和分类。整套规则 160+ 条，零依赖，<strong>桌面与小程序共用同一份解析引擎的同源改写版</strong>。</p>
+        <p class="intro">拖入/粘贴一段微信聊天文字，Le时间管理自动提取出"明天下午3点到4点 与导师讨论开题修改"里的时间、日期、事件和分类。整套规则 160+ 条，零依赖，<strong>桌面与小程序共用同一份解析引擎的同源改写版</strong>。</p>
         <h3>识别的语义维度</h3>
         <ul class="plain">
           <li><strong>绝对日期</strong>：今天 / 明天 / 后天 / 周X / 下周X / X月X日 / X-X月 / 农历节气</li>
@@ -543,7 +543,7 @@ miniprogram/
         <div class="table-wrap"><table>
           <thead><tr><th>渠道</th><th>产物</th><th>触发</th></tr></thead>
           <tbody>
-            <tr><td>GitHub Releases</td><td><code>TideBalance_x64-setup.exe</code> · <code>*.deb</code> · <code>*.AppImage</code> · <code>TideBalance_*.apk</code></td><td>tag 推送后 Actions 自动构建</td></tr>
+            <tr><td>GitHub Releases</td><td><code>Le时间管理_x64-setup.exe</code> · <code>*.deb</code> · <code>*.AppImage</code> · <code>Le时间管理_*.apk</code></td><td>tag 推送后 Actions 自动构建</td></tr>
             <tr><td>Cloudflare Pages</td><td><code>cloudflare-pages/</code> · 插件文档 / 上传工坊静态站</td><td>push 到 main → Pages 自动部署</td></tr>
             <tr><td>微信开发者工具</td><td><code>miniprogram/</code> 整目录</td><td>本地工具上传 → miniprogram-ci 可 CI 化</td></tr>
           </tbody>
@@ -553,7 +553,7 @@ miniprogram/
       <section id="quality">
         <p class="section-kicker">M09 · 质量层</p>
         <h2>零依赖测试 + 静态校验</h2>
-        <p class="intro">潮衡刻意不引入 jest / vitest / mocha 这类框架；所有测试都是 <strong>Node 直跑的 .mjs 脚本</strong>，每个文件独立可执行，断言用 <code>node:assert</code>。失败立即非零退出，CI 直接看 exit code。</p>
+        <p class="intro">Le时间管理刻意不引入 jest / vitest / mocha 这类框架；所有测试都是 <strong>Node 直跑的 .mjs 脚本</strong>，每个文件独立可执行，断言用 <code>node:assert</code>。失败立即非零退出，CI 直接看 exit code。</p>
         <h3>关键脚本</h3>
         <ul class="plain">
           <li><strong>core 时间解析</strong>：<code>node tools/test-miniprogram-core.js</code> · 39 用例，覆盖日期 / 时刻 / 时长 / 合并</li>
@@ -597,7 +597,7 @@ miniprogram/
       <section id="philosophy">
         <p class="section-kicker">写在最后 / Why</p>
         <h2>选型哲学：少即是多</h2>
-        <p>潮衡的技术栈看起来"老派"——原生 JS + 原生小程序 + Rust 桌面壳。但每一个选择都对应一个具体克制：</p>
+        <p>Le时间管理的技术栈看起来"老派"——原生 JS + 原生小程序 + Rust 桌面壳。但每一个选择都对应一个具体克制：</p>
         <ul class="plain">
           <li><strong>不要框架</strong>：四象限 + 时间块的任务量级下，原生 DOM 重绘 < 6ms，引入 React 反而要付 90KB+ 与一次 diff 开销</li>
           <li><strong>不要数据库</strong>：单 JSON 文件可以装下用户整年的日程；引入 SQLite 后还要管 migration</li>
@@ -612,7 +612,7 @@ miniprogram/
   </div>
 
   <footer>
-    <p>潮衡 TideBalance · 技术栈总览 · 数据逐条对齐仓库实现 · <a href="./index.html">插件开发手册</a> · <a href="./plugins.html">插件使用说明</a> · <a href="./upload.html">插件工坊</a> · <a href="https://github.com/momoqiqi-qwq/tidebalance" target="_blank" rel="noreferrer">GitHub ↗</a></p>
+    <p>Le时间管理 · 技术栈总览 · 数据逐条对齐仓库实现 · <a href="./index.html">插件开发手册</a> · <a href="./plugins.html">插件使用说明</a> · <a href="./upload.html">插件工坊</a> · <a href="https://github.com/momoqiqi-qwq/le-time-management" target="_blank" rel="noreferrer">GitHub ↗</a></p>
   </footer>
 </body>
 </html>

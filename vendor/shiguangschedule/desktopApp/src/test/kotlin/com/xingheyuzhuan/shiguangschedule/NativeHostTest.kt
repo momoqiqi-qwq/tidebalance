@@ -23,14 +23,14 @@ class NativeHostTest {
         val exe = File(System.getProperty("shiguang.distribution"), "ShiguangSchedule.exe")
         assertTrue("Bundled original executable must exist", exe.isFile)
         lateinit var parent: JFrame
-        SwingUtilities.invokeAndWait { parent = JFrame("TideBalance host integration test").apply { setSize(1000, 800); isVisible = true } }
+        SwingUtilities.invokeAndWait { parent = JFrame("Le host integration test").apply { setSize(1000, 800); isVisible = true } }
         val handle = HWND(Native.getComponentPointer(parent))
-        val child = ProcessBuilder(exe.absolutePath, "--tidebalance-parent=${Pointer.nativeValue(handle.pointer)}")
+        val child = ProcessBuilder(exe.absolutePath, "--le-parent=${Pointer.nativeValue(handle.pointer)}")
             .redirectError(File(System.getProperty("java.io.tmpdir"), "shiguang-host-test.log")).start()
         val ready = CompletableFuture<Boolean>()
         Thread {
             child.inputStream.bufferedReader().useLines { lines ->
-                lines.forEach { if (it.trim() == "TIDEBALANCE_READY") ready.complete(true) }
+                lines.forEach { if (it.trim() == "LE_READY") ready.complete(true) }
             }
             ready.complete(false)
         }.apply { isDaemon = true; start() }

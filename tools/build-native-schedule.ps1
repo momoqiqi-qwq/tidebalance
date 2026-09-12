@@ -1,5 +1,5 @@
 param(
-    [string]$BuildDirectory = "$env:LOCALAPPDATA/TideBalanceBuild/shiguang",
+    [string]$BuildDirectory = "$env:LOCALAPPDATA/LeBuild/shiguang",
     [switch]$Installer
 )
 $ErrorActionPreference = 'Stop'
@@ -13,7 +13,7 @@ try {
 } finally { Pop-Location }
 $distribution = Join-Path $BuildDirectory 'compose/binaries/main/app/ShiguangSchedule'
 if (-not (Test-Path "$distribution/ShiguangSchedule.exe")) { throw 'Original native executable was not produced.' }
-$target = Join-Path $repo 'tidebalance/src-tauri/native/shiguang'
+$target = Join-Path $repo 'le-time-management/src-tauri/native/shiguang'
 New-Item -ItemType Directory -Path $target -Force | Out-Null
 Copy-Item -Path "$distribution/*" -Destination $target -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $repo 'vendor/shiguangschedule/LICENSE') -Destination "$target/LICENSE-shiguangschedule.txt" -Force
@@ -21,10 +21,10 @@ if ($Installer) {
     # Keep native-port artifacts separate from caches copied from another checkout.
     $previousTargetDirectory = $env:CARGO_TARGET_DIR
     if (-not $env:CARGO_TARGET_DIR) { $env:CARGO_TARGET_DIR = Join-Path $BuildDirectory 'tauri-target' }
-    Push-Location (Join-Path $repo 'tidebalance')
+    Push-Location (Join-Path $repo 'le-time-management')
     try {
         & npm.cmd run tauri -- build --config src-tauri/tauri.shiguang.conf.json --bundles nsis
-        if ($LASTEXITCODE -ne 0) { throw 'TideBalance installer build failed.' }
+        if ($LASTEXITCODE -ne 0) { throw 'Le installer build failed.' }
     } finally { Pop-Location; $env:CARGO_TARGET_DIR = $previousTargetDirectory }
 }
 Write-Host "Original native course plugin staged at $target"

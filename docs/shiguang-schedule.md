@@ -2,7 +2,7 @@
 
 > 本文以下“使用／复用范围”描述的是早期 JavaScript 原型，已不作为原版移植的验收结果。当前正在直接集成用户提供的 Kotlin/Compose 工程，进度和构建方法见 [原版移植记录](shiguang-native-port.md)。
 
-入口：潮衡侧栏“拾光课表”，插件市场可停用。Windows / Android 共用 JavaScript 入口，当前工作区已注册；旧安装包需重新构建才包含它。微信小程序尚未移植此插件。
+入口：Le时间管理侧栏“拾光课表”，插件市场可停用。Windows / Android 共用 JavaScript 入口，当前工作区已注册；旧安装包需重新构建才包含它。微信小程序尚未移植此插件。
 
 ## 使用
 1. 在“学期与节次”设置第一周内的开学日期、学期周数及作息时间。默认作息是可编辑起点，不代表任何学校的实际作息。
@@ -14,8 +14,8 @@
 
 ## 复用范围
 
-上游：XingHeYuZhuan/shiguangschedule，输入为用户提供的 shiguangschedule-main.zip。课程导入导出 DTO 从 Kotlin 数据模型移植为 JavaScript；未嵌入 Kotlin/Compose UI。课程色值和备注随 JSON 保留，界面使用潮衡统一配色。许可证原文与来源校验值保存在插件目录 LICENSE、NOTICE.md，页面底部可查阅。
+上游：XingHeYuZhuan/shiguangschedule，输入为用户提供的 shiguangschedule-main.zip。课程导入导出 DTO 从 Kotlin 数据模型移植为 JavaScript；未嵌入 Kotlin/Compose UI。课程色值和备注随 JSON 保留，界面使用Le时间管理统一配色。许可证原文与来源校验值保存在插件目录 LICENSE、NOTICE.md，页面底部可查阅。
 
-插件目录：`tidebalance/public/plugins/shiguang-schedule/`。维护 model.js 与 ui.js 后运行 `node tools/build-schedule-plugin.js` 生成独立入口 main.js。
+插件目录：`le-time-management/public/plugins/shiguang-schedule/`。维护 model.js 与 ui.js 后运行 `node tools/build-schedule-plugin.js` 生成独立入口 main.js。
 
-验证：`node tidebalance/scripts/test-schedule.mjs`；`npm --prefix tidebalance run build`。本次完成模型与时间块回归测试，及浏览器新增课程、单周切换、再次编辑、删除验收。
+验证：`node le-time-management/scripts/test-schedule.mjs`；`npm --prefix le-time-management run build`。本次完成模型与时间块回归测试，及浏览器新增课程、单周切换、再次编辑、删除验收。

@@ -1,4 +1,4 @@
-// Added by TideBalance. Original settings state, persistence and dialogs are reused.
+// Added by Le. Original settings state, persistence and dialogs are reused.
 package com.xingheyuzhuan.shiguangschedule.ui.settings.notification
 
 import androidx.compose.foundation.layout.*

@@ -1,4 +1,4 @@
-// Added by TideBalance. Uses original WebViewScreen and WebBridgeHandler unchanged.
+// Added by Le. Uses original WebViewScreen and WebBridgeHandler unchanged.
 package com.xingheyuzhuan.shiguangschedule.ui.schoolselection.web
 
 import androidx.compose.runtime.*
@@ -30,7 +30,7 @@ private object DesktopBrowserRuntime {
  @Synchronized fun get(): CefApp {
   app?.let { return it }
   val builder = CefAppBuilder()
-  builder.setInstallDir(File(System.getProperty("user.home"), ".tidebalance/shiguang/jcef"))
+  builder.setInstallDir(File(System.getProperty("user.home"), ".le/shiguang/jcef"))
   builder.cefSettings.windowless_rendering_enabled = false
   return builder.build().also { app = it }
  }

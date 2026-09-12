@@ -1,4 +1,4 @@
-// Added by TideBalance: native desktop file picker; original common UI is unchanged.
+// Added by Le: native desktop file picker; original common UI is unchanged.
 package com.xingheyuzhuan.shiguangschedule.tool
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.toComposeImageBitmap

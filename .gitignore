@@ -21,7 +21,7 @@ private.key
 upload-keys/
 
 # Isolated desktop verification build
-/tidebalance/src-tauri/target-care-windows/
+/le-time-management/src-tauri/target-care-windows/
 /releases/
 
 # Upstream native compilation caches
@@ -29,7 +29,7 @@ upload-keys/
 /vendor/shiguangschedule/.gradle/
 /vendor/shiguangschedule/.kotlin/
 /vendor/shiguangschedule/local.properties
-/tidebalance/src-tauri/native/shiguang/
+/le-time-management/src-tauri/native/shiguang/
 
 # WorkBuddy AI workspace
 .workbuddy-ai/
@@ -38,4 +38,4 @@ upload-keys/
 *.zip
 
 # Old APK in root
-/TideBalance_*.apk
+/Le时间管理_*.apk

@@ -1,7 +1,7 @@
 param([ValidateSet('Debug','Release')][string]$Configuration = 'Debug')
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
-$generated = Join-Path $repo 'tidebalance/src-tauri/gen/android'
+$generated = Join-Path $repo 'le-time-management/src-tauri/gen/android'
 $settings = Get-Content (Join-Path $generated 'tauri.settings.gradle') -Raw
 $sources = @{}
 foreach ($match in [regex]::Matches($settings, 'project\('':([^'']+)''\)\.projectDir = new File\("([^"\r\n]+)"\)')) {
@@ -10,12 +10,12 @@ foreach ($match in [regex]::Matches($settings, 'project\('':([^'']+)''\)\.projec
 foreach ($name in @('tauri-android','tauri-plugin-opener')) {
     if (-not $sources[$name] -or -not (Test-Path $sources[$name])) { throw "Missing generated Tauri Android source: $name" }
 }
-if (-not (Test-Path "$generated/app/src/main/jniLibs/arm64-v8a/libtidebalance_lib.so")) { throw 'Build the TideBalance arm64 Rust library first.' }
+if (-not (Test-Path "$generated/app/src/main/jniLibs/arm64-v8a/libletime_lib.so")) { throw 'Build the Le arm64 Rust library first.' }
 & node (Join-Path $repo 'tools/sync-android-care.js')
 if ($LASTEXITCODE -ne 0) { throw 'Android source synchronization failed.' }
 Push-Location (Join-Path $repo 'vendor/shiguangschedule')
 try {
-    & ./gradlew.bat ":tidebalanceAndroid:assemble$Configuration" '-PtidebalanceAndroid=true' '-Pkotlin.incremental=false' '-Pandroid.overridePathCheck=true' "-PtauriAndroidSource=$($sources['tauri-android'])" "-PtauriOpenerSource=$($sources['tauri-plugin-opener'])" --console=plain
+    & ./gradlew.bat ":leAndroid:assemble$Configuration" '-PleAndroid=true' '-Pkotlin.incremental=false' '-Pandroid.overridePathCheck=true' "-PtauriAndroidSource=$($sources['tauri-android'])" "-PtauriOpenerSource=$($sources['tauri-plugin-opener'])" --console=plain
     if ($LASTEXITCODE -ne 0) { throw 'Integrated original Android app build failed.' }
 } finally { Pop-Location }
-Write-Host "APK output: $repo/vendor/shiguangschedule/tidebalanceAndroid/build/outputs/apk"
+Write-Host "APK output: $repo/vendor/shiguangschedule/leAndroid/build/outputs/apk"

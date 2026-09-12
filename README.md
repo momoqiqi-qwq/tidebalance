@@ -1,8 +1,8 @@
-# 潮衡 TideBalance
+# Le时间管理
 
 ### ✨ 项目简介
 
-**潮衡**是一款本地优先的时间管理桌面/移动应用，把 **03「权衡」四象限决策台** 与 **04「潮汐」时间块规划轴** 两个设计方向融合成一个产品：先用四象限决定"该做什么"，再把任务拖进一天的时间格子里。基于 **Tauri 2 + 原生 JS** 构建，一套代码可打包 Windows / Linux / Android；数据只存在本机单个 JSON 文件里，无账号、无联网。它还能"听懂"中文时间——把微信聊天、网页文字直接拖进来，自动提取日期并在对应时间创建事件。
+**Le时间管理**是一款本地优先的时间管理桌面/移动应用，把 **03「权衡」四象限决策台** 与 **04「潮汐」时间块规划轴** 两个设计方向融合成一个产品：先用四象限决定"该做什么"，再把任务拖进一天的时间格子里。基于 **Tauri 2 + 原生 JS** 构建，一套代码可打包 Windows / Linux / Android；数据只存在本机单个 JSON 文件里，无账号、无联网。它还能"听懂"中文时间——把微信聊天、网页文字直接拖进来，自动提取日期并在对应时间创建事件。
 
 ### 🎨 主要特点
 
@@ -26,18 +26,18 @@
 
 ### 🛠️ 如何使用
 
-1. **直接运行**：下载 Release 中的 `TideBalance_x64-setup.exe` 安装，或用仓库内构建产物 `tidebalance.exe`
+1. **直接运行**：下载 Release 中的 `Le时间管理_x64-setup.exe` 安装，或用仓库内构建产物 `letime.exe`
 2. **从源码构建**：
 
    ```bash
-   cd tidebalance
+   cd le-time-management
    npm install
    npm run tauri dev      # 开发模式
    npm run tauri build    # 打包 Windows NSIS/MSI、Linux deb/AppImage
    npm run tauri android build   # Android APK（需 SDK/NDK，步骤见 README）
    ```
 
-3. **捕获事件**：复制一条带时间的消息（如"周五下午4点半 项目周会"），到潮衡按 `Ctrl+V`，事件自动落在对应时间
+3. **捕获事件**：复制一条带时间的消息（如"周五下午4点半 项目周会"），到Le时间管理按 `Ctrl+V`，事件自动落在对应时间
 4. **写一个插件**：建一个含 `manifest.json` + `main.js` 的文件夹放进数据目录 `plugins/`，回到设置点「重新扫描」
 
 ### ❓ 效果演示
@@ -72,6 +72,6 @@
 
 ### 🙏 贡献
 
-欢迎 Issue 与 PR：时间解析规则扩充（`src/timeParser.js`）、新内置插件、Linux/Android 适配反馈都特别有价值。插件开发 API 文档见 [`tidebalance/README.md`](./tidebalance/README.md)，界面与插件**图标规范**（字形图标 + 128×128 随包 PNG、授权署名、自检清单）见 [`tidebalance/docs/plugin-icons.md`](./tidebalance/docs/plugin-icons.md)。
+欢迎 Issue 与 PR：时间解析规则扩充（`src/timeParser.js`）、新内置插件、Linux/Android 适配反馈都特别有价值。插件开发 API 文档见 [`le-time-management/README.md`](./le-time-management/README.md)，界面与插件**图标规范**（字形图标 + 128×128 随包 PNG、授权署名、自检清单）见 [`le-time-management/docs/plugin-icons.md`](./le-time-management/docs/plugin-icons.md)。
 
 > 本 README 按照 [App-Showcase-Template](https://github.com/yxs2003/App-Showcase-Template) 的展示流程编写。

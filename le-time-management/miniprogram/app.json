@@ -1,0 +1,10 @@
+{
+  "pages": ["pages/index/index"],
+  "window": {
+    "navigationBarTitleText": "Le时间管理",
+    "navigationBarBackgroundColor": "#0F4C5C",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#F2EFEA"
+  },
+  "style": "v2"
+}

@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="潮衡 TideBalance 插件开发与适配手册：结构、权限、API、兼容性、测试和发布。">
+  <meta name="description" content="Le时间管理 插件开发与适配手册：结构、权限、API、兼容性、测试和发布。">
   <meta name="theme-color" content="#073b4c">
-  <title>潮衡插件开发手册 · TideBalance</title>
+  <title>Le时间管理插件开发手册 · Le</title>
   <style>
     :root {
       --deep: #073b4c;
@@ -160,7 +160,7 @@
   <a class="skip" href="#content">跳到正文</a>
   <header class="topbar">
     <div class="topbar-inner">
-      <a class="brand" href="#top"><span class="brand-mark">潮</span>潮衡插件手册 <small>API · v0.1</small></a>
+      <a class="brand" href="#top"><span class="brand-mark">Le</span>Le时间管理插件手册 <small>API · v0.1</small></a>
       <div class="top-actions"><a class="pill" href="tech-stack.html">技术栈 ↗</a><a class="pill" href="#release">发布检查</a><a class="pill primary" href="#quickstart">开始开发</a></div>
     </div>
   </header>
@@ -168,9 +168,9 @@
   <div class="hero" id="top">
     <div class="hero-inner">
       <div>
-        <div class="eyebrow">TideBalance extension field guide</div>
+        <div class="eyebrow">Le extension field guide</div>
         <h1>让时间管理<br>长出新能力<span>插件开发 · 适配 · 测试 · 发布</span></h1>
-        <p class="lede">面向潮衡桌面端插件开发者的单页参考。用两个文件注册新视图、任务动作、提醒、数据存储与网络会话，并在本地优先的边界内安全运行。</p>
+        <p class="lede">面向Le时间管理桌面端插件开发者的单页参考。用两个文件注册新视图、任务动作、提醒、数据存储与网络会话，并在本地优先的边界内安全运行。</p>
         <div class="hero-meta"><span>原生 JavaScript</span><span>Tauri 2</span><span>桌面端插件</span><span>无需构建工具</span></div>
       </div>
       <div class="tide-map" aria-label="插件生命周期示意图">
@@ -212,7 +212,7 @@
       </section>
 
       <section id="model">
-        <div class="section-head"><div class="chapter">01</div><div><h2>先理解插件如何进入潮衡</h2><p>插件宿主按固定顺序发现、读取、注入并注册扩展。</p></div></div>
+        <div class="section-head"><div class="chapter">01</div><div><h2>先理解插件如何进入Le时间管理</h2><p>插件宿主按固定顺序发现、读取、注入并注册扩展。</p></div></div>
         <div class="flow" role="img" aria-label="插件加载过程">
           <div><code>1</code><strong>扫描目录</strong><span>桌面端枚举数据目录下的 <code>plugins/*</code></span></div>
           <div><code>2</code><strong>读取清单</strong><span>解析 <code>manifest.json</code>，入口默认 <code>main.js</code></span></div>
@@ -331,7 +331,7 @@
       </section>
 
       <section id="patterns">
-        <div class="section-head"><div class="chapter">05</div><div><h2>常用适配模式</h2><p>从潮衡已有插件提炼的可复用写法。</p></div></div>
+        <div class="section-head"><div class="chapter">05</div><div><h2>常用适配模式</h2><p>从Le时间管理已有插件提炼的可复用写法。</p></div></div>
         <div class="grid">
           <article class="card"><span class="tag">DATA → REMINDER</span><h3>把外部消息转成提醒</h3><p>先用 <code>http</code> 拉取，交给 <code>parseWhen</code> 识别时间，再同时创建任务和时间块。远端 HTML 必须先净化，禁止直接注入 <code>innerHTML</code>。</p></article>
           <article class="card"><span class="tag">STATE → VIEW</span><h3>保持插件偏好</h3><p>筛选器、已读 ID、计数等写入 <code>storage</code>。不要把账号密码长期明文保存；敏感配置应尽量由用户每次输入。</p></article>
@@ -393,12 +393,12 @@ npm run deploy</code></pre>
           <a href="https://developers.cloudflare.com/workers/wrangler/configuration/#assets">Wrangler · Assets configuration ↗</a>
           <a href="https://developers.cloudflare.com/workers/wrangler/commands/workers/">Wrangler · Workers commands ↗</a>
         </div>
-        <p style="margin-top:18px;color:var(--muted);font-size:12px">仓库依据：<code>tidebalance/src/pluginHost.js</code>、<code>tidebalance/src/api.js</code>、<code>tidebalance/src/store.js</code>、<code>tidebalance/src-tauri/src/lib.rs</code> 与 <code>tidebalance/public/plugins/*</code>。</p>
+        <p style="margin-top:18px;color:var(--muted);font-size:12px">仓库依据：<code>le-time-management/src/pluginHost.js</code>、<code>le-time-management/src/api.js</code>、<code>le-time-management/src/store.js</code>、<code>le-time-management/src-tauri/src/lib.rs</code> 与 <code>le-time-management/public/plugins/*</code>。</p>
       </section>
     </main>
   </div>
 
-  <footer><b>潮衡 TideBalance</b> · 插件开发与适配手册 · 静态托管于 Cloudflare Workers</footer>
+  <footer><b>Le时间管理</b> · 插件开发与适配手册 · 静态托管于 Cloudflare Workers</footer>
   <script>
     document.querySelectorAll("pre").forEach((pre) => {
       const button = pre.querySelector(".copy");

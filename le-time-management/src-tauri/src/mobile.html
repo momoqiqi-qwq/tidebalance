@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Le时间管理 · 手机端</title>
+<style>
+  :root{--bg:#F2EFEA;--ink:#22303A;--ink2:#7E8B94;--line:#E4DFD6;--deep:#0F4C5C;--coral:#FF6B6B;--mint:#2EC4B6}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;padding:calc(14px + env(safe-area-inset-top)) 14px calc(44px + env(safe-area-inset-bottom));-webkit-tap-highlight-color:transparent}
+  h1{font-size:18px;font-weight:700;display:flex;align-items:center;gap:8px}
+  h1 .mk{width:22px;height:22px;border-radius:7px;background:conic-gradient(#D64545 0 90deg,#E3A008 90deg 180deg,#5B6BE8 180deg 270deg,#118AB2 270deg 360deg);position:relative}
+  h1 .mk::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--bg)}
+  .date{font-size:12px;color:var(--ink2);margin:6px 0 12px}
+  .sec{font-size:12px;font-weight:700;color:var(--deep);letter-spacing:.06em;margin:16px 0 8px;padding-left:8px;border-left:3px solid var(--deep)}
+  .block{background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;border-left:4px solid var(--deep);box-shadow:0 1px 3px rgba(34,48,58,.06);min-height:58px}
+  .block.past{opacity:.45}
+  .block .bn{font-size:14px;font-weight:600}
+  .block .bm{font-size:11px;color:var(--ink2);margin-top:3px}
+  .block.now{outline:2px solid var(--mint)}
+  .task{display:flex;gap:10px;align-items:center;background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(34,48,58,.06);min-height:58px}
+  .task.done{opacity:.5}
+  .task.done .tt{text-decoration:line-through}
+  .cb{width:28px;height:28px;border-radius:9px;border:1.5px solid #C9C4B8;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff}
+  .task.done .cb{background:#5B8F7B;border-color:#5B8F7B}
+  .tt{flex:1;font-size:13.5px;font-weight:600;line-height:1.5}
+  .tm{font-size:10.5px;color:var(--ink2);margin-top:3px}
+  .add{display:flex;gap:8px;margin-top:10px;position:sticky;bottom:calc(10px + env(safe-area-inset-bottom));background:var(--bg);padding-top:8px}
+  .add input{flex:1;height:46px;border:1px solid var(--line);border-radius:12px;padding:0 13px;font-size:14px;background:#fff}
+  .add button{width:66px;height:46px;border:none;border-radius:12px;background:var(--deep);color:#fff;font-size:13px;font-weight:600}
+  .add button:active,.refresh:active,.task:active{transform:scale(.99);opacity:.9}
+  .refresh{width:100%;height:42px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink2);font-size:12.5px;margin-top:14px}
+  @media (max-width:340px){body{padding-left:10px;padding-right:10px}.tt{font-size:13px}.tm{font-size:10px}.add button{width:58px}}
+  .empty{border:1.5px dashed #CFC8BA;border-radius:12px;padding:20px;text-align:center;color:#A9B2BA;font-size:12px}
+  .st{font-size:11px;color:var(--ink2);text-align:center;margin-top:8px}
+</style>
+</head>
+<body>
+  <h1><span class="mk"></span>Le时间管理 · 手机端</h1>
+  <div class="date" id="date"></div>
+  <div class="sec">今 日 时 间 块</div>
+  <div id="blocks"><div class="empty">加载中…</div></div>
+  <div class="sec">今 日 任 务</div>
+  <div id="tasks"></div>
+  <div class="add"><input id="newtask" placeholder="快速添加任务，回车保存"><button id="addbtn">添加</button></div>
+  <button class="refresh" id="refresh">刷新</button>
+  <div class="st" id="st">已连接 Win 控制端 · 数据实时回写</div>
+<script>
+const params = new URLSearchParams(location.search);
+const TOKEN = params.get("token") || "";
+const qs = o => Object.keys(o).map(k => k + "=" + encodeURIComponent(o[k])).join("&");
+
+function render(d) {
+  const today = new Date();
+  const ds = today.getFullYear() + "-" + String(today.getMonth()+1).padStart(2,"0") + "-" + String(today.getDate()).padStart(2,"0");
+  document.getElementById("date").textContent = ds + " · 周" + "日一二三四五六"[today.getDay()];
+  const nowMin = today.getHours()*60 + today.getMinutes();
+
+  const blocks = (d.blocks || []).filter(b => b.date === ds).sort((a,b)=>a.start.localeCompare(b.start));
+  document.getElementById("blocks").innerHTML = blocks.length ? blocks.map(b => {
+    const [h,m] = b.start.split(":").map(Number);
+    const sm = h*60+m;
+    const past = sm + b.durMin < nowMin;
+    const now = sm <= nowMin && nowMin < sm + b.durMin;
+    return `<div class="block${past?" past":""}${now?" now":""}"><div class="bn">${esc(b.title)}${now?" · 进行中":""}</div><div class="bm">${b.start} – ${end(b.start,b.durMin)} · ${b.durMin} 分钟</div></div>`;
+  }).join("") : `<div class="empty">今天没有时间块</div>`;
+
+  const sched = new Set(blocks.map(b => b.taskId).filter(Boolean));
+  const tasks = (d.tasks || []).filter(t => !sched.has(t.id)).sort((a,b)=>Number(a.done)-Number(b.done) || a.quad-b.quad);
+  document.getElementById("tasks").innerHTML = tasks.length ? tasks.map(t =>
+    `<div class="task${t.done?" done":""}"><span class="cb" onclick="toggle('${t.id}')">${t.done?"✓":""}</span><div><div class="tt">${esc(t.title)}</div><div class="tm">象限 ${t.quad} · ${t.estMin} 分钟${t.due?" · 截止 "+t.due.slice(5):""}</div></div></div>`
+  ).join("") : `<div class="empty">任务都完成了</div>`;
+}
+function end(start, dur) { const [h,m] = start.split(":").map(Number); const t = h*60+m+dur; return String(Math.floor(t/60)).padStart(2,"0") + ":" + String(t%60).padStart(2,"0"); }
+function esc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : s; return d.innerHTML; }
+
+async function load() {
+  try {
+    const r = await fetch("/api/state?token=" + encodeURIComponent(TOKEN));
+    render(await r.json());
+    document.getElementById("st").textContent = "已连接 Win 控制端 · " + new Date().toTimeString().slice(0,5);
+  } catch (e) {
+    document.getElementById("st").textContent = "连接失败：确保Le时间管理在电脑上运行且手机与电脑同一网络";
+  }
+}
+async function toggle(id) {
+  await fetch("/api/command?token=" + encodeURIComponent(TOKEN), { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ action: "toggle", id }) });
+  load();
+}
+async function addTask() {
+  const v = document.getElementById("newtask").value.trim();
+  if (!v) return;
+  await fetch("/api/command?token=" + encodeURIComponent(TOKEN), { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ action: "add", title: v }) });
+  document.getElementById("newtask").value = "";
+  load();
+}
+document.getElementById("addbtn").addEventListener("click", addTask);
+document.getElementById("newtask").addEventListener("keydown", e => { if (e.key === "Enter") addTask(); });
+document.getElementById("refresh").addEventListener("click", load);
+setInterval(load, 15000);
+load();
+</script>
+</body>
+</html>
